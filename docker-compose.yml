@@ -1,0 +1,32 @@
+version: "2.3"
+services:
+  redis:
+    restart: always
+    image: redis:alpine
+
+  worker:
+    build: .
+    image: yukimochi/activity-relay
+    restart: always
+    init: true
+    command: worker
+    environment:
+      - "ACTOR_PEM=/actor.pem"
+      - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
+      - "REDIS_URL=redis:6379"
+    volumes:
+      - "./actor.pem:/actor.pem"
+
+  server:
+    build: .
+    image: yukimochi/activity-relay
+    restart: always
+    init: true
+    command: server
+    environment:
+      - "ACTOR_PEM=/actor.pem"
+      - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
+      - "RELAY_BIND=0.0.0.0:8080"
+      - "REDIS_URL=redis:6379"
+    volumes:
+      - "./actor.pem:/actor.pem"
