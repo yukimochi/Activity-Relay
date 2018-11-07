@@ -8,6 +8,7 @@
 
  - `github.com/yukimochi/Activity-Relay`
  - `github.com/yukimochi/Activity-Relay/worker`
+ - `github.com/yukimochi/Activity-Relay/cli`
 
 ## Requirements
 
