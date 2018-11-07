@@ -25,6 +25,23 @@ var Actor activitypub.Actor
 // WebfingerResource : Relay's Webfinger resource
 var WebfingerResource activitypub.WebfingerResource
 
+type relayConfig struct {
+	blockService bool
+}
+
+var relConfig relayConfig
+
+func loadConfig() relayConfig {
+	blockService, err := RedClient.HGet("relay:config", "block_service").Result()
+	if err != nil {
+		RedClient.HSet("relay:config", "block_service", 0)
+		blockService = "0"
+	}
+	return relayConfig{
+		blockService: blockService == "1",
+	}
+}
+
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
 	if pemPath == "" {
@@ -70,6 +87,9 @@ func main() {
 
 	Actor = activitypub.GenerateActor(Hostname, &Hostkey.PublicKey)
 	WebfingerResource = activitypub.GenerateWebfingerResource(Hostname, &Actor)
+
+	// Load Config
+	relConfig = loadConfig()
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)

@@ -152,6 +152,9 @@ func suitableRelay(activity *activitypub.Activity, actor *activitypub.Actor) boo
 	if receivers != 0 {
 		return false
 	}
+	if relConfig.blockService && actor.Type == "Service" {
+		return false
+	}
 	return true
 }
 
