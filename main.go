@@ -14,11 +14,6 @@ import (
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
-var Hostname *url.URL
-var Hostkey *rsa.PrivateKey
-var RedClient *redis.Client
-var MacServer *machinery.Server
-
 // Actor : Relay's Actor
 var Actor activitypub.Actor
 
@@ -29,12 +24,16 @@ type relayConfig struct {
 	blockService bool
 }
 
+var hostname *url.URL
+var hostkey *rsa.PrivateKey
+var redClient *redis.Client
+var macServer *machinery.Server
 var relConfig relayConfig
 
 func loadConfig() relayConfig {
-	blockService, err := RedClient.HGet("relay:config", "block_service").Result()
+	blockService, err := redClient.HGet("relay:config", "block_service").Result()
 	if err != nil {
-		RedClient.HSet("relay:config", "block_service", 0)
+		redClient.HSet("relay:config", "block_service", 0)
 		blockService = "0"
 	}
 	return relayConfig{
@@ -61,15 +60,15 @@ func main() {
 	}
 
 	var err error
-	Hostkey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
+	hostkey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
 	if err != nil {
 		panic("Can't read Hostkey Pemfile")
 	}
-	Hostname, err = url.Parse("https://" + relayDomain)
+	hostname, err = url.Parse("https://" + relayDomain)
 	if err != nil {
 		panic("Can't parse Relay Domain")
 	}
-	RedClient = redis.NewClient(&redis.Options{
+	redClient = redis.NewClient(&redis.Options{
 		Addr: redisURL,
 	})
 
@@ -80,13 +79,13 @@ func main() {
 		ResultsExpireIn: 5,
 	}
 
-	MacServer, err = machinery.NewServer(macConfig)
+	macServer, err = machinery.NewServer(macConfig)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	Actor = activitypub.GenerateActor(Hostname, &Hostkey.PublicKey)
-	WebfingerResource = activitypub.GenerateWebfingerResource(Hostname, &Actor)
+	Actor = activitypub.GenerateActor(hostname, &hostkey.PublicKey)
+	WebfingerResource = activitypub.GenerateWebfingerResource(hostname, &Actor)
 
 	// Load Config
 	relConfig = loadConfig()
@@ -99,5 +98,15 @@ func main() {
 	fmt.Println("RELAY DOMAIN : ", relayDomain)
 	fmt.Println("REDIS URL : ", redisURL)
 	fmt.Println("BIND ADDRESS : ", relayBind)
+	fmt.Println(" - Blocked Domain")
+	domains, _ := redClient.HKeys("relay:config:blockedDomain").Result()
+	for _, domain := range domains {
+		fmt.Println(domain)
+	}
+	fmt.Println(" - Limited Domain")
+	domains, _ = redClient.HKeys("relay:config:limitedDomain").Result()
+	for _, domain := range domains {
+		fmt.Println(domain)
+	}
 	http.ListenAndServe(relayBind, nil)
 }
