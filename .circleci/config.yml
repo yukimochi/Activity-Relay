@@ -1,0 +1,21 @@
+version: 2
+jobs:
+  test:
+    working_directory: /go/src/github.com/yukimochi/Activity-Relay
+    docker:
+      - image: circleci/golang
+    steps:
+      - checkout
+      - run:
+          name: build
+          command: |
+            go get -u github.com/golang/dep/cmd/dep
+            dep ensure
+            go test -coverprofile=coverage.txt . ./worker ./cli
+            bash <(curl -s https://codecov.io/bash)
+    
+workflows:
+  version: 2
+  build:
+    jobs:
+      - test

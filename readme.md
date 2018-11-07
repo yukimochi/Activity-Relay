@@ -2,6 +2,9 @@
 
 ## Yet another powerful customizable ActivityPub relay server written in Go.
 
+[![CircleCI](https://circleci.com/gh/yukimochi/Activity-Relay.svg?style=svg)](https://circleci.com/gh/yukimochi/Activity-Relay)
+[![codecov](https://codecov.io/gh/yukimochi/Activity-Relay/branch/master/graph/badge.svg)](https://codecov.io/gh/yukimochi/Activity-Relay)
+
 ![Powered by Ayame](docs/ayame.png)
 
 ## Packages
