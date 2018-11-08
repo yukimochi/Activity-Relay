@@ -15,7 +15,7 @@ import (
 
 func handleWebfinger(w http.ResponseWriter, r *http.Request) {
 	resource := r.URL.Query()["resource"]
-	if r.Method == "GET" && len(resource) == 0 {
+	if r.Method != "GET" || len(resource) == 0 {
 		w.WriteHeader(400)
 		w.Write(nil)
 	} else {
