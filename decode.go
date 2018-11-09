@@ -20,7 +20,10 @@ func decodeActivity(r *http.Request) (*activitypub.Activity, *activitypub.Actor,
 	r.Body.Read(body)
 
 	// Verify HTTPSignature
-	verifier, _ := httpsig.NewVerifier(r)
+	verifier, err := httpsig.NewVerifier(r)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	KeyID := verifier.KeyId()
 	remoteActor, err := activitypub.RetrieveActor(KeyID)
 	if err != nil {
