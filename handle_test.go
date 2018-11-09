@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
 func TestMain(m *testing.M) {
@@ -60,6 +60,7 @@ func TestHandleWebfingerGet(t *testing.T) {
 		t.Fatalf("WebfingerResource's Host not valid.")
 	}
 }
+
 func TestHandleWebfingerGetBadResource(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handleWebfinger))
 	defer s.Close()
@@ -77,6 +78,7 @@ func TestHandleWebfingerGetBadResource(t *testing.T) {
 		t.Fatalf("Failed - StatusCode is not 404.")
 	}
 }
+
 func TestHandleWebfingerInvalidMethod(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handleWebfinger))
 	defer s.Close()
@@ -91,6 +93,7 @@ func TestHandleWebfingerInvalidMethod(t *testing.T) {
 		t.Fatalf("Failed - StatusCode is not 400.")
 	}
 }
+
 func TestHandleActorGet(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handleActor))
 	defer s.Close()
