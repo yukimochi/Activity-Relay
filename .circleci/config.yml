@@ -13,9 +13,25 @@ jobs:
             dep ensure
             go test -coverprofile=coverage.txt . ./worker ./cli
             bash <(curl -s https://codecov.io/bash)
+  docker:
+    docker:
+      - image: docker:git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: build docker image
+          command: |
+            docker build -t ${DOCKER_USER}/activity-relay:latest .
+      - run:
+          name: upload image to docker hub.
+          command: |
+            docker login --username=${DOCKER_USER} --password=${DOCKER_PASS}
+            docker push ${DOCKER_USER}/activity-relay:latest
     
 workflows:
   version: 2
   build:
     jobs:
       - test
+      - docker
