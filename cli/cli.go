@@ -1,84 +1,62 @@
 package main
 
 import (
+	"crypto/rsa"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
-	"strings"
 
+	machinery "github.com/RichardKnop/machinery/v1"
+	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
 	"github.com/urfave/cli"
+	"github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
+var hostname *url.URL
+var hostkey *rsa.PrivateKey
 var redClient *redis.Client
-
-func listDomain(c *cli.Context) error {
-	var err error
-	var domains []string
-	var message string
-	switch c.String("type") {
-	case "limited":
-		message = " - Limited domain :"
-		domains, err = redClient.HKeys("relay:config:limitedDomain").Result()
-		if err != nil {
-			return err
-		}
-	case "blocked":
-		message = " - Blocked domain :"
-		domains, err = redClient.HKeys("relay:config:blockedDomain").Result()
-		if err != nil {
-			return err
-		}
-	default:
-		message = " - Subscribed domain :"
-		temp, err := redClient.Keys("relay:subscription:*").Result()
-		if err != nil {
-			return err
-		}
-		for _, domain := range temp {
-			domains = append(domains, strings.Replace(domain, "relay:subscription:", "", 1))
-		}
-	}
-	fmt.Println(message)
-	for _, domain := range domains {
-		fmt.Println(domain)
-	}
-	fmt.Println(fmt.Sprintf("Total : %d", len(domains)))
-	return nil
-}
-
-func manageDomain(c *cli.Context) error {
-	if c.String("domain") == "" {
-		fmt.Println("No domain given.")
-		return nil
-	}
-	switch c.String("type") {
-	case "limited":
-		if c.Bool("undo") {
-			redClient.HDel("relay:config:limitedDomain", c.String("domain"))
-			fmt.Println("Unregistrate [" + c.String("domain") + "] from Limited domain.")
-		} else {
-			redClient.HSet("relay:config:limitedDomain", c.String("domain"), "1")
-			fmt.Println("Registrate [" + c.String("domain") + "] as Limited domain.")
-		}
-	case "blocked":
-		if c.Bool("undo") {
-			redClient.HDel("relay:config:blockedDomain", c.String("domain"))
-			fmt.Println("Unregistrate [" + c.String("domain") + "] from Blocked domain.")
-		} else {
-			redClient.HSet("relay:config:blockedDomain", c.String("domain"), "1")
-			fmt.Println("Registrate [" + c.String("domain") + "] as Blocked domain.")
-		}
-	default:
-		fmt.Println("No type given.")
-	}
-	return nil
-}
+var macServer *machinery.Server
 
 func main() {
+	pemPath := os.Getenv("ACTOR_PEM")
+	if pemPath == "" {
+		panic("Require ACTOR_PEM environment variable.")
+	}
+	relayDomain := os.Getenv("RELAY_DOMAIN")
+	if relayDomain == "" {
+		panic("Require RELAY_DOMAIN environment variable.")
+	}
+	redisURL := os.Getenv("REDIS_URL")
+	if redisURL == "" {
+		redisURL = "127.0.0.1:6379"
+	}
+
+	var err error
+	hostkey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
+	if err != nil {
+		panic("Can't read Hostkey Pemfile")
+	}
+	hostname, err = url.Parse("https://" + relayDomain)
+	if err != nil {
+		panic("Can't parse Relay Domain")
+	}
 	redClient = redis.NewClient(&redis.Options{
-		Addr: os.Getenv("REDIS_URL"),
+		Addr: redisURL,
 	})
+
+	var macConfig = &config.Config{
+		Broker:          "redis://" + redisURL,
+		DefaultQueue:    "relay",
+		ResultBackend:   "redis://" + redisURL,
+		ResultsExpireIn: 5,
+	}
+
+	macServer, err = machinery.NewServer(macConfig)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	app := cli.NewApp()
 	app.Name = "Activity Relay Extarnal CLI"
@@ -86,41 +64,111 @@ func main() {
 	app.Version = "0.0.2"
 	app.Commands = []cli.Command{
 		{
-			Name:    "list-domain",
-			Aliases: []string{"ld"},
-			Usage:   "List {subscribed,limited,blocked} domains",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "type, t",
-					Value: "subscribed",
-					Usage: "Registrate type [subscribed,limited,blocked]",
+			Name:  "domain",
+			Usage: "Management domains",
+			Subcommands: []cli.Command{
+				{
+					Name:  "list",
+					Usage: "List {subscribed,limited,blocked} domains",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "type, t",
+							Value: "subscribed",
+							Usage: "Domain type [subscribed,limited,blocked]",
+						},
+					},
+					Action: listDomains,
+				},
+				{
+					Name:  "set",
+					Usage: "set domain type [limited,blocked]",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "type, t",
+							Usage: "Domain type [limited,blocked]",
+						},
+						cli.StringFlag{
+							Name:  "domain, d",
+							Usage: "Registrate domain",
+						},
+						cli.BoolFlag{
+							Name:  "undo, u",
+							Usage: "Undo registrate",
+						},
+					},
+					Action: setDomainType,
 				},
 			},
-			Action: listDomain,
 		},
 		{
-			Name:    "manage-domain",
-			Aliases: []string{"md"},
-			Usage:   "Manage {limited,blocked} domains",
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "type, t",
-					Usage: "Registrate type [limited,blocked]",
+			Name:  "config",
+			Usage: "Management relay config",
+			Subcommands: []cli.Command{
+				{
+					Name:   "show",
+					Usage:  "Show all relay configrations",
+					Action: listConfigs,
 				},
-				cli.StringFlag{
-					Name:  "domain, d",
-					Usage: "Registrate domain",
+				{
+					Name:  "service-block",
+					Usage: "Enable blocking for service-type actor",
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "undo, u",
+							Usage: "Undo block",
+						},
+					},
+					Action: serviceBlock,
 				},
-				cli.BoolFlag{
-					Name:  "undo, u",
-					Usage: "Undo registrate",
+				{
+					Name:  "manually-accept",
+					Usage: "Enable Manually accept follow-request",
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "undo, u",
+							Usage: "Undo block",
+						},
+					},
+					Action: manuallyAccept,
 				},
 			},
-			Action: manageDomain,
+		},
+		{
+			Name:  "follow-request",
+			Usage: "Management follow-request",
+			Subcommands: []cli.Command{
+				{
+					Name:   "show",
+					Usage:  "Show all follow-request",
+					Action: listFollows,
+				},
+				{
+					Name:  "reject",
+					Usage: "Reject follow-request",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "domain, d",
+							Usage: "domain name",
+						},
+					},
+					Action: rejectFollow,
+				},
+				{
+					Name:  "accept",
+					Usage: "Accept follow-request",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "domain, d",
+							Usage: "domain name",
+						},
+					},
+					Action: acceptFollow,
+				},
+			},
 		},
 	}
 
-	err := app.Run(os.Args)
+	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,7 +7,9 @@ import (
 )
 
 func TestHandleInboxNoSignature(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(handleInbox))
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, decodeActivity)
+	}))
 	defer s.Close()
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
@@ -22,7 +24,9 @@ func TestHandleInboxNoSignature(t *testing.T) {
 }
 
 func TestHandleInboxInvalidMethod(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(handleInbox))
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, decodeActivity)
+	}))
 	defer s.Close()
 
 	req, _ := http.NewRequest("GET", s.URL, nil)

@@ -12,6 +12,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/RelayConf"
 )
 
 // Actor : Relay's Actor
@@ -20,26 +21,11 @@ var Actor activitypub.Actor
 // WebfingerResource : Relay's Webfinger resource
 var WebfingerResource activitypub.WebfingerResource
 
-type relayConfig struct {
-	blockService bool
-}
-
 var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
-var relConfig relayConfig
-
-func loadConfig() relayConfig {
-	blockService, err := redClient.HGet("relay:config", "block_service").Result()
-	if err != nil {
-		redClient.HSet("relay:config", "block_service", 0)
-		blockService = "0"
-	}
-	return relayConfig{
-		blockService: blockService == "1",
-	}
-}
+var relConfig relayconf.RelayConfig
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
@@ -88,11 +74,13 @@ func main() {
 	WebfingerResource = activitypub.GenerateWebfingerResource(hostname, &Actor)
 
 	// Load Config
-	relConfig = loadConfig()
+	relConfig = relayconf.LoadConfig(redClient)
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)
-	http.HandleFunc("/inbox", handleInbox)
+	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, decodeActivity)
+	})
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]\n - Configrations")
 	fmt.Println("RELAY DOMAIN : ", relayDomain)
