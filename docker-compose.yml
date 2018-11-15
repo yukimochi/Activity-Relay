@@ -12,6 +12,7 @@ services:
     command: worker
     environment:
       - "ACTOR_PEM=/actor.pem"
+      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
       - "REDIS_URL=redis:6379"
     volumes:
@@ -25,6 +26,7 @@ services:
     command: server
     environment:
       - "ACTOR_PEM=/actor.pem"
+      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
       - "RELAY_BIND=0.0.0.0:8080"
       - "REDIS_URL=redis:6379"

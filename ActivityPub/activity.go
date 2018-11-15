@@ -19,7 +19,7 @@ import (
 	"github.com/yukimochi/httpsig"
 )
 
-var UA_STRING = "YUKIMOCHI Toot Relay Service (golang net/http; Activity-Relay v0.0.2; " + os.Getenv("RELAY_DOMAIN") + ")"
+var UA_STRING = os.Getenv("RELAY_SERVICENAME") + " (golang net/http; Activity-Relay v0.1.0; " + os.Getenv("RELAY_DOMAIN") + ")"
 
 func appendSignature(r *http.Request, body *[]byte, KeyID string, pKey *rsa.PrivateKey) error {
 	hash := sha256.New()
