@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,22 +11,8 @@ import (
 	"testing"
 
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/RelayConf"
 )
-
-func TestMain(m *testing.M) {
-	os.Setenv("ACTOR_PEM", "misc/testKey.pem")
-	os.Setenv("RELAY_DOMAIN", "relay.yukimochi.example.org")
-	pemPath := os.Getenv("ACTOR_PEM")
-	relayDomain := os.Getenv("RELAY_DOMAIN")
-	hostkey, _ = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
-	hostname, _ = url.Parse("https://" + relayDomain)
-	Actor = activitypub.GenerateActor(hostname, &hostkey.PublicKey)
-	WebfingerResource = activitypub.GenerateWebfingerResource(hostname, &Actor)
-
-	code := m.Run()
-	os.Exit(code)
-}
 
 func TestHandleWebfingerGet(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handleWebfinger))
@@ -162,5 +149,231 @@ func TestContains(t *testing.T) {
 	result = contains(badData, "hoge")
 	if result != false {
 		t.Fatalf("Failed - input bad data but true. (slice)")
+	}
+}
+
+func TestHandleInboxNoSignature(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, decodeActivity)
+	}))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 400 {
+		t.Fatalf("Failed - StatusCode is not 400")
+	}
+}
+
+func TestHandleInboxInvalidMethod(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, decodeActivity)
+	}))
+	defer s.Close()
+
+	req, _ := http.NewRequest("GET", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 404 {
+		t.Fatalf("Failed - StatusCode is not 404")
+	}
+}
+
+func mockActivityDecoderProvider(activity *activitypub.Activity, actor *activitypub.Actor) func(r *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
+	return func(r *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		return activity, actor, body, nil
+	}
+}
+
+func TestHandleInboxValidFollow(t *testing.T) {
+	activity := activitypub.Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f",
+		"https://mastodon.test.yukimochi.io/users/yukimochi",
+		"Follow",
+		"https://www.w3.org/ns/activitystreams#Public",
+		nil,
+		nil,
+	}
+	actor := activitypub.Actor{
+		[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		"https://mastodon.test.yukimochi.io/users/yukimochi",
+		"Person",
+		"yukimochi",
+		"https://mastodon.test.yukimochi.io/users/yukimochi/inbox",
+		&activitypub.Endpoints{
+			"https://mastodon.test.yukimochi.io/inbox",
+		},
+		activitypub.PublicKey{
+			"https://mastodon.test.yukimochi.io/users/yukimochi#main-key",
+			"https://mastodon.test.yukimochi.io/users/yukimochi",
+			"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuak6v+V5hd683ioTLSPF\nLR7CxiI1GMzmOfgaP/P37YBi8bk1aYu3pSDaSJ4889llLHOrLWnzuojHHAUTsVH3\nDG3BXUIjMdGzO6CYG0Tsk36PF7yKZ4RrIj3z03XEUogBbNN/YiqjWCiUkOLLayx5\nM/iE1VBu3zoC2cP8m+hnVdSOpTV8XcaTXMQSGnk/mKMh93CP16pMkJ3Jaw5I2tYm\nCTKVV3zPdmXwT5rCL/qstlIfDaIkKc/PL04mhA9/8+9A6HhhTsxCsgA1zJZomTBI\n4FXeu7mzFZJtZJdDwaVy2H+CKMw6HOHneEenvvCR/37kiLjk8gw+grC/G1Bw6E2h\nZwIDAQAB\n-----END PUBLIC KEY-----\n",
+		},
+	}
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	relayconf.SetConfig(redClient, "manually_accept", false)
+	relConfig = relayconf.LoadConfig(redClient)
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
+	}
+	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 1 {
+		t.Fatalf("Failed - Subscription not works.")
+	}
+	redClient.Del("relay:subscription:" + domain.Host).Result()
+	redClient.Del("relay:pending:" + domain.Host).Result()
+
+	// Switch Manually
+	relayconf.SetConfig(redClient, "manually_accept", true)
+	relConfig = relayconf.LoadConfig(redClient)
+
+	req, _ = http.NewRequest("POST", s.URL, nil)
+	client = new(http.Client)
+	r, err = client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
+	}
+	res, _ = redClient.Exists("relay:pending:" + domain.Host).Result()
+	if res != 1 {
+		t.Fatalf("Failed - Pending not works.")
+	}
+	res, _ = redClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("Failed - Pending was skipped.")
+	}
+	redClient.Del("relay:subscription:" + domain.Host).Result()
+	redClient.Del("relay:pending:" + domain.Host).Result()
+	relayconf.SetConfig(redClient, "manually_accept", false)
+	relConfig = relayconf.LoadConfig(redClient)
+}
+
+func TestHandleInboxValidFollowBlocked(t *testing.T) {
+	activity := activitypub.Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f",
+		"https://mastodon.test.yukimochi.io/users/yukimochi",
+		"Follow",
+		"https://www.w3.org/ns/activitystreams#Public",
+		nil,
+		nil,
+	}
+	actor := activitypub.Actor{
+		[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		"https://mastodon.test.yukimochi.io/users/yukimochi",
+		"Person",
+		"yukimochi",
+		"https://mastodon.test.yukimochi.io/users/yukimochi/inbox",
+		&activitypub.Endpoints{
+			"https://mastodon.test.yukimochi.io/inbox",
+		},
+		activitypub.PublicKey{
+			"https://mastodon.test.yukimochi.io/users/yukimochi#main-key",
+			"https://mastodon.test.yukimochi.io/users/yukimochi",
+			"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuak6v+V5hd683ioTLSPF\nLR7CxiI1GMzmOfgaP/P37YBi8bk1aYu3pSDaSJ4889llLHOrLWnzuojHHAUTsVH3\nDG3BXUIjMdGzO6CYG0Tsk36PF7yKZ4RrIj3z03XEUogBbNN/YiqjWCiUkOLLayx5\nM/iE1VBu3zoC2cP8m+hnVdSOpTV8XcaTXMQSGnk/mKMh93CP16pMkJ3Jaw5I2tYm\nCTKVV3zPdmXwT5rCL/qstlIfDaIkKc/PL04mhA9/8+9A6HhhTsxCsgA1zJZomTBI\n4FXeu7mzFZJtZJdDwaVy2H+CKMw6HOHneEenvvCR/37kiLjk8gw+grC/G1Bw6E2h\nZwIDAQAB\n-----END PUBLIC KEY-----\n",
+		},
+	}
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	redClient.HSet("relay:config:blockedDomain", domain.Host, "1")
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
+	}
+	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("Failed - Subscription not blocked.")
+	}
+	redClient.Del("relay:subscription:" + domain.Host).Result()
+	redClient.Del("relay:pending:" + domain.Host).Result()
+}
+
+func TestHandleInboxValidUnfollow(t *testing.T) {
+	activity := activitypub.Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f",
+		"https://mastodon.test.yukimochi.io/users/yukimochi",
+		"Undo",
+		map[string]interface{}{
+			"@context": "https://www.w3.org/ns/activitystreams",
+			"id":       "https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f",
+			"actor":    "https://mastodon.test.yukimochi.io/users/yukimochi",
+			"type":     "Follow",
+			"object":   "https://www.w3.org/ns/activitystreams#Public",
+		},
+		nil,
+		nil,
+	}
+	actor := activitypub.Actor{
+		[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		"https://mastodon.test.yukimochi.io/users/yukimochi",
+		"Person",
+		"yukimochi",
+		"https://mastodon.test.yukimochi.io/users/yukimochi/inbox",
+		&activitypub.Endpoints{
+			"https://mastodon.test.yukimochi.io/inbox",
+		},
+		activitypub.PublicKey{
+			"https://mastodon.test.yukimochi.io/users/yukimochi#main-key",
+			"https://mastodon.test.yukimochi.io/users/yukimochi",
+			"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuak6v+V5hd683ioTLSPF\nLR7CxiI1GMzmOfgaP/P37YBi8bk1aYu3pSDaSJ4889llLHOrLWnzuojHHAUTsVH3\nDG3BXUIjMdGzO6CYG0Tsk36PF7yKZ4RrIj3z03XEUogBbNN/YiqjWCiUkOLLayx5\nM/iE1VBu3zoC2cP8m+hnVdSOpTV8XcaTXMQSGnk/mKMh93CP16pMkJ3Jaw5I2tYm\nCTKVV3zPdmXwT5rCL/qstlIfDaIkKc/PL04mhA9/8+9A6HhhTsxCsgA1zJZomTBI\n4FXeu7mzFZJtZJdDwaVy2H+CKMw6HOHneEenvvCR/37kiLjk8gw+grC/G1Bw6E2h\nZwIDAQAB\n-----END PUBLIC KEY-----\n",
+		},
+	}
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", "https://mastodon.test.yukimochi.io/inbox").Result()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
+	}
+	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("Failed - Subscription not succeed.")
 	}
 }

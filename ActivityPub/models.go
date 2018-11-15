@@ -7,7 +7,8 @@ type PublicKey struct {
 	PublicKeyPem string `json:"publicKeyPem"`
 }
 
-type endpoints struct {
+//Endpoints : Contains SharedInbox address.
+type Endpoints struct {
 	SharedInbox string `json:"sharedInbox"`
 }
 
@@ -18,7 +19,7 @@ type Actor struct {
 	Type              string      `json:"type"`
 	PreferredUsername string      `json:"preferredUsername"`
 	Inbox             string      `json:"inbox"`
-	Endpoints         *endpoints  `json:"endpoints"`
+	Endpoints         *Endpoints  `json:"endpoints"`
 	PublicKey         PublicKey   `json:"publicKey"`
 }
 

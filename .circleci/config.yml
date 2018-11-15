@@ -4,6 +4,9 @@ jobs:
     working_directory: /go/src/github.com/yukimochi/Activity-Relay
     docker:
       - image: circleci/golang
+        environment:
+          REDIS_URL: localhost:6379
+      - image: redis:alpine
     steps:
       - checkout
       - run:
