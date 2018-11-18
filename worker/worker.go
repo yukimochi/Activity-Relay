@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"time"
 	"unsafe"
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
+	"github.com/go-redis/redis"
 	"github.com/satori/go.uuid"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
@@ -23,10 +25,19 @@ var Hostkey *rsa.PrivateKey
 // Actor : Relay's Actor
 var Actor activitypub.Actor
 
+var redClient *redis.Client
+
 func relayActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
 	err := activitypub.SendActivity(inboxURL, Actor.ID, *(*[]byte)(unsafe.Pointer(&body)), Hostkey)
+	if err != nil {
+		domain, _ := url.Parse(inboxURL)
+		mod, _ := redClient.HSetNX("relay:statistics:"+domain.Host, "last_error", err.Error()).Result()
+		if mod {
+			redClient.Expire("relay:statistics:"+domain.Host, time.Duration(time.Minute))
+		}
+	}
 	return err
 }
 
@@ -60,6 +71,9 @@ func main() {
 	if err != nil {
 		panic("Can't parse Relay Domain")
 	}
+	redClient = redis.NewClient(&redis.Options{
+		Addr: redisURL,
+	})
 	Actor = activitypub.GenerateActor(Hostname, &Hostkey.PublicKey)
 
 	var macConfig = &config.Config{
