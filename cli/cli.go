@@ -131,6 +131,17 @@ func main() {
 					},
 					Action: manuallyAccept,
 				},
+				{
+					Name:  "create-as-announce",
+					Usage: "Enable Announce activity instead of relay create activity (Not recommended)",
+					Flags: []cli.Flag{
+						cli.BoolFlag{
+							Name:  "undo, u",
+							Usage: "Undo block",
+						},
+					},
+					Action: createAsAnnounce,
+				},
 			},
 		},
 		{
