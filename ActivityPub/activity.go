@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Songmu/go-httpdate"
+	"github.com/satori/go.uuid"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
 	"github.com/yukimochi/httpsig"
 )
@@ -84,13 +85,32 @@ func RetrieveActor(url string) (*Actor, error) {
 // DescribeNestedActivity : Descrive Nested Activity Series
 func DescribeNestedActivity(nestedActivity interface{}) (*Activity, error) {
 	mappedObject := nestedActivity.(map[string]interface{})
-
-	return &Activity{
-		ID:     mappedObject["id"].(string),
-		Type:   mappedObject["type"].(string),
-		Actor:  mappedObject["actor"].(string),
-		Object: mappedObject["object"],
-	}, nil
+	if id, ok := mappedObject["id"].(string); ok {
+		if nestedType, ok := mappedObject["type"].(string); ok {
+			actor, ok := mappedObject["actor"].(string)
+			if !ok {
+				actor = ""
+			}
+			switch object := mappedObject["object"].(type) {
+			case string:
+				return &Activity{
+					ID:     id,
+					Type:   nestedType,
+					Actor:  actor,
+					Object: object,
+				}, nil
+			default:
+				return &Activity{
+					ID:     id,
+					Type:   nestedType,
+					Actor:  actor,
+					Object: mappedObject["object"],
+				}, nil
+			}
+		}
+		return nil, errors.New("Can't assart type")
+	}
+	return nil, errors.New("Can't assart id")
 }
 
 // GenerateActor : Generate Actor by hostname and publickey
@@ -127,12 +147,25 @@ func GenerateWebfingerResource(hostname *url.URL, actor *Actor) WebfingerResourc
 // GenerateActivityResponse : Generate Responce Activity to Activity
 func GenerateActivityResponse(host *url.URL, to *url.URL, responseType string, activity Activity) Activity {
 	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-		host.String() + "/actor#accepts/follows/" + to.Host,
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		host.String() + "/activities/" + uuid.NewV4().String(),
 		host.String() + "/actor",
 		responseType,
 		&activity,
 		nil,
+		nil,
+	}
+}
+
+// GenerateActivityAnnounce : Generate Announce Activity to Activity
+func GenerateActivityAnnounce(host *url.URL, to *url.URL, actiivtyID string) Activity {
+	return Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		host.String() + "/activities/" + uuid.NewV4().String(),
+		host.String() + "/actor",
+		"Announce",
+		actiivtyID,
+		[]string{host.String() + "/actor/followers"},
 		nil,
 	}
 }

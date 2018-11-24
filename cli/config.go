@@ -27,9 +27,20 @@ func manuallyAccept(c *cli.Context) {
 	}
 }
 
+func createAsAnnounce(c *cli.Context) {
+	if c.Bool("undo") {
+		relayconf.SetConfig(redClient, "create_as_announce", false)
+		fmt.Println("Announce activity instead of relay create activity is Disabled.")
+	} else {
+		relayconf.SetConfig(redClient, "create_as_announce", true)
+		fmt.Println("Announce activity instead of relay create activity is Enabled.")
+	}
+}
+
 func listConfigs(c *cli.Context) {
 	config := relayconf.LoadConfig(redClient)
 
 	fmt.Println("Blocking for service-type actor : ", config.BlockService)
 	fmt.Println("Manually accept follow-request : ", config.ManuallyAccept)
+	fmt.Println("Announce activity instead of relay create activity : ", config.CreateAsAnnounce)
 }

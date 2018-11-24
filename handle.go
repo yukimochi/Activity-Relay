@@ -230,8 +230,23 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					w.Write([]byte(err.Error()))
 				} else {
 					if suitableRelay(activity, actor) {
-						go pushRelayJob(domain.Host, body)
-						fmt.Println("Accept Relay Status : ", activity.Actor)
+						if relConfig.CreateAsAnnounce && activity.Type == "Create" {
+							nestedObject, err := activitypub.DescribeNestedActivity(activity.Object)
+							if err != nil {
+								fmt.Println("Fail Assert activity : activity.Actor")
+							}
+							if nestedObject.Type == "Note" {
+								resp := activitypub.GenerateActivityAnnounce(hostname, domain, nestedObject.ID)
+								jsonData, _ := json.Marshal(&resp)
+								go pushRelayJob(domain.Host, jsonData)
+								fmt.Println("Accept Announce Note : ", activity.Actor)
+							} else {
+								fmt.Println("Skipping Announce ", nestedObject.Type, " : ", activity.Actor)
+							}
+						} else {
+							go pushRelayJob(domain.Host, body)
+							fmt.Println("Accept Relay Status : ", activity.Actor)
+						}
 					} else {
 						fmt.Println("Skipping Relay Status : ", activity.Actor)
 					}
