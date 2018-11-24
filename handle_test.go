@@ -190,6 +190,11 @@ func mockActivity(req string) activitypub.Activity {
 		var activity activitypub.Activity
 		json.Unmarshal([]byte(body), &activity)
 		return activity
+	case "Create-Article":
+		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857/activity\",\"type\":\"Create\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:07:26Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"type\":\"Article\",\"summary\":null,\"inReplyTo\":null,\"published\":\"2018-11-15T11:07:26Z\",\"url\":\"https://mastodon.test.yukimochi.io/@yukimochi/101075045564444857\",\"attributedTo\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"sensitive\":false,\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"inReplyToAtomUri\":null,\"conversation\":\"tag:mastodon.test.yukimochi.io,2018-11-15:objectId=68:objectType=Conversation\",\"content\":\"<p>Actvity-Relay</p>\",\"contentMap\":{\"en\":\"<p>Actvity-Relay</p>\"},\"attachment\":[],\"tag\":[]},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:07:26Z\",\"signatureValue\":\"mMgl2GgVPgb1Kw6a2iDIZc7r0j3ob+Cl9y+QkCxIe6KmnUzb15e60UuhkE5j3rJnoTwRKqOFy1PMkSxlYW6fPG/5DBxW9I4kX+8sw8iH/zpwKKUOnXUJEqfwRrNH2ix33xcs/GkKPdedY6iAPV9vGZ10MSMOdypfYgU9r+UI0sTaaC2iMXH0WPnHQuYAI+Q1JDHIbDX5FH1WlDL6+8fKAicf3spBMxDwPHGPK8W2jmDLWdN2Vz4ffsCtWs5BCuqOKZrtTW0Rdd4HWzo40MnRXvBjv7yNlnnKzokANBqiOLWT7kNfK0+Vtnt6c/bNX64KBro53KR7wL3ZBvPVuv5rdQ==\"}}"
+		var activity activitypub.Activity
+		json.Unmarshal([]byte(body), &activity)
+		return activity
 	case "Announce":
 		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075096728565994/activity\",\"type\":\"Announce\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:20:27Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075042939498980\",\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075096728565994/activity\",\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:20:27Z\",\"signatureValue\":\"HUe7M49uoEE5bsCM7rrG1ruamKVuYclKYst4OHQHBcvGSWkMTYCG5OmNQMihpFAantN1Mhz+PWKubXsWmrEnUGDNtog9XDGo2iVbYDcD1wjrDz6EuJiq3CBjLpzQ+F04EIx8LK8WSq6pec+jaIxBJghBa7BNH5i77nUdD7QLZxglqljMkf/r2s1i1eDtVJVDLzU3PW05Qu6Z+RDGZrG137ZwLZ3a5hnFyUPqw3fSgdA4n+AmxYenIHorgj45bmI4QJB8X1TPuAadB2XDvnSTTSuJQyDPyR3kCafBWmXDrqb0MRREsc99KzS9L00OiOY31v0TXr78vjSDxoGzEE81cw==\"}}"
 		var activity activitypub.Activity
@@ -535,6 +540,64 @@ func TestHandleInboxlimitedCreate(t *testing.T) {
 	}
 	redClient.Del("relay:subscription:" + domain.Host).Result()
 	redClient.Del("relay:config:limitedDomain", domain.Host).Result()
+}
+
+func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
+	activity := mockActivity("Create")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", "https://mastodon.test.yukimochi.io/inbox").Result()
+	redClient.HSet("relay:subscription:example.org", "inbox_url", "https://example.org/inbox").Result()
+	redClient.HSet("relay:config", "create_as_announce", "1").Result()
+	relConfig = relayconf.LoadConfig(redClient)
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
+	}
+	redClient.Del("relay:subscription:" + domain.Host).Result()
+	redClient.Del("relay:subscription:example.org").Result()
+	redClient.HSet("relay:config", "create_as_announce", "0").Result()
+	relConfig = relayconf.LoadConfig(redClient)
+}
+
+func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
+	activity := mockActivity("Create-Article")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", "https://mastodon.test.yukimochi.io/inbox").Result()
+	redClient.HSet("relay:subscription:example.org", "inbox_url", "https://example.org/inbox").Result()
+	redClient.HSet("relay:config", "create_as_announce", "1").Result()
+	relConfig = relayconf.LoadConfig(redClient)
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
+	}
+	redClient.Del("relay:subscription:" + domain.Host).Result()
+	redClient.Del("relay:subscription:example.org").Result()
+	redClient.HSet("relay:config", "create_as_announce", "0").Result()
+	relConfig = relayconf.LoadConfig(redClient)
 }
 
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {

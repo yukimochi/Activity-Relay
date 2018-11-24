@@ -235,13 +235,14 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 							if err != nil {
 								fmt.Println("Fail Assert activity : activity.Actor")
 							}
-							if nestedObject.Type == "Note" {
+							switch nestedObject.Type {
+							case "Note":
 								resp := activitypub.GenerateActivityAnnounce(hostname, domain, nestedObject.ID)
 								jsonData, _ := json.Marshal(&resp)
 								go pushRelayJob(domain.Host, jsonData)
 								fmt.Println("Accept Announce Note : ", activity.Actor)
-							} else {
-								fmt.Println("Skipping Announce ", nestedObject.Type, " : ", activity.Actor)
+							default:
+								fmt.Println("Skipping Announce", nestedObject.Type, ": ", activity.Actor)
 							}
 						} else {
 							go pushRelayJob(domain.Host, body)
