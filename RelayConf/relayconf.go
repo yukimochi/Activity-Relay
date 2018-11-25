@@ -9,34 +9,49 @@ type RelayConfig struct {
 	CreateAsAnnounce bool
 }
 
-// LoadConfig : Loader for relay configuration
-func LoadConfig(redClient *redis.Client) RelayConfig {
-	blockService, err := redClient.HGet("relay:config", "block_service").Result()
+type Config int
+
+const (
+	BlockService Config = iota
+	ManuallyAccept
+	CreateAsAnnounce
+)
+
+func (c *RelayConfig) Load(r *redis.Client) {
+	blockService, err := r.HGet("relay:config", "block_service").Result()
 	if err != nil {
-		redClient.HSet("relay:config", "block_service", 0)
+		c.Set(r, BlockService, false)
 		blockService = "0"
 	}
-	manuallyAccept, err := redClient.HGet("relay:config", "manually_accept").Result()
+	manuallyAccept, err := r.HGet("relay:config", "manually_accept").Result()
 	if err != nil {
-		redClient.HSet("relay:config", "manually_accept", 0)
+		c.Set(r, ManuallyAccept, false)
 		manuallyAccept = "0"
 	}
-	createAsAnnounce, err := redClient.HGet("relay:config", "create_as_announce").Result()
+	createAsAnnounce, err := r.HGet("relay:config", "create_as_announce").Result()
 	if err != nil {
-		redClient.HSet("relay:config", "create_as_announce", 0)
+		c.Set(r, CreateAsAnnounce, false)
 		createAsAnnounce = "0"
 	}
-	return RelayConfig{
-		BlockService:     blockService == "1",
-		ManuallyAccept:   manuallyAccept == "1",
-		CreateAsAnnounce: createAsAnnounce == "1",
-	}
+	c.BlockService = blockService == "1"
+	c.ManuallyAccept = manuallyAccept == "1"
+	c.CreateAsAnnounce = createAsAnnounce == "1"
 }
 
-func SetConfig(redClient *redis.Client, key string, value bool) {
+func (c *RelayConfig) Set(r *redis.Client, key Config, value bool) {
 	strValue := 0
 	if value {
 		strValue = 1
 	}
-	redClient.HSet("relay:config", key, strValue)
+	switch key {
+	case BlockService:
+		c.BlockService = value
+		r.HSet("relay:config", "block_service", strValue)
+	case ManuallyAccept:
+		c.ManuallyAccept = value
+		r.HSet("relay:config", "manually_accept", strValue)
+	case CreateAsAnnounce:
+		c.CreateAsAnnounce = value
+		r.HSet("relay:config", "create_as_announce", strValue)
+	}
 }

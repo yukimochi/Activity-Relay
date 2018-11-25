@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"strings"
-	"unsafe"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/urfave/cli"
@@ -25,7 +23,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 			{
 				Name:  "body",
 				Type:  "string",
-				Value: *(*string)(unsafe.Pointer(&body)),
+				Value: string(body),
 			},
 		},
 	}
@@ -80,8 +78,7 @@ func acceptFollow(c *cli.Context) error {
 			nil,
 		}
 
-		actorDomain, _ := url.Parse(activity.Actor)
-		resp := activitypub.GenerateActivityResponse(hostname, actorDomain, "Accept", activity)
+		resp := activity.GenerateResponse(hostname, "Accept")
 		jsonData, _ := json.Marshal(&resp)
 
 		pushRegistorJob(data["inbox_url"], jsonData)
@@ -121,8 +118,7 @@ func rejectFollow(c *cli.Context) error {
 			nil,
 		}
 
-		actorDomain, _ := url.Parse(activity.Actor)
-		resp := activitypub.GenerateActivityResponse(hostname, actorDomain, "Reject", activity)
+		resp := activity.GenerateResponse(hostname, "Reject")
 		jsonData, _ := json.Marshal(&resp)
 
 		pushRegistorJob(data["inbox_url"], jsonData)

@@ -5,18 +5,13 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"time"
 
 	"github.com/Songmu/go-httpdate"
-	"github.com/satori/go.uuid"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
 	"github.com/yukimochi/httpsig"
 )
 
@@ -59,113 +54,4 @@ func SendActivity(inboxURL string, KeyID string, refBytes []byte, pKey *rsa.Priv
 	}
 
 	return nil
-}
-
-// RetrieveActor : Retrieve Remote actor
-func RetrieveActor(url string) (*Actor, error) {
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Accept", "application/activity+json, application/ld+json")
-	req.Header.Set("User-Agent", UA_STRING)
-	client := new(http.Client)
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	data, _ := ioutil.ReadAll(resp.Body)
-	var actor Actor
-	err = json.Unmarshal(data, &actor)
-	if err != nil {
-		return nil, err
-	}
-	return &actor, nil
-}
-
-// DescribeNestedActivity : Descrive Nested Activity Series
-func DescribeNestedActivity(nestedActivity interface{}) (*Activity, error) {
-	mappedObject := nestedActivity.(map[string]interface{})
-	if id, ok := mappedObject["id"].(string); ok {
-		if nestedType, ok := mappedObject["type"].(string); ok {
-			actor, ok := mappedObject["actor"].(string)
-			if !ok {
-				actor = ""
-			}
-			switch object := mappedObject["object"].(type) {
-			case string:
-				return &Activity{
-					ID:     id,
-					Type:   nestedType,
-					Actor:  actor,
-					Object: object,
-				}, nil
-			default:
-				return &Activity{
-					ID:     id,
-					Type:   nestedType,
-					Actor:  actor,
-					Object: mappedObject["object"],
-				}, nil
-			}
-		}
-		return nil, errors.New("Can't assart type")
-	}
-	return nil, errors.New("Can't assart id")
-}
-
-// GenerateActor : Generate Actor by hostname and publickey
-func GenerateActor(hostname *url.URL, publickey *rsa.PublicKey) Actor {
-	return Actor{
-		[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-		hostname.String() + "/actor",
-		"Service",
-		"relay",
-		hostname.String() + "/inbox",
-		nil,
-		PublicKey{
-			hostname.String() + "/actor#main-key",
-			hostname.String() + "/actor",
-			keyloader.GeneratePublicKeyPEMString(publickey),
-		},
-	}
-}
-
-// GenerateWebfingerResource : Generate Webfinger Resource
-func GenerateWebfingerResource(hostname *url.URL, actor *Actor) WebfingerResource {
-	return WebfingerResource{
-		"acct:" + actor.PreferredUsername + "@" + hostname.Host,
-		[]WebfingerLink{
-			WebfingerLink{
-				"self",
-				"application/activity+json",
-				actor.ID,
-			},
-		},
-	}
-}
-
-// GenerateActivityResponse : Generate Responce Activity to Activity
-func GenerateActivityResponse(host *url.URL, to *url.URL, responseType string, activity Activity) Activity {
-	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams"},
-		host.String() + "/activities/" + uuid.NewV4().String(),
-		host.String() + "/actor",
-		responseType,
-		&activity,
-		nil,
-		nil,
-	}
-}
-
-// GenerateActivityAnnounce : Generate Announce Activity to Activity
-func GenerateActivityAnnounce(host *url.URL, to *url.URL, actiivtyID string) Activity {
-	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams"},
-		host.String() + "/activities/" + uuid.NewV4().String(),
-		host.String() + "/actor",
-		"Announce",
-		actiivtyID,
-		[]string{host.String() + "/actor/followers"},
-		nil,
-	}
 }

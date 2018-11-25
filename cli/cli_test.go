@@ -29,10 +29,6 @@ func TestMain(m *testing.M) {
 		ResultsExpireIn: 5,
 	}
 	macServer, _ = machinery.NewServer(macConfig)
-
-	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
-	WebfingerResource.GenerateFromActor(hostname, &Actor)
-
 	redClient.FlushAll().Result()
 	relConfig.Load(redClient)
 	code := m.Run()

@@ -12,12 +12,14 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/urfave/cli"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/RelayConf"
 )
 
 var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
+var relConfig relayconf.RelayConfig
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")

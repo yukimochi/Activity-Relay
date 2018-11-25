@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"time"
-	"unsafe"
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
@@ -30,7 +29,7 @@ var redClient *redis.Client
 func relayActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := activitypub.SendActivity(inboxURL, Actor.ID, *(*[]byte)(unsafe.Pointer(&body)), Hostkey)
+	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), Hostkey)
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
 		mod, _ := redClient.HSetNX("relay:statistics:"+domain.Host, "last_error", err.Error()).Result()
@@ -44,7 +43,7 @@ func relayActivity(args ...string) error {
 func registorActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := activitypub.SendActivity(inboxURL, Actor.ID, *(*[]byte)(unsafe.Pointer(&body)), Hostkey)
+	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), Hostkey)
 	return err
 }
 
@@ -74,7 +73,7 @@ func main() {
 	redClient = redis.NewClient(&redis.Options{
 		Addr: redisURL,
 	})
-	Actor = activitypub.GenerateActor(Hostname, &Hostkey.PublicKey)
+	Actor.GenerateSelfKey(Hostname, &Hostkey.PublicKey)
 
 	var macConfig = &config.Config{
 		Broker:          "redis://" + redisURL,

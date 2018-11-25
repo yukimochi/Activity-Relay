@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"unsafe"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
@@ -82,7 +81,7 @@ func pushRelayJob(sourceInbox string, body []byte) {
 					{
 						Name:  "body",
 						Type:  "string",
-						Value: *(*string)(unsafe.Pointer(&body)),
+						Value: string(body),
 					},
 				},
 			}
@@ -107,7 +106,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 			{
 				Name:  "body",
 				Type:  "string",
-				Value: *(*string)(unsafe.Pointer(&body)),
+				Value: string(body),
 			},
 		},
 	}
@@ -179,7 +178,7 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 			case "Follow":
 				err = followAcceptable(activity, actor)
 				if err != nil {
-					resp := activitypub.GenerateActivityResponse(hostname, domain, "Reject", *activity)
+					resp := activity.GenerateResponse(hostname, "Reject")
 					jsonData, _ := json.Marshal(&resp)
 					go pushRegistorJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
@@ -198,14 +197,14 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 							})
 							fmt.Println("Pending Follow Request : ", activity.Actor)
 						} else {
-							resp := activitypub.GenerateActivityResponse(hostname, domain, "Accept", *activity)
+							resp := activity.GenerateResponse(hostname, "Accept")
 							jsonData, _ := json.Marshal(&resp)
 							go pushRegistorJob(actor.Inbox, jsonData)
 							redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", actor.Endpoints.SharedInbox)
 							fmt.Println("Accept Follow Request : ", activity.Actor)
 						}
 					} else {
-						resp := activitypub.GenerateActivityResponse(hostname, domain, "Reject", *activity)
+						resp := activity.GenerateResponse(hostname, "Reject")
 						jsonData, _ := json.Marshal(&resp)
 						go pushRegistorJob(actor.Inbox, jsonData)
 						fmt.Println("Reject Follow Request : ", activity.Actor)
@@ -215,7 +214,7 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					w.Write(nil)
 				}
 			case "Undo":
-				nestedActivity, _ := activitypub.DescribeNestedActivity(activity.Object)
+				nestedActivity, _ := activity.NestedActivity()
 				if nestedActivity.Type == "Follow" && nestedActivity.Actor == activity.Actor {
 					err = unFollowAcceptable(nestedActivity, actor)
 					if err != nil {
@@ -251,13 +250,13 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 				} else {
 					if suitableRelay(activity, actor) {
 						if relConfig.CreateAsAnnounce && activity.Type == "Create" {
-							nestedObject, err := activitypub.DescribeNestedActivity(activity.Object)
+							nestedObject, err := activity.NestedActivity()
 							if err != nil {
 								fmt.Println("Fail Assert activity : activity.Actor")
 							}
 							switch nestedObject.Type {
 							case "Note":
-								resp := activitypub.GenerateActivityAnnounce(hostname, domain, nestedObject.ID)
+								resp := nestedObject.GenerateAnnounce(hostname)
 								jsonData, _ := json.Marshal(&resp)
 								go pushRelayJob(domain.Host, jsonData)
 								fmt.Println("Accept Announce Note : ", activity.Actor)

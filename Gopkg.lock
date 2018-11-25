@@ -192,6 +192,14 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  branch = "master"
+  digest = "1:1f251f2f217a800ef952995dac5fbe0615f4cacd0dc448a0dffd9176a09a3823"
+  name = "github.com/kami-zh/go-capturer"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e492ea43421da7381e5200a2e22753bfc31347c2"
+
+[[projects]]
   digest = "1:edbef42561faa44c19129b68d1e109fbc1647f63239250391eadc8d0e7c9f669"
   name = "github.com/kelseyhightower/envconfig"
   packages = ["."]
@@ -476,6 +484,7 @@
     "github.com/RichardKnop/machinery/v1/tasks",
     "github.com/Songmu/go-httpdate",
     "github.com/go-redis/redis",
+    "github.com/kami-zh/go-capturer",
     "github.com/satori/go.uuid",
     "github.com/urfave/cli",
     "github.com/yukimochi/httpsig",

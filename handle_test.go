@@ -14,6 +14,12 @@ import (
 	"github.com/yukimochi/Activity-Relay/RelayConf"
 )
 
+const (
+	BlockService relayconf.Config = iota
+	ManuallyAccept
+	CreateAsAnnounce
+)
+
 func TestHandleWebfingerGet(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(handleWebfinger))
 	defer s.Close()
@@ -259,8 +265,7 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 
-	relayconf.SetConfig(redClient, "block_service", false)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, BlockService, false)
 
 	if suitableRelay(&activity, &personActor) != true {
 		t.Fatalf("Failed - Person status not relay")
@@ -275,8 +280,7 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 
-	relayconf.SetConfig(redClient, "block_service", true)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, BlockService, true)
 
 	if suitableRelay(&activity, &personActor) != true {
 		t.Fatalf("Failed - Person status not relay")
@@ -284,8 +288,7 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	if suitableRelay(&activity, &serviceActor) != false {
 		t.Fatalf("Failed - Service status may relay when blocking mode")
 	}
-	relayconf.SetConfig(redClient, "block_service", false)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, BlockService, false)
 }
 
 func TestHandleInboxNoSignature(t *testing.T) {
@@ -331,8 +334,7 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayconf.SetConfig(redClient, "manually_accept", false)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, ManuallyAccept, false)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -361,8 +363,7 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	defer s.Close()
 
 	// Switch Manually
-	relayconf.SetConfig(redClient, "manually_accept", true)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, ManuallyAccept, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -383,8 +384,7 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	}
 	redClient.Del("relay:subscription:" + domain.Host).Result()
 	redClient.Del("relay:pending:" + domain.Host).Result()
-	relayconf.SetConfig(redClient, "manually_accept", false)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, ManuallyAccept, false)
 }
 
 func TestHandleInboxInvalidFollow(t *testing.T) {
@@ -396,8 +396,7 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayconf.SetConfig(redClient, "manually_accept", false)
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, ManuallyAccept, false)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -585,8 +584,7 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 
 	redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", "https://mastodon.test.yukimochi.io/inbox").Result()
 	redClient.HSet("relay:subscription:example.org", "inbox_url", "https://example.org/inbox").Result()
-	redClient.HSet("relay:config", "create_as_announce", "1").Result()
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, CreateAsAnnounce, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -599,8 +597,7 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 	}
 	redClient.Del("relay:subscription:" + domain.Host).Result()
 	redClient.Del("relay:subscription:example.org").Result()
-	redClient.HSet("relay:config", "create_as_announce", "0").Result()
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, CreateAsAnnounce, false)
 }
 
 func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
@@ -614,8 +611,7 @@ func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
 
 	redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", "https://mastodon.test.yukimochi.io/inbox").Result()
 	redClient.HSet("relay:subscription:example.org", "inbox_url", "https://example.org/inbox").Result()
-	redClient.HSet("relay:config", "create_as_announce", "1").Result()
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, CreateAsAnnounce, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -628,8 +624,7 @@ func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
 	}
 	redClient.Del("relay:subscription:" + domain.Host).Result()
 	redClient.Del("relay:subscription:example.org").Result()
-	redClient.HSet("relay:config", "create_as_announce", "0").Result()
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Set(redClient, CreateAsAnnounce, false)
 }
 
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {

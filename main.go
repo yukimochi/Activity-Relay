@@ -70,11 +70,11 @@ func main() {
 		fmt.Println(err)
 	}
 
-	Actor = activitypub.GenerateActor(hostname, &hostkey.PublicKey)
-	WebfingerResource = activitypub.GenerateWebfingerResource(hostname, &Actor)
+	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
+	WebfingerResource.GenerateFromActor(hostname, &Actor)
 
 	// Load Config
-	relConfig = relayconf.LoadConfig(redClient)
+	relConfig.Load(redClient)
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)
