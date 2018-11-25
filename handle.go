@@ -183,6 +183,9 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					jsonData, _ := json.Marshal(&resp)
 					go pushRegistorJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
+
+					w.WriteHeader(202)
+					w.Write(nil)
 				} else {
 					if suitableFollow(activity, actor) {
 						if relConfig.ManuallyAccept {
@@ -211,9 +214,6 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					w.WriteHeader(202)
 					w.Write(nil)
 				}
-
-				w.WriteHeader(202)
-				w.Write(nil)
 			case "Undo":
 				nestedActivity, _ := activitypub.DescribeNestedActivity(activity.Object)
 				if nestedActivity.Type == "Follow" && nestedActivity.Actor == activity.Actor {
