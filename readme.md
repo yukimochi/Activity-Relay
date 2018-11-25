@@ -17,6 +17,10 @@
 
  - [Redis](https://github.com/antirez/redis)
 
+## Installation Manual
+
+See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki)
+
 ## Environment Variable
 
  - `ACTOR_PEM` (ex. `/actor.pem`)
