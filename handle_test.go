@@ -185,6 +185,11 @@ func mockActivity(req string) activitypub.Activity {
 		var activity activitypub.Activity
 		json.Unmarshal([]byte(body), &activity)
 		return activity
+	case "UnfollowAsActor":
+		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://relay.yukimochi.example.org/actor\"}}"
+		var activity activitypub.Activity
+		json.Unmarshal([]byte(body), &activity)
+		return activity
 	case "Create":
 		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857/activity\",\"type\":\"Create\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:07:26Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"type\":\"Note\",\"summary\":null,\"inReplyTo\":null,\"published\":\"2018-11-15T11:07:26Z\",\"url\":\"https://mastodon.test.yukimochi.io/@yukimochi/101075045564444857\",\"attributedTo\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"sensitive\":false,\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"inReplyToAtomUri\":null,\"conversation\":\"tag:mastodon.test.yukimochi.io,2018-11-15:objectId=68:objectType=Conversation\",\"content\":\"<p>Actvity-Relay</p>\",\"contentMap\":{\"en\":\"<p>Actvity-Relay</p>\"},\"attachment\":[],\"tag\":[]},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:07:26Z\",\"signatureValue\":\"mMgl2GgVPgb1Kw6a2iDIZc7r0j3ob+Cl9y+QkCxIe6KmnUzb15e60UuhkE5j3rJnoTwRKqOFy1PMkSxlYW6fPG/5DBxW9I4kX+8sw8iH/zpwKKUOnXUJEqfwRrNH2ix33xcs/GkKPdedY6iAPV9vGZ10MSMOdypfYgU9r+UI0sTaaC2iMXH0WPnHQuYAI+Q1JDHIbDX5FH1WlDL6+8fKAicf3spBMxDwPHGPK8W2jmDLWdN2Vz4ffsCtWs5BCuqOKZrtTW0Rdd4HWzo40MnRXvBjv7yNlnnKzokANBqiOLWT7kNfK0+Vtnt6c/bNX64KBro53KR7wL3ZBvPVuv5rdQ==\"}}"
 		var activity activitypub.Activity
@@ -400,8 +405,8 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed - " + err.Error())
 	}
-	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400")
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
 	}
 	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
@@ -488,6 +493,33 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
 		t.Fatalf("Failed - Block hacked unfollow not succeed.")
+	}
+	redClient.Del("relay:subscription:" + domain.Host).Result()
+}
+
+func TestHandleInboxUnfollowAsActor(t *testing.T) {
+	activity := mockActivity("UnfollowAsActor")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", "https://mastodon.test.yukimochi.io/inbox").Result()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 400 {
+		t.Fatalf("Failed - StatusCode is not 400")
+	}
+	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 1 {
+		t.Fatalf("Failed - Block actor unfollow not succeed.")
 	}
 	redClient.Del("relay:subscription:" + domain.Host).Result()
 }

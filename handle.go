@@ -125,6 +125,14 @@ func followAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) 
 	}
 }
 
+func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) error {
+	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
+		return nil
+	} else {
+		return errors.New("Unfollow only allowed for https://www.w3.org/ns/activitystreams#Public")
+	}
+}
+
 func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
 	blocked, _ := redClient.HExists("relay:config:blockedDomain", domain.Host).Result()
@@ -171,8 +179,10 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 			case "Follow":
 				err = followAcceptable(activity, actor)
 				if err != nil {
-					w.WriteHeader(400)
-					w.Write([]byte(err.Error()))
+					resp := activitypub.GenerateActivityResponse(hostname, domain, "Reject", *activity)
+					jsonData, _ := json.Marshal(&resp)
+					go pushRegistorJob(actor.Inbox, jsonData)
+					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
 				} else {
 					if suitableFollow(activity, actor) {
 						if relConfig.ManuallyAccept {
@@ -201,14 +211,24 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					w.WriteHeader(202)
 					w.Write(nil)
 				}
+
+				w.WriteHeader(202)
+				w.Write(nil)
 			case "Undo":
 				nestedActivity, _ := activitypub.DescribeNestedActivity(activity.Object)
 				if nestedActivity.Type == "Follow" && nestedActivity.Actor == activity.Actor {
-					redClient.Del("relay:subscription:" + domain.Host)
-					fmt.Println("Accept Unfollow Request : ", activity.Actor)
+					err = unFollowAcceptable(nestedActivity, actor)
+					if err != nil {
+						fmt.Println("Reject Unfollow Request : ", err.Error())
+						w.WriteHeader(400)
+						w.Write([]byte(err.Error()))
+					} else {
+						redClient.Del("relay:subscription:" + domain.Host)
+						fmt.Println("Accept Unfollow Request : ", activity.Actor)
 
-					w.WriteHeader(202)
-					w.Write(nil)
+						w.WriteHeader(202)
+						w.Write(nil)
+					}
 				} else {
 					err = relayAcceptable(activity, actor)
 					if err != nil {
