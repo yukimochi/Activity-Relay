@@ -400,8 +400,8 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed - " + err.Error())
 	}
-	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400")
+	if r.StatusCode != 202 {
+		t.Fatalf("Failed - StatusCode is not 202")
 	}
 	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
