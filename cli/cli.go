@@ -117,6 +117,17 @@ func main() {
 					Action: exportConfigs,
 				},
 				{
+					Name:   "import",
+					Usage:  "Import relay information (json)",
+					Action: importConfigs,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "json, j",
+							Usage: "json file path",
+						},
+					},
+				},
+				{
 					Name:  "service-block",
 					Usage: "Enable blocking for service-type actor",
 					Flags: []cli.Flag{
