@@ -112,6 +112,11 @@ func main() {
 					Action: listConfigs,
 				},
 				{
+					Name:   "export",
+					Usage:  "Export all relay information (json)",
+					Action: exportConfigs,
+				},
+				{
 					Name:  "service-block",
 					Usage: "Enable blocking for service-type actor",
 					Flags: []cli.Flag{

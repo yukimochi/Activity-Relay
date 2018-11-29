@@ -1,12 +1,54 @@
 package relayconf
 
-import "github.com/go-redis/redis"
+import (
+	"strings"
+
+	"github.com/go-redis/redis"
+)
+
+type ExportConfig struct {
+	RelayConfig    RelayConfig    `json:"relayConfig"`
+	LimitedDomains []string       `json:"limitedDomains"`
+	BlockedDomains []string       `json:"blockedDomains"`
+	Subscriptions  []subscription `json:"subscriptions"`
+}
+
+type subscription struct {
+	Domain     string `json:"domain"`
+	InboxURL   string `json:"inbox_url"`
+	ActivityID string `json:"activity_id"`
+	ActorID    string `json:"actor_id"`
+}
+
+func (c *ExportConfig) Import(r *redis.Client) {
+	c.RelayConfig.Load(r)
+	var l []string
+	var b []string
+	var s []subscription
+	domains, _ := r.HKeys("relay:config:limitedDomain").Result()
+	for _, domain := range domains {
+		l = append(l, domain)
+	}
+	domains, _ = r.HKeys("relay:config:blockedDomain").Result()
+	for _, domain := range domains {
+		b = append(b, domain)
+	}
+	domains, _ = r.Keys("relay:subscription:*").Result()
+	for _, domain := range domains {
+		d := strings.Replace(domain, "relay:subscription:", "", 1)
+		i, _ := r.HGet(domain, "inbox_url").Result()
+		s = append(s, subscription{d, i, "", ""})
+	}
+	c.LimitedDomains = l
+	c.BlockedDomains = b
+	c.Subscriptions = s
+}
 
 // RelayConfig : struct for relay configuration
 type RelayConfig struct {
-	BlockService     bool
-	ManuallyAccept   bool
-	CreateAsAnnounce bool
+	BlockService     bool `json:"blockService"`
+	ManuallyAccept   bool `json:"manuallyAccept"`
+	CreateAsAnnounce bool `json:"createAsAnnounce"`
 }
 
 type Config int

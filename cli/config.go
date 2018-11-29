@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/urfave/cli"
@@ -49,4 +50,12 @@ func listConfigs(c *cli.Context) {
 	fmt.Println("Blocking for service-type actor : ", relConfig.BlockService)
 	fmt.Println("Manually accept follow-request : ", relConfig.ManuallyAccept)
 	fmt.Println("Announce activity instead of relay create activity : ", relConfig.CreateAsAnnounce)
+}
+
+func exportConfigs(c *cli.Context) {
+	var ex relayconf.ExportConfig
+	ex.Import(redClient)
+
+	jsonData, _ := json.Marshal(&ex)
+	fmt.Println(string(jsonData))
 }
