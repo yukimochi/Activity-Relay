@@ -36,7 +36,7 @@ type Actor struct {
 }
 
 func (a *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey) {
-	a.Context = []string{"https://www.w3.org/ns/activitystreams"}
+	a.Context = []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"}
 	a.ID = hostname.String() + "/actor"
 	a.Type = "Service"
 	a.PreferredUsername = "relay"
