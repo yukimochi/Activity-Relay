@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
@@ -92,7 +93,7 @@ func pushRelayJob(sourceInbox string, body []byte) {
 			}
 			_, err := macServer.SendTask(job)
 			if err != nil {
-				fmt.Println(err)
+				fmt.Fprintln(os.Stderr, err)
 			}
 		}
 	}
@@ -117,7 +118,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 	}
 	_, err := macServer.SendTask(job)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 }
 
@@ -139,7 +140,6 @@ func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor
 
 func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
-	fmt.Println(exportConfig.BlockedDomains, domain.Host)
 	if contains(exportConfig.BlockedDomains, domain.Host) {
 		return false
 	}

@@ -102,6 +102,6 @@ func main() {
 
 	err = worker.Launch()
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Fprintln(os.Stderr, err)
 	}
 }

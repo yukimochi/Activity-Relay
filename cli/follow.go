@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
@@ -29,7 +30,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 	}
 	_, err := macServer.SendTask(job)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 }
 

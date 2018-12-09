@@ -60,18 +60,18 @@ func exportConfigs(c *cli.Context) {
 func importConfigs(c *cli.Context) {
 	file, err := os.Open(c.String("json"))
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	jsonData, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 	var data relayconf.ExportConfig
 	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		return
 	}
 

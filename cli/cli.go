@@ -57,7 +57,7 @@ func main() {
 
 	macServer, err = machinery.NewServer(macConfig)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 
 	app := cli.NewApp()

@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"os"
 )
 
 func ReadPrivateKeyRSAfromPath(path string) (*rsa.PrivateKey, error) {
@@ -26,7 +27,7 @@ func ReadPublicKeyRSAfromString(pemString string) (*rsa.PublicKey, error) {
 	decoded, _ := pem.Decode(pemByte)
 	keyInterface, err := x509.ParsePKIXPublicKey(decoded.Bytes)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 		return nil, err
 	}
 	pub := keyInterface.(*rsa.PublicKey)

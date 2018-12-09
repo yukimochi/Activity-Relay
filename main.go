@@ -67,7 +67,7 @@ func main() {
 
 	macServer, err = machinery.NewServer(macConfig)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintln(os.Stderr, err)
 	}
 
 	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
