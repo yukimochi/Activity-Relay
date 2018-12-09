@@ -13,14 +13,14 @@ import (
 	"github.com/yukimochi/httpsig"
 )
 
-func decodeActivity(r *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
-	r.Header.Set("Host", r.Host)
-	dataLen, _ := strconv.Atoi(r.Header.Get("Content-Length"))
+func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
+	request.Header.Set("Host", request.Host)
+	dataLen, _ := strconv.Atoi(request.Header.Get("Content-Length"))
 	body := make([]byte, dataLen)
-	r.Body.Read(body)
+	request.Body.Read(body)
 
 	// Verify HTTPSignature
-	verifier, err := httpsig.NewVerifier(r)
+	verifier, err := httpsig.NewVerifier(request)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -40,7 +40,7 @@ func decodeActivity(r *http.Request) (*activitypub.Activity, *activitypub.Actor,
 	}
 
 	// Verify Digest
-	givenDigest := r.Header.Get("Digest")
+	givenDigest := request.Header.Get("Digest")
 	hash := sha256.New()
 	hash.Write(body)
 	b := hash.Sum(nil)

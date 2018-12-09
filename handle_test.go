@@ -12,11 +12,11 @@ import (
 	"testing"
 
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/RelayConf"
+	"github.com/yukimochi/Activity-Relay/State"
 )
 
 const (
-	BlockService relayconf.Config = iota
+	BlockService state.Config = iota
 	ManuallyAccept
 	CreateAsAnnounce
 )
@@ -266,7 +266,7 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 
-	exportConfig.SetConfig(BlockService, false)
+	relayState.SetConfig(BlockService, false)
 
 	if suitableRelay(&activity, &personActor) != true {
 		t.Fatalf("Failed - Person status not relay")
@@ -281,7 +281,7 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 
-	exportConfig.SetConfig(BlockService, true)
+	relayState.SetConfig(BlockService, true)
 
 	if suitableRelay(&activity, &personActor) != true {
 		t.Fatalf("Failed - Person status not relay")
@@ -289,7 +289,7 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	if suitableRelay(&activity, &serviceActor) != false {
 		t.Fatalf("Failed - Service status may relay when blocking mode")
 	}
-	exportConfig.SetConfig(BlockService, false)
+	relayState.SetConfig(BlockService, false)
 }
 
 func TestHandleInboxNoSignature(t *testing.T) {
@@ -348,7 +348,7 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("Failed - Subscription not works.")
 	}
-	exportConfig.DelSubscription(domain.Host)
+	relayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxValidManuallyFollow(t *testing.T) {
@@ -361,7 +361,7 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	defer s.Close()
 
 	// Switch Manually
-	exportConfig.SetConfig(ManuallyAccept, true)
+	relayState.SetConfig(ManuallyAccept, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -380,8 +380,8 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("Failed - Pending was skipped.")
 	}
-	exportConfig.DelSubscription(domain.Host)
-	exportConfig.SetConfig(ManuallyAccept, false)
+	relayState.DelSubscription(domain.Host)
+	relayState.SetConfig(ManuallyAccept, false)
 }
 
 func TestHandleInboxInvalidFollow(t *testing.T) {
@@ -393,7 +393,7 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.SetConfig(ManuallyAccept, false)
+	relayState.SetConfig(ManuallyAccept, false)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -419,7 +419,7 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.SetBlockedDomain(domain.Host, true)
+	relayState.SetBlockedDomain(domain.Host, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -434,8 +434,8 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("Failed - Subscription not blocked.")
 	}
-	exportConfig.DelSubscription(domain.Host)
-	exportConfig.SetBlockedDomain(domain.Host, false)
+	relayState.DelSubscription(domain.Host)
+	relayState.SetBlockedDomain(domain.Host, false)
 }
 
 func TestHandleInboxValidUnfollow(t *testing.T) {
@@ -447,7 +447,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -465,7 +465,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("Failed - Subscription not succeed.")
 	}
-	exportConfig.DelSubscription(domain.Host)
+	relayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxInvalidUnfollow(t *testing.T) {
@@ -477,7 +477,7 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -495,7 +495,7 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("Failed - Block hacked unfollow not succeed.")
 	}
-	exportConfig.DelSubscription(domain.Host)
+	relayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxUnfollowAsActor(t *testing.T) {
@@ -507,7 +507,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -525,7 +525,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("Failed - Block actor unfollow not succeed.")
 	}
-	exportConfig.DelSubscription(domain.Host)
+	relayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxValidCreate(t *testing.T) {
@@ -537,11 +537,11 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -555,8 +555,8 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	exportConfig.DelSubscription(domain.Host)
-	exportConfig.DelSubscription("example.org")
+	relayState.DelSubscription(domain.Host)
+	relayState.DelSubscription("example.org")
 	redClient.Del("relay:subscription:" + domain.Host).Result()
 	redClient.Del("relay:subscription:example.org").Result()
 }
@@ -570,11 +570,11 @@ func TestHandleInboxlimitedCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	exportConfig.SetLimitedDomain(domain.Host, true)
+	relayState.SetLimitedDomain(domain.Host, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -585,8 +585,8 @@ func TestHandleInboxlimitedCreate(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	exportConfig.DelSubscription(domain.Host)
-	exportConfig.SetLimitedDomain(domain.Host, false)
+	relayState.DelSubscription(domain.Host)
+	relayState.SetLimitedDomain(domain.Host, false)
 }
 
 func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
@@ -598,15 +598,15 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
-	exportConfig.SetConfig(CreateAsAnnounce, true)
+	relayState.SetConfig(CreateAsAnnounce, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -617,9 +617,9 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	exportConfig.DelSubscription(domain.Host)
-	exportConfig.DelSubscription("example.org")
-	exportConfig.SetConfig(CreateAsAnnounce, false)
+	relayState.DelSubscription(domain.Host)
+	relayState.DelSubscription("example.org")
+	relayState.SetConfig(CreateAsAnnounce, false)
 }
 
 func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
@@ -631,15 +631,15 @@ func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
-	exportConfig.SetConfig(CreateAsAnnounce, true)
+	relayState.SetConfig(CreateAsAnnounce, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
@@ -650,9 +650,9 @@ func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	exportConfig.DelSubscription(domain.Host)
-	exportConfig.DelSubscription("example.org")
-	exportConfig.SetConfig(CreateAsAnnounce, false)
+	relayState.DelSubscription(domain.Host)
+	relayState.DelSubscription("example.org")
+	relayState.SetConfig(CreateAsAnnounce, false)
 }
 
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
@@ -683,7 +683,7 @@ func TestHandleInboxUndo(t *testing.T) {
 	}))
 	defer s.Close()
 
-	exportConfig.AddSubscription(relayconf.Subscription{
+	relayState.AddSubscription(state.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -701,5 +701,5 @@ func TestHandleInboxUndo(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("Failed - Missing unsubscribed.")
 	}
-	exportConfig.DelSubscription(domain.Host)
+	relayState.DelSubscription(domain.Host)
 }

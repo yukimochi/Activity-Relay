@@ -9,7 +9,7 @@ import (
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
-	"github.com/yukimochi/Activity-Relay/RelayConf"
+	"github.com/yukimochi/Activity-Relay/State"
 )
 
 func TestMain(m *testing.M) {
@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	}
 	macServer, _ = machinery.NewServer(macConfig)
 	redClient.FlushAll().Result()
-	exportConfig = relayconf.NewConfig(redClient)
+	relayState = state.NewState(redClient)
 	code := m.Run()
 	os.Exit(code)
 	redClient.FlushAll().Result()

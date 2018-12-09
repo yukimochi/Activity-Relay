@@ -25,14 +25,14 @@ func TestServiceBlock(t *testing.T) {
 		fooCmd,
 	}
 
-	exportConfig.SetConfig(BlockService, false)
+	relayState.SetConfig(BlockService, false)
 	app.Run([]string{"", "service-block"})
-	if !exportConfig.RelayConfig.BlockService {
+	if !relayState.RelayConfig.BlockService {
 		t.Fatalf("Not Enabled ServiceBlock feature,")
 	}
 
 	app.Run([]string{"", "service-block", "-u"})
-	if exportConfig.RelayConfig.BlockService {
+	if relayState.RelayConfig.BlockService {
 		t.Fatalf("Not Disabled ServiceBlock feature,")
 	}
 }
@@ -54,14 +54,14 @@ func TestManuallyAccept(t *testing.T) {
 		fooCmd,
 	}
 
-	exportConfig.SetConfig(ManuallyAccept, false)
+	relayState.SetConfig(ManuallyAccept, false)
 	app.Run([]string{"", "manually-accept"})
-	if !exportConfig.RelayConfig.ManuallyAccept {
+	if !relayState.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Enabled Manually accept follow-request feature,")
 	}
 
 	app.Run([]string{"", "manually-accept", "-u"})
-	if exportConfig.RelayConfig.ManuallyAccept {
+	if relayState.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Disabled Manually accept follow-request feature,")
 	}
 }
@@ -83,14 +83,14 @@ func TestCreateAsAnnounce(t *testing.T) {
 		fooCmd,
 	}
 
-	exportConfig.SetConfig(CreateAsAnnounce, false)
+	relayState.SetConfig(CreateAsAnnounce, false)
 	app.Run([]string{"", "create-as-announce"})
-	if !exportConfig.RelayConfig.CreateAsAnnounce {
+	if !relayState.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Not Enabled Announce activity instead of relay create activity feature,")
 	}
 
 	app.Run([]string{"", "create-as-announce", "-u"})
-	if exportConfig.RelayConfig.CreateAsAnnounce {
+	if relayState.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Not Disabled Announce activity instead of relay create activity feature,")
 	}
 }
@@ -106,9 +106,9 @@ func TestListConfigs(t *testing.T) {
 		fooCmd,
 	}
 
-	exportConfig.SetConfig(BlockService, true)
-	exportConfig.SetConfig(ManuallyAccept, true)
-	exportConfig.SetConfig(CreateAsAnnounce, true)
+	relayState.SetConfig(BlockService, true)
+	relayState.SetConfig(ManuallyAccept, true)
+	relayState.SetConfig(CreateAsAnnounce, true)
 	out := capturer.CaptureStdout(func() {
 		app.Run([]string{"", "show"})
 	})
@@ -130,9 +130,9 @@ func TestListConfigs(t *testing.T) {
 		}
 	}
 
-	exportConfig.SetConfig(BlockService, false)
-	exportConfig.SetConfig(ManuallyAccept, false)
-	exportConfig.SetConfig(CreateAsAnnounce, false)
+	relayState.SetConfig(BlockService, false)
+	relayState.SetConfig(ManuallyAccept, false)
+	relayState.SetConfig(CreateAsAnnounce, false)
 	out = capturer.CaptureStdout(func() {
 		app.Run([]string{"", "show"})
 	})

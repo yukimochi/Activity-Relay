@@ -12,7 +12,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
-	"github.com/yukimochi/Activity-Relay/RelayConf"
+	"github.com/yukimochi/Activity-Relay/State"
 )
 
 // Actor : Relay's Actor
@@ -25,7 +25,7 @@ var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
-var exportConfig relayconf.ExportConfig
+var relayState state.RelayState
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
@@ -74,7 +74,7 @@ func main() {
 	WebfingerResource.GenerateFromActor(hostname, &Actor)
 
 	// Load Config
-	exportConfig = relayconf.NewConfig(redClient)
+	relayState = state.NewState(redClient)
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)

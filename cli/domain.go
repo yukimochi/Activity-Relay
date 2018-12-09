@@ -11,13 +11,13 @@ func listDomains(c *cli.Context) error {
 	switch c.String("type") {
 	case "limited":
 		fmt.Println(" - Limited domain :")
-		domains = exportConfig.LimitedDomains
+		domains = relayState.LimitedDomains
 	case "blocked":
 		fmt.Println(" - Blocked domain :")
-		domains = exportConfig.BlockedDomains
+		domains = relayState.BlockedDomains
 	default:
 		fmt.Println(" - Subscribed domain :")
-		temp := exportConfig.Subscriptions
+		temp := relayState.Subscriptions
 		for _, domain := range temp {
 			domains = append(domains, domain.Domain)
 		}
@@ -37,18 +37,18 @@ func setDomainType(c *cli.Context) error {
 	switch c.String("type") {
 	case "limited":
 		if c.Bool("undo") {
-			exportConfig.SetLimitedDomain(c.String("domain"), false)
+			relayState.SetLimitedDomain(c.String("domain"), false)
 			fmt.Println("Unset [" + c.String("domain") + "] as Limited domain.")
 		} else {
-			exportConfig.SetLimitedDomain(c.String("domain"), true)
+			relayState.SetLimitedDomain(c.String("domain"), true)
 			fmt.Println("Set [" + c.String("domain") + "] as Limited domain.")
 		}
 	case "blocked":
 		if c.Bool("undo") {
-			exportConfig.SetBlockedDomain(c.String("domain"), false)
+			relayState.SetBlockedDomain(c.String("domain"), false)
 			fmt.Println("Unset [" + c.String("domain") + "] as Blocked domain.")
 		} else {
-			exportConfig.SetBlockedDomain(c.String("domain"), true)
+			relayState.SetBlockedDomain(c.String("domain"), true)
 			fmt.Println("Set [" + c.String("domain") + "] as Blocked domain.")
 		}
 	default:

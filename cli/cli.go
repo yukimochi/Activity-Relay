@@ -7,19 +7,19 @@ import (
 	"net/url"
 	"os"
 
-	machinery "github.com/RichardKnop/machinery/v1"
+	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
 	"github.com/urfave/cli"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
-	"github.com/yukimochi/Activity-Relay/RelayConf"
+	"github.com/yukimochi/Activity-Relay/State"
 )
 
 var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
-var exportConfig relayconf.ExportConfig
+var relayState state.RelayState
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
@@ -140,7 +140,7 @@ func main() {
 				},
 				{
 					Name:  "manually-accept",
-					Usage: "Enable Manually accept follow-request",
+					Usage: "Enable manually accept follow-request",
 					Flags: []cli.Flag{
 						cli.BoolFlag{
 							Name:  "undo, u",
@@ -151,7 +151,7 @@ func main() {
 				},
 				{
 					Name:  "create-as-announce",
-					Usage: "Enable Announce activity instead of relay create activity (Not recommended)",
+					Usage: "Enable announce activity instead of relay create activity (Not recommend)",
 					Flags: []cli.Flag{
 						cli.BoolFlag{
 							Name:  "undo, u",
@@ -197,7 +197,7 @@ func main() {
 		},
 	}
 
-	exportConfig = relayconf.NewConfig(redClient)
+	relayState = state.NewState(redClient)
 	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

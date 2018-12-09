@@ -70,13 +70,11 @@ func acceptFollow(c *cli.Context) error {
 			return err
 		}
 		activity := activitypub.Activity{
-			[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-			data["activity_id"],
-			data["actor"],
-			data["type"],
-			data["object"],
-			nil,
-			nil,
+			Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+			ID:      data["activity_id"],
+			Actor:   data["actor"],
+			Type:    data["type"],
+			Object:  data["object"],
 		}
 
 		resp := activity.GenerateResponse(hostname, "Accept")
@@ -85,11 +83,10 @@ func acceptFollow(c *cli.Context) error {
 		pushRegistorJob(data["inbox_url"], jsonData)
 		redClient.HSet("relay:subscription:"+domain, "inbox_url", data["inbox_url"])
 		redClient.Del("relay:pending:" + domain)
-		return nil
 	} else {
 		fmt.Println("No domain given.")
-		return nil
 	}
+	return nil
 }
 
 func rejectFollow(c *cli.Context) error {
@@ -110,13 +107,11 @@ func rejectFollow(c *cli.Context) error {
 			return err
 		}
 		activity := activitypub.Activity{
-			[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-			data["activity_id"],
-			data["actor"],
-			data["type"],
-			data["object"],
-			nil,
-			nil,
+			Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+			ID:      data["activity_id"],
+			Actor:   data["actor"],
+			Type:    data["type"],
+			Object:  data["object"],
 		}
 
 		resp := activity.GenerateResponse(hostname, "Reject")
@@ -124,9 +119,8 @@ func rejectFollow(c *cli.Context) error {
 
 		pushRegistorJob(data["inbox_url"], jsonData)
 		redClient.Del("relay:pending:" + domain)
-		return nil
 	} else {
 		fmt.Println("No domain given.")
-		return nil
 	}
+	return nil
 }

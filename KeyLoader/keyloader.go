@@ -34,13 +34,13 @@ func ReadPublicKeyRSAfromString(pemString string) (*rsa.PublicKey, error) {
 	return pub, nil
 }
 
-func GeneratePublicKeyPEMString(pub *rsa.PublicKey) string {
-	pubkeyBytes := x509.MarshalPKCS1PublicKey(pub)
-	pubkeyPem := pem.EncodeToMemory(
+func GeneratePublicKeyPEMString(publicKey *rsa.PublicKey) string {
+	publicKeyByte := x509.MarshalPKCS1PublicKey(publicKey)
+	publicKeyPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "RSA PUBLIC KEY",
-			Bytes: pubkeyBytes,
+			Bytes: publicKeyByte,
 		},
 	)
-	return string(pubkeyPem)
+	return string(publicKeyPem)
 }

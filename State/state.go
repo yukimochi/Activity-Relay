@@ -1,4 +1,4 @@
-package relayconf
+package state
 
 import (
 	"strings"
@@ -6,23 +6,29 @@ import (
 	"github.com/go-redis/redis"
 )
 
+// Config : Enum for RelayConfig
 type Config int
 
 const (
+	// BlockService : Blocking for service-type actor
 	BlockService Config = iota
+	// ManuallyAccept : Manually accept follow-request
 	ManuallyAccept
+	// CreateAsAnnounce : Announce activity instead of relay create activity
 	CreateAsAnnounce
 )
 
-func NewConfig(r *redis.Client) ExportConfig {
-	var config ExportConfig
-	config.RedisClient = r
+// NewState : Create new RelayState instance with redis client
+func NewState(redisClient *redis.Client) RelayState {
+	var config RelayState
+	config.RedisClient = redisClient
 
 	config.Load()
 	return config
 }
 
-type ExportConfig struct {
+// RelayState : Store subscriptions and relay configrations
+type RelayState struct {
 	RedisClient *redis.Client
 
 	RelayConfig    relayConfig    `json:"relayConfig"`
@@ -31,7 +37,8 @@ type ExportConfig struct {
 	Subscriptions  []Subscription `json:"subscriptions"`
 }
 
-func (config *ExportConfig) Load() {
+// Load : Refrash content from redis
+func (config *RelayState) Load() {
 	config.RelayConfig.load(config.RedisClient)
 	var limitedDomains []string
 	var blockedDomains []string
@@ -63,7 +70,8 @@ func (config *ExportConfig) Load() {
 	config.Subscriptions = subscriptions
 }
 
-func (config *ExportConfig) SetConfig(key Config, value bool) {
+// SetConfig : Set relay configration
+func (config *RelayState) SetConfig(key Config, value bool) {
 	strValue := 0
 	if value {
 		strValue = 1
@@ -79,7 +87,8 @@ func (config *ExportConfig) SetConfig(key Config, value bool) {
 	config.Load()
 }
 
-func (config *ExportConfig) AddSubscription(domain Subscription) {
+// AddSubscription : Add new instance for subscription list
+func (config *RelayState) AddSubscription(domain Subscription) {
 	config.RedisClient.HMSet("relay:subscription:"+domain.Domain, map[string]interface{}{
 		"inbox_url":   domain.InboxURL,
 		"activity_id": domain.ActivityID,
@@ -89,14 +98,16 @@ func (config *ExportConfig) AddSubscription(domain Subscription) {
 	config.Load()
 }
 
-func (config *ExportConfig) DelSubscription(domain string) {
+// DelSubscription : Delete instance from subscription list
+func (config *RelayState) DelSubscription(domain string) {
 	config.RedisClient.Del("relay:subscription:" + domain).Result()
 	config.RedisClient.Del("relay:pending:" + domain).Result()
 
 	config.Load()
 }
 
-func (config *ExportConfig) SetBlockedDomain(domain string, value bool) {
+// SetBlockedDomain : Set/Unset instance for blocked domain
+func (config *RelayState) SetBlockedDomain(domain string, value bool) {
 	if value {
 		config.RedisClient.HSet("relay:config:blockedDomain", domain, "1").Result()
 	} else {
@@ -106,7 +117,8 @@ func (config *ExportConfig) SetBlockedDomain(domain string, value bool) {
 	config.Load()
 }
 
-func (config *ExportConfig) SetLimitedDomain(domain string, value bool) {
+// SetLimitedDomain : Set/Unset instance for limited domain
+func (config *RelayState) SetLimitedDomain(domain string, value bool) {
 	if value {
 		config.RedisClient.HSet("relay:config:limitedDomain", domain, "1").Result()
 	} else {
@@ -116,6 +128,7 @@ func (config *ExportConfig) SetLimitedDomain(domain string, value bool) {
 	config.Load()
 }
 
+// Subscription : Instance subscription information
 type Subscription struct {
 	Domain     string `json:"domain"`
 	InboxURL   string `json:"inbox_url"`
@@ -123,23 +136,22 @@ type Subscription struct {
 	ActorID    string `json:"actor_id"`
 }
 
-// RelayConfig : struct for relay configuration
 type relayConfig struct {
 	BlockService     bool `json:"blockService"`
 	ManuallyAccept   bool `json:"manuallyAccept"`
 	CreateAsAnnounce bool `json:"createAsAnnounce"`
 }
 
-func (config *relayConfig) load(r *redis.Client) {
-	blockService, err := r.HGet("relay:config", "block_service").Result()
+func (config *relayConfig) load(redisClient *redis.Client) {
+	blockService, err := redisClient.HGet("relay:config", "block_service").Result()
 	if err != nil {
 		blockService = "0"
 	}
-	manuallyAccept, err := r.HGet("relay:config", "manually_accept").Result()
+	manuallyAccept, err := redisClient.HGet("relay:config", "manually_accept").Result()
 	if err != nil {
 		manuallyAccept = "0"
 	}
-	createAsAnnounce, err := r.HGet("relay:config", "create_as_announce").Result()
+	createAsAnnounce, err := redisClient.HGet("relay:config", "create_as_announce").Result()
 	if err != nil {
 		createAsAnnounce = "0"
 	}

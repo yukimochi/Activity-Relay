@@ -10,14 +10,14 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/RelayConf"
+	"github.com/yukimochi/Activity-Relay/State"
 )
 
-func handleWebfinger(w http.ResponseWriter, r *http.Request) {
-	resource := r.URL.Query()["resource"]
-	if r.Method != "GET" || len(resource) == 0 {
-		w.WriteHeader(400)
-		w.Write(nil)
+func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
+	resource := request.URL.Query()["resource"]
+	if request.Method != "GET" || len(resource) == 0 {
+		writer.WriteHeader(400)
+		writer.Write(nil)
 	} else {
 		request := resource[0]
 		if request == WebfingerResource.Subject {
@@ -25,28 +25,28 @@ func handleWebfinger(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				panic(err)
 			}
-			w.Header().Add("Content-Type", "application/json")
-			w.WriteHeader(200)
-			w.Write(wfresource)
+			writer.Header().Add("Content-Type", "application/json")
+			writer.WriteHeader(200)
+			writer.Write(wfresource)
 		} else {
-			w.WriteHeader(404)
-			w.Write(nil)
+			writer.WriteHeader(404)
+			writer.Write(nil)
 		}
 	}
 }
 
-func handleActor(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+func handleActor(writer http.ResponseWriter, request *http.Request) {
+	if request.Method == "GET" {
 		actor, err := json.Marshal(&Actor)
 		if err != nil {
 			panic(err)
 		}
-		w.Header().Add("Content-Type", "application/activity+json")
-		w.WriteHeader(200)
-		w.Write(actor)
+		writer.Header().Add("Content-Type", "application/activity+json")
+		writer.WriteHeader(200)
+		writer.Write(actor)
 	} else {
-		w.WriteHeader(400)
-		w.Write(nil)
+		writer.WriteHeader(400)
+		writer.Write(nil)
 	}
 }
 
@@ -61,7 +61,7 @@ func contains(entries interface{}, finder string) bool {
 			}
 		}
 		return false
-	case []relayconf.Subscription:
+	case []state.Subscription:
 		for i := 0; i < len(entry); i++ {
 			if entry[i].Domain == finder {
 				return true
@@ -73,7 +73,7 @@ func contains(entries interface{}, finder string) bool {
 }
 
 func pushRelayJob(sourceInbox string, body []byte) {
-	for _, domain := range exportConfig.Subscriptions {
+	for _, domain := range relayState.Subscriptions {
 		if sourceInbox != domain.Domain {
 			job := &tasks.Signature{
 				Name:       "relay",
@@ -140,7 +140,7 @@ func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor
 
 func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
-	if contains(exportConfig.BlockedDomains, domain.Host) {
+	if contains(relayState.BlockedDomains, domain.Host) {
 		return false
 	}
 	return true
@@ -151,7 +151,7 @@ func relayAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) e
 		return errors.New("Activity should contain https://www.w3.org/ns/activitystreams#Public as receiver")
 	}
 	domain, _ := url.Parse(activity.Actor)
-	if contains(exportConfig.Subscriptions, domain.Host) {
+	if contains(relayState.Subscriptions, domain.Host) {
 		return nil
 	}
 	return errors.New("To use the relay service, Subscribe me in advance")
@@ -159,24 +159,24 @@ func relayAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) e
 
 func suitableRelay(activity *activitypub.Activity, actor *activitypub.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
-	if contains(exportConfig.LimitedDomains, domain.Host) {
+	if contains(relayState.LimitedDomains, domain.Host) {
 		return false
 	}
-	if exportConfig.RelayConfig.BlockService && actor.Type == "Service" {
+	if relayState.RelayConfig.BlockService && actor.Type == "Service" {
 		return false
 	}
 	return true
 }
 
-func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error)) {
-	switch r.Method {
+func handleInbox(writer http.ResponseWriter, request *http.Request, activityDecoder func(*http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error)) {
+	switch request.Method {
 	case "POST":
-		activity, actor, body, err := activityDecoder(r)
+		activity, actor, body, err := activityDecoder(request)
 		if err != nil {
-			w.WriteHeader(400)
-			w.Write(nil)
+			writer.WriteHeader(400)
+			writer.Write(nil)
 		} else {
-			exportConfig.Load()
+			relayState.Load()
 			domain, _ := url.Parse(activity.Actor)
 			switch activity.Type {
 			case "Follow":
@@ -187,11 +187,11 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					go pushRegistorJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
 
-					w.WriteHeader(202)
-					w.Write(nil)
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				} else {
 					if suitableFollow(activity, actor) {
-						if exportConfig.RelayConfig.ManuallyAccept {
+						if relayState.RelayConfig.ManuallyAccept {
 							redClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
 								"inbox_url":   actor.Endpoints.SharedInbox,
 								"activity_id": activity.ID,
@@ -204,7 +204,7 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 							resp := activity.GenerateResponse(hostname, "Accept")
 							jsonData, _ := json.Marshal(&resp)
 							go pushRegistorJob(actor.Inbox, jsonData)
-							exportConfig.AddSubscription(relayconf.Subscription{
+							relayState.AddSubscription(state.Subscription{
 								Domain:     domain.Host,
 								InboxURL:   actor.Endpoints.SharedInbox,
 								ActivityID: activity.ID,
@@ -219,8 +219,8 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 						fmt.Println("Reject Follow Request : ", activity.Actor)
 					}
 
-					w.WriteHeader(202)
-					w.Write(nil)
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				}
 			case "Undo":
 				nestedActivity, _ := activity.NestedActivity()
@@ -228,37 +228,37 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					err = unFollowAcceptable(nestedActivity, actor)
 					if err != nil {
 						fmt.Println("Reject Unfollow Request : ", err.Error())
-						w.WriteHeader(400)
-						w.Write([]byte(err.Error()))
+						writer.WriteHeader(400)
+						writer.Write([]byte(err.Error()))
 					} else {
 						redClient.Del("relay:subscription:" + domain.Host)
 						fmt.Println("Accept Unfollow Request : ", activity.Actor)
 
-						w.WriteHeader(202)
-						w.Write(nil)
+						writer.WriteHeader(202)
+						writer.Write(nil)
 					}
 				} else {
 					err = relayAcceptable(activity, actor)
 					if err != nil {
-						w.WriteHeader(400)
-						w.Write([]byte(err.Error()))
+						writer.WriteHeader(400)
+						writer.Write([]byte(err.Error()))
 					} else {
 						domain, _ := url.Parse(activity.Actor)
 						go pushRelayJob(domain.Host, body)
 						fmt.Println("Accept Relay Status : ", activity.Actor)
 
-						w.WriteHeader(202)
-						w.Write(nil)
+						writer.WriteHeader(202)
+						writer.Write(nil)
 					}
 				}
 			case "Create", "Update", "Delete", "Announce":
 				err = relayAcceptable(activity, actor)
 				if err != nil {
-					w.WriteHeader(400)
-					w.Write([]byte(err.Error()))
+					writer.WriteHeader(400)
+					writer.Write([]byte(err.Error()))
 				} else {
 					if suitableRelay(activity, actor) {
-						if exportConfig.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
+						if relayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
 							nestedObject, err := activity.NestedActivity()
 							if err != nil {
 								fmt.Println("Fail Assert activity : activity.Actor")
@@ -280,13 +280,13 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 						fmt.Println("Skipping Relay Status : ", activity.Actor)
 					}
 
-					w.WriteHeader(202)
-					w.Write(nil)
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				}
 			}
 		}
 	default:
-		w.WriteHeader(404)
-		w.Write(nil)
+		writer.WriteHeader(404)
+		writer.Write(nil)
 	}
 }
