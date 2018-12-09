@@ -19,7 +19,7 @@ var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
-var relConfig relayconf.RelayConfig
+var exportConfig relayconf.ExportConfig
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
@@ -112,6 +112,22 @@ func main() {
 					Action: listConfigs,
 				},
 				{
+					Name:   "export",
+					Usage:  "Export all relay information (json)",
+					Action: exportConfigs,
+				},
+				{
+					Name:   "import",
+					Usage:  "Import relay information (json)",
+					Action: importConfigs,
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "json, j",
+							Usage: "json file path",
+						},
+					},
+				},
+				{
 					Name:  "service-block",
 					Usage: "Enable blocking for service-type actor",
 					Flags: []cli.Flag{
@@ -181,6 +197,7 @@ func main() {
 		},
 	}
 
+	exportConfig = relayconf.NewConfig(redClient)
 	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

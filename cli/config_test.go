@@ -25,14 +25,14 @@ func TestServiceBlock(t *testing.T) {
 		fooCmd,
 	}
 
-	relConfig.Set(redClient, BlockService, false)
+	exportConfig.SetConfig(BlockService, false)
 	app.Run([]string{"", "service-block"})
-	if !relConfig.BlockService {
+	if !exportConfig.RelayConfig.BlockService {
 		t.Fatalf("Not Enabled ServiceBlock feature,")
 	}
 
 	app.Run([]string{"", "service-block", "-u"})
-	if relConfig.BlockService {
+	if exportConfig.RelayConfig.BlockService {
 		t.Fatalf("Not Disabled ServiceBlock feature,")
 	}
 }
@@ -54,14 +54,14 @@ func TestManuallyAccept(t *testing.T) {
 		fooCmd,
 	}
 
-	relConfig.Set(redClient, ManuallyAccept, false)
+	exportConfig.SetConfig(ManuallyAccept, false)
 	app.Run([]string{"", "manually-accept"})
-	if !relConfig.ManuallyAccept {
+	if !exportConfig.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Enabled Manually accept follow-request feature,")
 	}
 
 	app.Run([]string{"", "manually-accept", "-u"})
-	if relConfig.ManuallyAccept {
+	if exportConfig.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Disabled Manually accept follow-request feature,")
 	}
 }
@@ -83,14 +83,14 @@ func TestCreateAsAnnounce(t *testing.T) {
 		fooCmd,
 	}
 
-	relConfig.Set(redClient, CreateAsAnnounce, false)
+	exportConfig.SetConfig(CreateAsAnnounce, false)
 	app.Run([]string{"", "create-as-announce"})
-	if !relConfig.CreateAsAnnounce {
+	if !exportConfig.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Not Enabled Announce activity instead of relay create activity feature,")
 	}
 
 	app.Run([]string{"", "create-as-announce", "-u"})
-	if relConfig.CreateAsAnnounce {
+	if exportConfig.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Not Disabled Announce activity instead of relay create activity feature,")
 	}
 }
@@ -106,9 +106,9 @@ func TestListConfigs(t *testing.T) {
 		fooCmd,
 	}
 
-	relConfig.Set(redClient, BlockService, true)
-	relConfig.Set(redClient, ManuallyAccept, true)
-	relConfig.Set(redClient, CreateAsAnnounce, true)
+	exportConfig.SetConfig(BlockService, true)
+	exportConfig.SetConfig(ManuallyAccept, true)
+	exportConfig.SetConfig(CreateAsAnnounce, true)
 	out := capturer.CaptureStdout(func() {
 		app.Run([]string{"", "show"})
 	})
@@ -130,9 +130,9 @@ func TestListConfigs(t *testing.T) {
 		}
 	}
 
-	relConfig.Set(redClient, BlockService, false)
-	relConfig.Set(redClient, ManuallyAccept, false)
-	relConfig.Set(redClient, CreateAsAnnounce, false)
+	exportConfig.SetConfig(BlockService, false)
+	exportConfig.SetConfig(ManuallyAccept, false)
+	exportConfig.SetConfig(CreateAsAnnounce, false)
 	out = capturer.CaptureStdout(func() {
 		app.Run([]string{"", "show"})
 	})

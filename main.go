@@ -25,7 +25,7 @@ var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
-var relConfig relayconf.RelayConfig
+var exportConfig relayconf.ExportConfig
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
@@ -74,7 +74,7 @@ func main() {
 	WebfingerResource.GenerateFromActor(hostname, &Actor)
 
 	// Load Config
-	relConfig.Load(redClient)
+	exportConfig = relayconf.NewConfig(redClient)
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)
