@@ -62,7 +62,7 @@ func main() {
 
 	app := cli.NewApp()
 	app.Name = "Activity Relay Extarnal CLI"
-	app.Usage = "Control Relay configration"
+	app.Usage = "Configure Activity-Relay"
 	app.Version = "0.2.0rc1"
 	app.Commands = []cli.Command{
 		{

@@ -86,11 +86,9 @@ func importConfigs(c *cli.Context) {
 	}
 	for _, LimitedDomain := range data.LimitedDomains {
 		relayState.SetLimitedDomain(LimitedDomain, true)
-		redClient.HSet("relay:config:limitedDomain", LimitedDomain, "1")
 	}
 	for _, BlockedDomain := range data.BlockedDomains {
 		relayState.SetLimitedDomain(BlockedDomain, true)
-		redClient.HSet("relay:config:blockedDomain", BlockedDomain, "1")
 	}
 	for _, Subscription := range data.Subscriptions {
 		relayState.AddSubscription(state.Subscription{
