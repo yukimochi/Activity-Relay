@@ -2,39 +2,26 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/urfave/cli"
 )
 
 func listDomains(c *cli.Context) error {
-	var err error
 	var domains []string
-	var message string
 	switch c.String("type") {
 	case "limited":
 		fmt.Println(" - Limited domain :")
-		domains, err = redClient.HKeys("relay:config:limitedDomain").Result()
-		if err != nil {
-			return err
-		}
+		domains = exportConfig.LimitedDomains
 	case "blocked":
 		fmt.Println(" - Blocked domain :")
-		domains, err = redClient.HKeys("relay:config:blockedDomain").Result()
-		if err != nil {
-			return err
-		}
+		domains = exportConfig.BlockedDomains
 	default:
 		fmt.Println(" - Subscribed domain :")
-		temp, err := redClient.Keys("relay:subscription:*").Result()
-		if err != nil {
-			return err
-		}
+		temp := exportConfig.Subscriptions
 		for _, domain := range temp {
-			domains = append(domains, strings.Replace(domain, "relay:subscription:", "", 1))
+			domains = append(domains, domain.Domain)
 		}
 	}
-	fmt.Println(message)
 	for _, domain := range domains {
 		fmt.Println(domain)
 	}
@@ -50,18 +37,18 @@ func setDomainType(c *cli.Context) error {
 	switch c.String("type") {
 	case "limited":
 		if c.Bool("undo") {
-			redClient.HDel("relay:config:limitedDomain", c.String("domain"))
+			exportConfig.SetLimitedDomain(c.String("domain"), false)
 			fmt.Println("Unset [" + c.String("domain") + "] as Limited domain.")
 		} else {
-			redClient.HSet("relay:config:limitedDomain", c.String("domain"), "1")
+			exportConfig.SetLimitedDomain(c.String("domain"), true)
 			fmt.Println("Set [" + c.String("domain") + "] as Limited domain.")
 		}
 	case "blocked":
 		if c.Bool("undo") {
-			redClient.HDel("relay:config:blockedDomain", c.String("domain"))
+			exportConfig.SetBlockedDomain(c.String("domain"), false)
 			fmt.Println("Unset [" + c.String("domain") + "] as Blocked domain.")
 		} else {
-			redClient.HSet("relay:config:blockedDomain", c.String("domain"), "1")
+			exportConfig.SetBlockedDomain(c.String("domain"), true)
 			fmt.Println("Set [" + c.String("domain") + "] as Blocked domain.")
 		}
 	default:

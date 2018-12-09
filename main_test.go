@@ -9,6 +9,7 @@ import (
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/RelayConf"
 )
 
 func TestMain(m *testing.M) {
@@ -33,8 +34,10 @@ func TestMain(m *testing.M) {
 	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
 	WebfingerResource.GenerateFromActor(hostname, &Actor)
 
+	// Load Config
 	redClient.FlushAll().Result()
-	relConfig.Load(redClient)
+	exportConfig = relayconf.NewConfig(redClient)
 	code := m.Run()
 	os.Exit(code)
+	redClient.FlushAll().Result()
 }

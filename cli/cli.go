@@ -19,7 +19,7 @@ var hostname *url.URL
 var hostkey *rsa.PrivateKey
 var redClient *redis.Client
 var macServer *machinery.Server
-var relConfig relayconf.RelayConfig
+var exportConfig relayconf.ExportConfig
 
 func main() {
 	pemPath := os.Getenv("ACTOR_PEM")
@@ -197,6 +197,7 @@ func main() {
 		},
 	}
 
+	exportConfig = relayconf.NewConfig(redClient)
 	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

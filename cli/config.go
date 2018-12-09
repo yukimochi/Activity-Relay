@@ -18,47 +18,42 @@ const (
 
 func serviceBlock(c *cli.Context) {
 	if c.Bool("undo") {
-		relConfig.Set(redClient, BlockService, false)
+		exportConfig.SetConfig(BlockService, false)
 		fmt.Println("Blocking for service-type actor is Disabled.")
 	} else {
-		relConfig.Set(redClient, BlockService, true)
+		exportConfig.SetConfig(BlockService, true)
 		fmt.Println("Blocking for service-type actor is Enabled.")
 	}
 }
 
 func manuallyAccept(c *cli.Context) {
 	if c.Bool("undo") {
-		relConfig.Set(redClient, ManuallyAccept, false)
+		exportConfig.SetConfig(ManuallyAccept, false)
 		fmt.Println("Manually accept follow-request is Disabled.")
 	} else {
-		relConfig.Set(redClient, ManuallyAccept, true)
+		exportConfig.SetConfig(ManuallyAccept, true)
 		fmt.Println("Manually accept follow-request is Enabled.")
 	}
 }
 
 func createAsAnnounce(c *cli.Context) {
 	if c.Bool("undo") {
-		relConfig.Set(redClient, CreateAsAnnounce, false)
+		exportConfig.SetConfig(CreateAsAnnounce, false)
 		fmt.Println("Announce activity instead of relay create activity is Disabled.")
 	} else {
-		relConfig.Set(redClient, CreateAsAnnounce, true)
+		exportConfig.SetConfig(CreateAsAnnounce, true)
 		fmt.Println("Announce activity instead of relay create activity is Enabled.")
 	}
 }
 
 func listConfigs(c *cli.Context) {
-	relConfig.Load(redClient)
-
-	fmt.Println("Blocking for service-type actor : ", relConfig.BlockService)
-	fmt.Println("Manually accept follow-request : ", relConfig.ManuallyAccept)
-	fmt.Println("Announce activity instead of relay create activity : ", relConfig.CreateAsAnnounce)
+	fmt.Println("Blocking for service-type actor : ", exportConfig.RelayConfig.BlockService)
+	fmt.Println("Manually accept follow-request : ", exportConfig.RelayConfig.ManuallyAccept)
+	fmt.Println("Announce activity instead of relay create activity : ", exportConfig.RelayConfig.CreateAsAnnounce)
 }
 
 func exportConfigs(c *cli.Context) {
-	var ex relayconf.ExportConfig
-	ex.Import(redClient)
-
-	jsonData, _ := json.Marshal(&ex)
+	jsonData, _ := json.Marshal(&exportConfig)
 	fmt.Println(string(jsonData))
 }
 
@@ -80,23 +75,29 @@ func importConfigs(c *cli.Context) {
 		return
 	}
 
-	relConfig.Load(redClient)
 	if data.RelayConfig.BlockService {
-		relConfig.Set(redClient, BlockService, true)
+		exportConfig.SetConfig(BlockService, true)
 	}
 	if data.RelayConfig.ManuallyAccept {
-		relConfig.Set(redClient, ManuallyAccept, true)
+		exportConfig.SetConfig(ManuallyAccept, true)
 	}
 	if data.RelayConfig.CreateAsAnnounce {
-		relConfig.Set(redClient, CreateAsAnnounce, true)
+		exportConfig.SetConfig(CreateAsAnnounce, true)
 	}
 	for _, LimitedDomain := range data.LimitedDomains {
+		exportConfig.SetLimitedDomain(LimitedDomain, true)
 		redClient.HSet("relay:config:limitedDomain", LimitedDomain, "1")
 	}
 	for _, BlockedDomain := range data.BlockedDomains {
+		exportConfig.SetLimitedDomain(BlockedDomain, true)
 		redClient.HSet("relay:config:blockedDomain", BlockedDomain, "1")
 	}
 	for _, Subscription := range data.Subscriptions {
-		redClient.HSet("relay:subscription:"+Subscription.Domain, "inbox_url", Subscription.InboxURL)
+		exportConfig.AddSubscription(relayconf.Subscription{
+			Domain:     Subscription.Domain,
+			InboxURL:   Subscription.InboxURL,
+			ActivityID: Subscription.ActivityID,
+			ActorID:    Subscription.ActorID,
+		})
 	}
 }

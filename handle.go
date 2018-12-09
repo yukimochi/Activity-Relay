@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
+	"github.com/yukimochi/Activity-Relay/RelayConf"
 )
 
 func handleWebfinger(w http.ResponseWriter, r *http.Request) {
@@ -60,15 +60,20 @@ func contains(entries interface{}, finder string) bool {
 			}
 		}
 		return false
+	case []relayconf.Subscription:
+		for i := 0; i < len(entry); i++ {
+			if entry[i].Domain == finder {
+				return true
+			}
+		}
+		return false
 	}
 	return false
 }
 
 func pushRelayJob(sourceInbox string, body []byte) {
-	domains, _ := redClient.Keys("relay:subscription:*").Result()
-	for _, domain := range domains {
-		if sourceInbox != strings.Replace(domain, "relay:subscription:", "", 1) {
-			inboxURL, _ := redClient.HGet(domain, "inbox_url").Result()
+	for _, domain := range exportConfig.Subscriptions {
+		if sourceInbox != domain.Domain {
 			job := &tasks.Signature{
 				Name:       "relay",
 				RetryCount: 0,
@@ -76,7 +81,7 @@ func pushRelayJob(sourceInbox string, body []byte) {
 					{
 						Name:  "inboxURL",
 						Type:  "string",
-						Value: inboxURL,
+						Value: domain.InboxURL,
 					},
 					{
 						Name:  "body",
@@ -134,8 +139,8 @@ func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor
 
 func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
-	blocked, _ := redClient.HExists("relay:config:blockedDomain", domain.Host).Result()
-	if blocked {
+	fmt.Println(exportConfig.BlockedDomains, domain.Host)
+	if contains(exportConfig.BlockedDomains, domain.Host) {
 		return false
 	}
 	return true
@@ -146,20 +151,18 @@ func relayAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) e
 		return errors.New("Activity should contain https://www.w3.org/ns/activitystreams#Public as receiver")
 	}
 	domain, _ := url.Parse(activity.Actor)
-	exist, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
-	if exist == 0 {
-		return errors.New("To use the relay service, Subscribe me in advance")
+	if contains(exportConfig.Subscriptions, domain.Host) {
+		return nil
 	}
-	return nil
+	return errors.New("To use the relay service, Subscribe me in advance")
 }
 
 func suitableRelay(activity *activitypub.Activity, actor *activitypub.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
-	limited, _ := redClient.HExists("relay:config:limitedDomain", domain.Host).Result()
-	if limited {
+	if contains(exportConfig.LimitedDomains, domain.Host) {
 		return false
 	}
-	if relConfig.BlockService && actor.Type == "Service" {
+	if exportConfig.RelayConfig.BlockService && actor.Type == "Service" {
 		return false
 	}
 	return true
@@ -173,6 +176,7 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 			w.WriteHeader(400)
 			w.Write(nil)
 		} else {
+			exportConfig.Load()
 			domain, _ := url.Parse(activity.Actor)
 			switch activity.Type {
 			case "Follow":
@@ -187,7 +191,7 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					w.Write(nil)
 				} else {
 					if suitableFollow(activity, actor) {
-						if relConfig.ManuallyAccept {
+						if exportConfig.RelayConfig.ManuallyAccept {
 							redClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
 								"inbox_url":   actor.Endpoints.SharedInbox,
 								"activity_id": activity.ID,
@@ -200,7 +204,12 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 							resp := activity.GenerateResponse(hostname, "Accept")
 							jsonData, _ := json.Marshal(&resp)
 							go pushRegistorJob(actor.Inbox, jsonData)
-							redClient.HSet("relay:subscription:"+domain.Host, "inbox_url", actor.Endpoints.SharedInbox)
+							exportConfig.AddSubscription(relayconf.Subscription{
+								Domain:     domain.Host,
+								InboxURL:   actor.Endpoints.SharedInbox,
+								ActivityID: activity.ID,
+								ActorID:    actor.ID,
+							})
 							fmt.Println("Accept Follow Request : ", activity.Actor)
 						}
 					} else {
@@ -249,7 +258,7 @@ func handleInbox(w http.ResponseWriter, r *http.Request, activityDecoder func(*h
 					w.Write([]byte(err.Error()))
 				} else {
 					if suitableRelay(activity, actor) {
-						if relConfig.CreateAsAnnounce && activity.Type == "Create" {
+						if exportConfig.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
 							nestedObject, err := activity.NestedActivity()
 							if err != nil {
 								fmt.Println("Fail Assert activity : activity.Actor")
