@@ -7,7 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/satori/go.uuid"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
 )
@@ -50,7 +52,17 @@ func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey)
 }
 
 // RetrieveRemoteActor : Retrieve Actor from remote instance.
-func (actor *Actor) RetrieveRemoteActor(url string) error {
+func (actor *Actor) RetrieveRemoteActor(url string, cache *cache.Cache) error {
+	var err error
+	cacheData, found := cache.Get(url)
+	if found {
+		err = json.Unmarshal(cacheData.([]byte), &actor)
+		if err != nil {
+			cache.Delete(url)
+		} else {
+			return nil
+		}
+	}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "application/activity+json, application/ld+json")
 	req.Header.Set("User-Agent", UaString)
@@ -66,6 +78,7 @@ func (actor *Actor) RetrieveRemoteActor(url string) error {
 	if err != nil {
 		return err
 	}
+	cache.Set(url, data, 5*time.Minute)
 	return nil
 }
 

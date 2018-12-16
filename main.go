@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
+	"github.com/patrickmn/go-cache"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
 	"github.com/yukimochi/Activity-Relay/State"
@@ -24,6 +26,7 @@ var WebfingerResource activitypub.WebfingerResource
 var hostURL *url.URL
 var hostPrivatekey *rsa.PrivateKey
 var redisClient *redis.Client
+var actorCache *cache.Cache
 var machineryServer *machinery.Server
 var relayState state.RelayState
 
@@ -57,6 +60,8 @@ func main() {
 	redisClient = redis.NewClient(&redis.Options{
 		Addr: redisURL,
 	})
+
+	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 
 	var macConfig = &config.Config{
 		Broker:          "redis://" + redisURL,
