@@ -16,7 +16,7 @@ import (
 )
 
 // UaString : Use for User-Agent
-var UaString = os.Getenv("RELAY_SERVICENAME") + " (golang net/http; Activity-Relay v0.2.0rc1; " + os.Getenv("RELAY_DOMAIN") + ")"
+var UaString = os.Getenv("RELAY_SERVICENAME") + " (golang net/http; Activity-Relay v0.2.0rc2; " + os.Getenv("RELAY_DOMAIN") + ")"
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKey *rsa.PrivateKey) error {
 	hash := sha256.New()

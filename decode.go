@@ -26,7 +26,7 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 	}
 	KeyID := verifier.KeyId()
 	remoteActor := new(activitypub.Actor)
-	err = remoteActor.RetrieveRemoteActor(KeyID)
+	err = remoteActor.RetrieveRemoteActor(KeyID, actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
