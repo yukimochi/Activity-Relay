@@ -222,6 +222,14 @@
   version = "v1.0.2"
 
 [[projects]]
+  digest = "1:808cdddf087fb64baeae67b8dfaee2069034d9704923a3cb8bd96a995421a625"
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+  version = "v2.1.0"
+
+[[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
   name = "github.com/satori/go.uuid"
   packages = ["."]
@@ -492,6 +500,7 @@
     "github.com/Songmu/go-httpdate",
     "github.com/go-redis/redis",
     "github.com/kami-zh/go-capturer",
+    "github.com/patrickmn/go-cache",
     "github.com/satori/go.uuid",
     "github.com/urfave/cli",
     "github.com/yukimochi/httpsig",
