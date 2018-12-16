@@ -15,26 +15,22 @@ import (
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
-// Hostname : Hostname of Relay
-var Hostname *url.URL
-
-// Hostkey : PrivateKey of Relay
-var Hostkey *rsa.PrivateKey
-
 // Actor : Relay's Actor
 var Actor activitypub.Actor
 
-var redClient *redis.Client
+var hostURL *url.URL
+var hostPrivatekey *rsa.PrivateKey
+var redisClient *redis.Client
 
 func relayActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), Hostkey)
+	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
-		mod, _ := redClient.HSetNX("relay:statistics:"+domain.Host, "last_error", err.Error()).Result()
+		mod, _ := redisClient.HSetNX("relay:statistics:"+domain.Host, "last_error", err.Error()).Result()
 		if mod {
-			redClient.Expire("relay:statistics:"+domain.Host, time.Duration(time.Minute))
+			redisClient.Expire("relay:statistics:"+domain.Host, time.Duration(time.Minute))
 		}
 	}
 	return err
@@ -43,7 +39,7 @@ func relayActivity(args ...string) error {
 func registorActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), Hostkey)
+	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
 	return err
 }
 
@@ -62,26 +58,26 @@ func main() {
 	}
 
 	var err error
-	Hostkey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
+	hostPrivatekey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
 	if err != nil {
 		panic("Can't read Hostkey Pemfile")
 	}
-	Hostname, err = url.Parse("https://" + relayDomain)
+	hostURL, err = url.Parse("https://" + relayDomain)
 	if err != nil {
 		panic("Can't parse Relay Domain")
 	}
-	redClient = redis.NewClient(&redis.Options{
+	redisClient = redis.NewClient(&redis.Options{
 		Addr: redisURL,
 	})
-	Actor.GenerateSelfKey(Hostname, &Hostkey.PublicKey)
+	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 
-	var macConfig = &config.Config{
+	machineryConfig := &config.Config{
 		Broker:          "redis://" + redisURL,
 		DefaultQueue:    "relay",
 		ResultBackend:   "redis://" + redisURL,
 		ResultsExpireIn: 5,
 	}
-	server, err := machinery.NewServer(macConfig)
+	server, err := machinery.NewServer(machineryConfig)
 	if err != nil {
 		panic(err.Error())
 	}

@@ -91,7 +91,7 @@ func pushRelayJob(sourceInbox string, body []byte) {
 					},
 				},
 			}
-			_, err := macServer.SendTask(job)
+			_, err := machineryServer.SendTask(job)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 			}
@@ -116,7 +116,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 			},
 		},
 	}
-	_, err := macServer.SendTask(job)
+	_, err := machineryServer.SendTask(job)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
@@ -182,7 +182,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			case "Follow":
 				err = followAcceptable(activity, actor)
 				if err != nil {
-					resp := activity.GenerateResponse(hostname, "Reject")
+					resp := activity.GenerateResponse(hostURL, "Reject")
 					jsonData, _ := json.Marshal(&resp)
 					go pushRegistorJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
@@ -192,7 +192,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				} else {
 					if suitableFollow(activity, actor) {
 						if relayState.RelayConfig.ManuallyAccept {
-							redClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
+							redisClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
 								"inbox_url":   actor.Endpoints.SharedInbox,
 								"activity_id": activity.ID,
 								"type":        "Follow",
@@ -201,7 +201,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							})
 							fmt.Println("Pending Follow Request : ", activity.Actor)
 						} else {
-							resp := activity.GenerateResponse(hostname, "Accept")
+							resp := activity.GenerateResponse(hostURL, "Accept")
 							jsonData, _ := json.Marshal(&resp)
 							go pushRegistorJob(actor.Inbox, jsonData)
 							relayState.AddSubscription(state.Subscription{
@@ -213,7 +213,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							fmt.Println("Accept Follow Request : ", activity.Actor)
 						}
 					} else {
-						resp := activity.GenerateResponse(hostname, "Reject")
+						resp := activity.GenerateResponse(hostURL, "Reject")
 						jsonData, _ := json.Marshal(&resp)
 						go pushRegistorJob(actor.Inbox, jsonData)
 						fmt.Println("Reject Follow Request : ", activity.Actor)
@@ -231,7 +231,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.WriteHeader(400)
 						writer.Write([]byte(err.Error()))
 					} else {
-						redClient.Del("relay:subscription:" + domain.Host)
+						redisClient.Del("relay:subscription:" + domain.Host)
 						fmt.Println("Accept Unfollow Request : ", activity.Actor)
 
 						writer.WriteHeader(202)
@@ -265,7 +265,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							}
 							switch nestedObject.Type {
 							case "Note":
-								resp := nestedObject.GenerateAnnounce(hostname)
+								resp := nestedObject.GenerateAnnounce(hostURL)
 								jsonData, _ := json.Marshal(&resp)
 								go pushRelayJob(domain.Host, jsonData)
 								fmt.Println("Accept Announce Note : ", activity.Actor)

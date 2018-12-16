@@ -344,7 +344,7 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
 		t.Fatalf("Failed - Subscription not works.")
 	}
@@ -372,11 +372,11 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	res, _ := redClient.Exists("relay:pending:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:pending:" + domain.Host).Result()
 	if res != 1 {
 		t.Fatalf("Failed - Pending not works.")
 	}
-	res, _ = redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ = redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
 		t.Fatalf("Failed - Pending was skipped.")
 	}
@@ -404,7 +404,7 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
 		t.Fatalf("Failed - Subscription not blocked.")
 	}
@@ -430,7 +430,7 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
 		t.Fatalf("Failed - Subscription not blocked.")
 	}
@@ -461,7 +461,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
 		t.Fatalf("Failed - Subscription not succeed.")
 	}
@@ -491,7 +491,7 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	if r.StatusCode != 400 {
 		t.Fatalf("Failed - StatusCode is not 400")
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
 		t.Fatalf("Failed - Block hacked unfollow not succeed.")
 	}
@@ -521,7 +521,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	if r.StatusCode != 400 {
 		t.Fatalf("Failed - StatusCode is not 400")
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
 		t.Fatalf("Failed - Block actor unfollow not succeed.")
 	}
@@ -557,8 +557,8 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	}
 	relayState.DelSubscription(domain.Host)
 	relayState.DelSubscription("example.org")
-	redClient.Del("relay:subscription:" + domain.Host).Result()
-	redClient.Del("relay:subscription:example.org").Result()
+	redisClient.Del("relay:subscription:" + domain.Host).Result()
+	redisClient.Del("relay:subscription:example.org").Result()
 }
 
 func TestHandleInboxlimitedCreate(t *testing.T) {
@@ -697,7 +697,7 @@ func TestHandleInboxUndo(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
 	}
-	res, _ := redClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := redisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
 		t.Fatalf("Failed - Missing unsubscribed.")
 	}

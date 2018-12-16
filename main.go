@@ -21,10 +21,10 @@ var Actor activitypub.Actor
 // WebfingerResource : Relay's Webfinger resource
 var WebfingerResource activitypub.WebfingerResource
 
-var hostname *url.URL
-var hostkey *rsa.PrivateKey
-var redClient *redis.Client
-var macServer *machinery.Server
+var hostURL *url.URL
+var hostPrivatekey *rsa.PrivateKey
+var redisClient *redis.Client
+var machineryServer *machinery.Server
 var relayState state.RelayState
 
 func main() {
@@ -46,15 +46,15 @@ func main() {
 	}
 
 	var err error
-	hostkey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
+	hostPrivatekey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
 	if err != nil {
 		panic("Can't read Hostkey Pemfile")
 	}
-	hostname, err = url.Parse("https://" + relayDomain)
+	hostURL, err = url.Parse("https://" + relayDomain)
 	if err != nil {
 		panic("Can't parse Relay Domain")
 	}
-	redClient = redis.NewClient(&redis.Options{
+	redisClient = redis.NewClient(&redis.Options{
 		Addr: redisURL,
 	})
 
@@ -65,16 +65,16 @@ func main() {
 		ResultsExpireIn: 5,
 	}
 
-	macServer, err = machinery.NewServer(macConfig)
+	machineryServer, err = machinery.NewServer(macConfig)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
-	WebfingerResource.GenerateFromActor(hostname, &Actor)
+	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
+	WebfingerResource.GenerateFromActor(hostURL, &Actor)
 
 	// Load Config
-	relayState = state.NewState(redClient)
+	relayState = state.NewState(redisClient)
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)
@@ -87,12 +87,12 @@ func main() {
 	fmt.Println("REDIS URL : ", redisURL)
 	fmt.Println("BIND ADDRESS : ", relayBind)
 	fmt.Println(" - Blocked Domain")
-	domains, _ := redClient.HKeys("relay:config:blockedDomain").Result()
+	domains, _ := redisClient.HKeys("relay:config:blockedDomain").Result()
 	for _, domain := range domains {
 		fmt.Println(domain)
 	}
 	fmt.Println(" - Limited Domain")
-	domains, _ = redClient.HKeys("relay:config:limitedDomain").Result()
+	domains, _ = redisClient.HKeys("relay:config:limitedDomain").Result()
 	for _, domain := range domains {
 		fmt.Println(domain)
 	}

@@ -18,9 +18,9 @@ func TestMain(m *testing.M) {
 	pemPath := os.Getenv("ACTOR_PEM")
 	relayDomain := os.Getenv("RELAY_DOMAIN")
 	redisURL := os.Getenv("REDIS_URL")
-	hostkey, _ = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
-	hostname, _ = url.Parse("https://" + relayDomain)
-	redClient = redis.NewClient(&redis.Options{
+	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
+	hostURL, _ = url.Parse("https://" + relayDomain)
+	redisClient = redis.NewClient(&redis.Options{
 		Addr: redisURL,
 	})
 	var macConfig = &config.Config{
@@ -29,15 +29,15 @@ func TestMain(m *testing.M) {
 		ResultBackend:   "redis://" + redisURL,
 		ResultsExpireIn: 5,
 	}
-	macServer, _ = machinery.NewServer(macConfig)
+	machineryServer, _ = machinery.NewServer(macConfig)
 
-	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
-	WebfingerResource.GenerateFromActor(hostname, &Actor)
+	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
+	WebfingerResource.GenerateFromActor(hostURL, &Actor)
 
 	// Load Config
-	redClient.FlushAll().Result()
-	relayState = state.NewState(redClient)
+	redisClient.FlushAll().Result()
+	relayState = state.NewState(redisClient)
 	code := m.Run()
 	os.Exit(code)
-	redClient.FlushAll().Result()
+	redisClient.FlushAll().Result()
 }
