@@ -3,56 +3,88 @@ package main
 import (
 	"fmt"
 
-	"github.com/urfave/cli"
+	"github.com/spf13/cobra"
 )
 
-func listDomains(c *cli.Context) error {
+func domainCmdInit() *cobra.Command {
+	var domain = &cobra.Command{
+		Use:   "domain",
+		Short: "Manage subscriber domain",
+		Long:  "List all subscriber, set/unset domain as limited or blocked and undo subscribe domain.",
+	}
+
+	var domainList = &cobra.Command{
+		Use:   "list [flags]",
+		Short: "List domain",
+		Long:  "List domain which filtered given type.",
+		RunE:  listDomains,
+	}
+	domainList.Flags().StringP("type", "t", "subscriber", "domain type [subscriber,limited,blocked]")
+	domain.AddCommand(domainList)
+
+	var domainSet = &cobra.Command{
+		Use:   "set [flags]",
+		Short: "Set or unset domain as limited or blocked",
+		Long:  "Set or unset domain as limited or blocked.",
+		Args:  cobra.MinimumNArgs(1),
+		RunE:  setDomainType,
+	}
+	domainSet.Flags().StringP("type", "t", "", "Apply domain type [limited,blocked]")
+	domainSet.MarkFlagRequired("type")
+	domainSet.Flags().BoolP("undo", "u", false, "Unset domain as limited or blocked")
+	domain.AddCommand(domainSet)
+
+	return domain
+}
+
+func listDomains(cmd *cobra.Command, args []string) error {
 	var domains []string
-	switch c.String("type") {
+	switch cmd.Flag("type").Value.String() {
 	case "limited":
-		fmt.Println(" - Limited domain :")
+		cmd.Println(" - Limited domain :")
 		domains = relayState.LimitedDomains
 	case "blocked":
-		fmt.Println(" - Blocked domain :")
+		cmd.Println(" - Blocked domain :")
 		domains = relayState.BlockedDomains
 	default:
-		fmt.Println(" - Subscribed domain :")
+		cmd.Println(" - Subscriber domain :")
 		temp := relayState.Subscriptions
 		for _, domain := range temp {
 			domains = append(domains, domain.Domain)
 		}
 	}
 	for _, domain := range domains {
-		fmt.Println(domain)
+		cmd.Println(domain)
 	}
-	fmt.Println(fmt.Sprintf("Total : %d", len(domains)))
+	cmd.Println(fmt.Sprintf("Total : %d", len(domains)))
+
 	return nil
 }
 
-func setDomainType(c *cli.Context) error {
-	if c.String("domain") == "" {
-		fmt.Println("No domain given.")
-		return nil
-	}
-	switch c.String("type") {
+func setDomainType(cmd *cobra.Command, args []string) error {
+	undo := cmd.Flag("undo").Value.String() == "true"
+	switch cmd.Flag("type").Value.String() {
 	case "limited":
-		if c.Bool("undo") {
-			relayState.SetLimitedDomain(c.String("domain"), false)
-			fmt.Println("Unset [" + c.String("domain") + "] as Limited domain.")
-		} else {
-			relayState.SetLimitedDomain(c.String("domain"), true)
-			fmt.Println("Set [" + c.String("domain") + "] as Limited domain.")
+		for _, domain := range args {
+			relayState.SetLimitedDomain(domain, !undo)
+			if undo {
+				cmd.Println("Unset [" + domain + "] as limited domain")
+			} else {
+				cmd.Println("Set [" + domain + "] as limited domain")
+			}
 		}
 	case "blocked":
-		if c.Bool("undo") {
-			relayState.SetBlockedDomain(c.String("domain"), false)
-			fmt.Println("Unset [" + c.String("domain") + "] as Blocked domain.")
-		} else {
-			relayState.SetBlockedDomain(c.String("domain"), true)
-			fmt.Println("Set [" + c.String("domain") + "] as Blocked domain.")
+		for _, domain := range args {
+			relayState.SetBlockedDomain(domain, !undo)
+			if undo {
+				cmd.Println("Unset [" + domain + "] as blocked domain")
+			} else {
+				cmd.Println("Set [" + domain + "] as blocked domain")
+			}
 		}
 	default:
-		fmt.Println("No type given.")
+		cmd.Println("Invalid type given")
 	}
+
 	return nil
 }
