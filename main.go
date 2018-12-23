@@ -33,8 +33,8 @@ var uaString string
 func initConfig() {
 	viper.BindEnv("actor_pem")
 	viper.BindEnv("relay_domain")
-	viper.BindEnv("redis_url")
 	viper.BindEnv("relay_bind")
+	viper.BindEnv("redis_url")
 	hostURL, _ = url.Parse("https://" + viper.GetString("relay_domain"))
 	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
 	redisClient := redis.NewClient(&redis.Options{

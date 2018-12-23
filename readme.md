@@ -26,6 +26,7 @@ See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki)
 
  - `ACTOR_PEM` (ex. `/actor.pem`)
  - `RELAY_DOMAIN` (ex. `relay.toot.yukimochi.jp`)
+ - `RELAY_SERVICENAME` (ex. `YUKIMOCHI Toot Relay Service`)
  - `RELAY_BIND` (ex. `0.0.0.0:8080`)
  - `REDIS_URL` (ex. `127.0.0.1:6379`)
 
