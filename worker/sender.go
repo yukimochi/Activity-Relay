@@ -1,4 +1,4 @@
-package activitypub
+package main
 
 import (
 	"bytes"
@@ -8,15 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/Songmu/go-httpdate"
 	"github.com/yukimochi/httpsig"
 )
-
-// UaString : Use for User-Agent
-var UaString = os.Getenv("RELAY_SERVICENAME") + " (golang net/http; Activity-Relay v0.2.0rc2; " + os.Getenv("RELAY_DOMAIN") + ")"
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKey *rsa.PrivateKey) error {
 	hash := sha256.New()
@@ -36,11 +32,10 @@ func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKe
 	return nil
 }
 
-// SendActivity : Send ActivityPub activity
-func SendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.PrivateKey) error {
+func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.PrivateKey) error {
 	req, _ := http.NewRequest("POST", inboxURL, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json, application/ld+json")
-	req.Header.Set("User-Agent", UaString)
+	req.Header.Set("User-Agent", uaString)
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
 	appendSignature(req, &body, KeyID, publicKey)
 	client := &http.Client{Timeout: time.Duration(5) * time.Second}

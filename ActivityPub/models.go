@@ -52,7 +52,7 @@ func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey)
 }
 
 // RetrieveRemoteActor : Retrieve Actor from remote instance.
-func (actor *Actor) RetrieveRemoteActor(url string, cache *cache.Cache) error {
+func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cache.Cache) error {
 	var err error
 	cacheData, found := cache.Get(url)
 	if found {
@@ -65,7 +65,7 @@ func (actor *Actor) RetrieveRemoteActor(url string, cache *cache.Cache) error {
 	}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "application/activity+json, application/ld+json")
-	req.Header.Set("User-Agent", UaString)
+	req.Header.Set("User-Agent", uaString)
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
