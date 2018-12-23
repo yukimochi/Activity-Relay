@@ -63,7 +63,7 @@ func initConfig() {
 		ResultsExpireIn: 5,
 	}
 	machineryServer, _ = machinery.NewServer(machineryConfig)
-	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.0rc2; " + hostURL.Host + ")"
+	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.0; " + hostURL.Host + ")"
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]\n - Configrations")
