@@ -23,7 +23,7 @@ func followCmdInit() *cobra.Command {
 		Use:   "list",
 		Short: "List follow request",
 		Long:  "List follow request.",
-		RunE:  listFollowsC,
+		RunE:  listFollows,
 	}
 	follow.AddCommand(followList)
 
@@ -32,7 +32,7 @@ func followCmdInit() *cobra.Command {
 		Short: "Accept follow request",
 		Long:  "Accept follow request by domain.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  acceptFollowC,
+		RunE:  acceptFollow,
 	}
 	follow.AddCommand(followAccept)
 
@@ -41,7 +41,7 @@ func followCmdInit() *cobra.Command {
 		Short: "Reject follow request",
 		Long:  "Reject follow request by domain.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  rejectFollowC,
+		RunE:  rejectFollow,
 	}
 	follow.AddCommand(followReject)
 
@@ -69,24 +69,6 @@ func pushRegistorJob(inboxURL string, body []byte) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-}
-
-func listFollowsC(cmd *cobra.Command, args []string) error {
-	var domains []string
-	cmd.Println(" - Follow request :")
-	follows, err := relayState.RedisClient.Keys("relay:pending:*").Result()
-	if err != nil {
-		return err
-	}
-	for _, follow := range follows {
-		domains = append(domains, strings.Replace(follow, "relay:pending:", "", 1))
-	}
-	for _, domain := range domains {
-		cmd.Println(domain)
-	}
-	cmd.Println(fmt.Sprintf("Total : %d", len(domains)))
-
-	return nil
 }
 
 func createFollowRequestResponse(domain string, response string) error {
@@ -118,7 +100,25 @@ func createFollowRequestResponse(domain string, response string) error {
 	return nil
 }
 
-func acceptFollowC(cmd *cobra.Command, args []string) error {
+func listFollows(cmd *cobra.Command, args []string) error {
+	var domains []string
+	cmd.Println(" - Follow request :")
+	follows, err := relayState.RedisClient.Keys("relay:pending:*").Result()
+	if err != nil {
+		return err
+	}
+	for _, follow := range follows {
+		domains = append(domains, strings.Replace(follow, "relay:pending:", "", 1))
+	}
+	for _, domain := range domains {
+		cmd.Println(domain)
+	}
+	cmd.Println(fmt.Sprintf("Total : %d", len(domains)))
+
+	return nil
+}
+
+func acceptFollow(cmd *cobra.Command, args []string) error {
 	var err error
 	var domains []string
 	follows, err := relayState.RedisClient.Keys("relay:pending:*").Result()
@@ -143,10 +143,10 @@ func acceptFollowC(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func rejectFollowC(cmd *cobra.Command, args []string) error {
+func rejectFollow(cmd *cobra.Command, args []string) error {
 	var err error
 	var domains []string
-	follows, err := redClient.Keys("relay:pending:*").Result()
+	follows, err := relayState.RedisClient.Keys("relay:pending:*").Result()
 	if err != nil {
 		return err
 	}
