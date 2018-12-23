@@ -192,7 +192,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				} else {
 					if suitableFollow(activity, actor) {
 						if relayState.RelayConfig.ManuallyAccept {
-							redisClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
+							relayState.RedisClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
 								"inbox_url":   actor.Endpoints.SharedInbox,
 								"activity_id": activity.ID,
 								"type":        "Follow",
@@ -231,7 +231,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.WriteHeader(400)
 						writer.Write([]byte(err.Error()))
 					} else {
-						redisClient.Del("relay:subscription:" + domain.Host)
+						relayState.RedisClient.Del("relay:subscription:" + domain.Host)
 						fmt.Println("Accept Unfollow Request : ", activity.Actor)
 
 						writer.WriteHeader(202)
