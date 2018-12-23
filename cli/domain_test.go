@@ -21,8 +21,7 @@ func TestListDomainSubscriber(t *testing.T) {
 	output := buffer.String()
 	valid := ` - Subscriber domain :
 subscription.example.jp
-subscription.example.com
-Total : 2
+Total : 1
 `
 	if output != valid {
 		t.Fatalf("Invalid Responce.")

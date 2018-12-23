@@ -49,6 +49,7 @@ func initConfig() {
 	machineryServer, _ = machinery.NewServer(machineryConfig)
 	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.0rc2; " + hostURL.Host + ")"
 	relayState = state.NewState(redisClient)
+	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 	WebfingerResource.GenerateFromActor(hostURL, &Actor)
 
@@ -71,7 +72,6 @@ func initConfig() {
 func main() {
 	// Load Config
 	initConfig()
-	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/actor", handleActor)

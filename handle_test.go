@@ -173,19 +173,22 @@ func mockActivityDecoderProvider(activity *activitypub.Activity, actor *activity
 func mockActivity(req string) activitypub.Activity {
 	switch req {
 	case "Follow":
-		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://www.w3.org/ns/activitystreams#Public\"}"
+		file, _ := os.Open("./misc/follow.json")
+		body, _ := ioutil.ReadAll(file)
 		var activity activitypub.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	case "Invalid-Follow":
-		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://" + os.Getenv("RELAY_DOMAIN") + "/users/relay\"}"
+		file, _ := os.Open("./misc/followAsActor.json")
+		body, _ := ioutil.ReadAll(file)
 		var activity activitypub.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	case "Unfollow":
-		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://www.w3.org/ns/activitystreams#Public\"}}"
+		file, _ := os.Open("./misc/unfollow.json")
+		body, _ := ioutil.ReadAll(file)
 		var activity activitypub.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	case "Invalid-Unfollow":
 		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://hacked.test.yukimochi.io/users/yukimochi\",\"object\":\"https://www.w3.org/ns/activitystreams#Public\"}}"
@@ -198,9 +201,10 @@ func mockActivity(req string) activitypub.Activity {
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "Create":
-		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857/activity\",\"type\":\"Create\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:07:26Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"type\":\"Note\",\"summary\":null,\"inReplyTo\":null,\"published\":\"2018-11-15T11:07:26Z\",\"url\":\"https://mastodon.test.yukimochi.io/@yukimochi/101075045564444857\",\"attributedTo\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"sensitive\":false,\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"inReplyToAtomUri\":null,\"conversation\":\"tag:mastodon.test.yukimochi.io,2018-11-15:objectId=68:objectType=Conversation\",\"content\":\"<p>Actvity-Relay</p>\",\"contentMap\":{\"en\":\"<p>Actvity-Relay</p>\"},\"attachment\":[],\"tag\":[]},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:07:26Z\",\"signatureValue\":\"mMgl2GgVPgb1Kw6a2iDIZc7r0j3ob+Cl9y+QkCxIe6KmnUzb15e60UuhkE5j3rJnoTwRKqOFy1PMkSxlYW6fPG/5DBxW9I4kX+8sw8iH/zpwKKUOnXUJEqfwRrNH2ix33xcs/GkKPdedY6iAPV9vGZ10MSMOdypfYgU9r+UI0sTaaC2iMXH0WPnHQuYAI+Q1JDHIbDX5FH1WlDL6+8fKAicf3spBMxDwPHGPK8W2jmDLWdN2Vz4ffsCtWs5BCuqOKZrtTW0Rdd4HWzo40MnRXvBjv7yNlnnKzokANBqiOLWT7kNfK0+Vtnt6c/bNX64KBro53KR7wL3ZBvPVuv5rdQ==\"}}"
+		file, _ := os.Open("./misc/create.json")
+		body, _ := ioutil.ReadAll(file)
 		var activity activitypub.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	case "Create-Article":
 		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857/activity\",\"type\":\"Create\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:07:26Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"type\":\"Article\",\"summary\":null,\"inReplyTo\":null,\"published\":\"2018-11-15T11:07:26Z\",\"url\":\"https://mastodon.test.yukimochi.io/@yukimochi/101075045564444857\",\"attributedTo\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"sensitive\":false,\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"inReplyToAtomUri\":null,\"conversation\":\"tag:mastodon.test.yukimochi.io,2018-11-15:objectId=68:objectType=Conversation\",\"content\":\"<p>Actvity-Relay</p>\",\"contentMap\":{\"en\":\"<p>Actvity-Relay</p>\"},\"attachment\":[],\"tag\":[]},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:07:26Z\",\"signatureValue\":\"mMgl2GgVPgb1Kw6a2iDIZc7r0j3ob+Cl9y+QkCxIe6KmnUzb15e60UuhkE5j3rJnoTwRKqOFy1PMkSxlYW6fPG/5DBxW9I4kX+8sw8iH/zpwKKUOnXUJEqfwRrNH2ix33xcs/GkKPdedY6iAPV9vGZ10MSMOdypfYgU9r+UI0sTaaC2iMXH0WPnHQuYAI+Q1JDHIbDX5FH1WlDL6+8fKAicf3spBMxDwPHGPK8W2jmDLWdN2Vz4ffsCtWs5BCuqOKZrtTW0Rdd4HWzo40MnRXvBjv7yNlnnKzokANBqiOLWT7kNfK0+Vtnt6c/bNX64KBro53KR7wL3ZBvPVuv5rdQ==\"}}"
@@ -208,14 +212,16 @@ func mockActivity(req string) activitypub.Activity {
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "Announce":
-		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075096728565994/activity\",\"type\":\"Announce\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:20:27Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075042939498980\",\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075096728565994/activity\",\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:20:27Z\",\"signatureValue\":\"HUe7M49uoEE5bsCM7rrG1ruamKVuYclKYst4OHQHBcvGSWkMTYCG5OmNQMihpFAantN1Mhz+PWKubXsWmrEnUGDNtog9XDGo2iVbYDcD1wjrDz6EuJiq3CBjLpzQ+F04EIx8LK8WSq6pec+jaIxBJghBa7BNH5i77nUdD7QLZxglqljMkf/r2s1i1eDtVJVDLzU3PW05Qu6Z+RDGZrG137ZwLZ3a5hnFyUPqw3fSgdA4n+AmxYenIHorgj45bmI4QJB8X1TPuAadB2XDvnSTTSuJQyDPyR3kCafBWmXDrqb0MRREsc99KzS9L00OiOY31v0TXr78vjSDxoGzEE81cw==\"}}"
+		file, _ := os.Open("./misc/announce.json")
+		body, _ := ioutil.ReadAll(file)
 		var activity activitypub.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	case "Undo":
-		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi#announces/101075096728565994/undo\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075096728565994/activity\",\"type\":\"Announce\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:20:27Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075042939498980\",\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075096728565994/activity\"},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:20:53Z\",\"signatureValue\":\"iJOPQXBfCSMZKEvj7dBKiwLa2Uo7u8tXYUkQVcVBaMqc1vZWWJ2x6N6H1HvUYgIIDhaPUT+ivzyhG+hi1YJzqH2zviy75EiI4O55Vl2+EjKntzasWSYB3jGb10Dzxdn0P9Ei24Z+72BKNhkLMGKWNtayA9qA1pr0gmfd5WsZ73jrlY4HGyoADsom9xRH8NYqEugv7mQr/qnkpaVB9276kMEPQRE/V0pNSX29sDOHhBmQmdLRk/WROMPn67/PDly8Oyd9kZKetFnPU9OTOXvmL4LL0xInhOLeL9WgZE3bbE0RWUFlEWC+CJPoDg3Ra2wJd2Nb12esHDJV4LN7gXUG+A==\"}}"
+		file, _ := os.Open("./misc/undo.json")
+		body, _ := ioutil.ReadAll(file)
 		var activity activitypub.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	default:
 		panic("No assined request.")
@@ -225,37 +231,17 @@ func mockActivity(req string) activitypub.Activity {
 func mockActor(req string) activitypub.Actor {
 	switch req {
 	case "Person":
-		return activitypub.Actor{
-			[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-			"https://mastodon.test.yukimochi.io/users/yukimochi",
-			"Person",
-			"yukimochi",
-			"https://mastodon.test.yukimochi.io/users/yukimochi/inbox",
-			&activitypub.Endpoints{
-				"https://mastodon.test.yukimochi.io/inbox",
-			},
-			activitypub.PublicKey{
-				"https://mastodon.test.yukimochi.io/users/yukimochi#main-key",
-				"https://mastodon.test.yukimochi.io/users/yukimochi",
-				"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuak6v+V5hd683ioTLSPF\nLR7CxiI1GMzmOfgaP/P37YBi8bk1aYu3pSDaSJ4889llLHOrLWnzuojHHAUTsVH3\nDG3BXUIjMdGzO6CYG0Tsk36PF7yKZ4RrIj3z03XEUogBbNN/YiqjWCiUkOLLayx5\nM/iE1VBu3zoC2cP8m+hnVdSOpTV8XcaTXMQSGnk/mKMh93CP16pMkJ3Jaw5I2tYm\nCTKVV3zPdmXwT5rCL/qstlIfDaIkKc/PL04mhA9/8+9A6HhhTsxCsgA1zJZomTBI\n4FXeu7mzFZJtZJdDwaVy2H+CKMw6HOHneEenvvCR/37kiLjk8gw+grC/G1Bw6E2h\nZwIDAQAB\n-----END PUBLIC KEY-----\n",
-			},
-		}
+		file, _ := os.Open("./misc/person.json")
+		body, _ := ioutil.ReadAll(file)
+		var actor activitypub.Actor
+		json.Unmarshal(body, &actor)
+		return actor
 	case "Service":
-		return activitypub.Actor{
-			[]string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-			"https://mastodon.test.yukimochi.io/users/yukimochi",
-			"Service",
-			"yukimochi",
-			"https://mastodon.test.yukimochi.io/users/yukimochi/inbox",
-			&activitypub.Endpoints{
-				"https://mastodon.test.yukimochi.io/inbox",
-			},
-			activitypub.PublicKey{
-				"https://mastodon.test.yukimochi.io/users/yukimochi#main-key",
-				"https://mastodon.test.yukimochi.io/users/yukimochi",
-				"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuak6v+V5hd683ioTLSPF\nLR7CxiI1GMzmOfgaP/P37YBi8bk1aYu3pSDaSJ4889llLHOrLWnzuojHHAUTsVH3\nDG3BXUIjMdGzO6CYG0Tsk36PF7yKZ4RrIj3z03XEUogBbNN/YiqjWCiUkOLLayx5\nM/iE1VBu3zoC2cP8m+hnVdSOpTV8XcaTXMQSGnk/mKMh93CP16pMkJ3Jaw5I2tYm\nCTKVV3zPdmXwT5rCL/qstlIfDaIkKc/PL04mhA9/8+9A6HhhTsxCsgA1zJZomTBI\n4FXeu7mzFZJtZJdDwaVy2H+CKMw6HOHneEenvvCR/37kiLjk8gw+grC/G1Bw6E2h\nZwIDAQAB\n-----END PUBLIC KEY-----\n",
-			},
-		}
+		file, _ := os.Open("./misc/service.json")
+		body, _ := ioutil.ReadAll(file)
+		var actor activitypub.Actor
+		json.Unmarshal(body, &actor)
+		return actor
 	default:
 		panic("No assined request.")
 	}
