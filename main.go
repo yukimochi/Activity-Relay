@@ -28,6 +28,7 @@ var hostPrivatekey *rsa.PrivateKey
 var actorCache *cache.Cache
 var machineryServer *machinery.Server
 var relayState state.RelayState
+var uaString string
 
 func initConfig() {
 	viper.BindEnv("actor_pem")
@@ -46,6 +47,7 @@ func initConfig() {
 		ResultsExpireIn: 5,
 	}
 	machineryServer, _ = machinery.NewServer(machineryConfig)
+	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.0rc2; " + hostURL.Host + ")"
 	relayState = state.NewState(redisClient)
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 	WebfingerResource.GenerateFromActor(hostURL, &Actor)

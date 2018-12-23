@@ -11,6 +11,7 @@ import (
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
 	"github.com/satori/go.uuid"
+	"github.com/spf13/viper"
 	"github.com/yukimochi/Activity-Relay/ActivityPub"
 	"github.com/yukimochi/Activity-Relay/KeyLoader"
 )
@@ -20,12 +21,14 @@ var Actor activitypub.Actor
 
 var hostURL *url.URL
 var hostPrivatekey *rsa.PrivateKey
+var machineryServer *machinery.Server
 var redisClient *redis.Client
+var uaString string
 
 func relayActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
+	err := sendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
 		mod, _ := redisClient.HSetNX("relay:statistics:"+domain.Host, "last_error", err.Error()).Result()
@@ -39,63 +42,48 @@ func relayActivity(args ...string) error {
 func registorActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := activitypub.SendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
+	err := sendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
 	return err
 }
 
-func main() {
-	pemPath := os.Getenv("ACTOR_PEM")
-	if pemPath == "" {
-		panic("Require ACTOR_PEM environment variable.")
-	}
-	relayDomain := os.Getenv("RELAY_DOMAIN")
-	if relayDomain == "" {
-		panic("Require RELAY_DOMAIN environment variable.")
-	}
-	redisURL := os.Getenv("REDIS_URL")
-	if redisURL == "" {
-		redisURL = "127.0.0.1:6379"
-	}
-
-	var err error
-	hostPrivatekey, err = keyloader.ReadPrivateKeyRSAfromPath(pemPath)
-	if err != nil {
-		panic("Can't read Hostkey Pemfile")
-	}
-	hostURL, err = url.Parse("https://" + relayDomain)
-	if err != nil {
-		panic("Can't parse Relay Domain")
-	}
+func initConfig() {
+	viper.BindEnv("actor_pem")
+	viper.BindEnv("relay_domain")
+	viper.BindEnv("relay_servicename")
+	viper.BindEnv("redis_url")
+	hostURL, _ = url.Parse("https://" + viper.GetString("relay_domain"))
+	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
 	redisClient = redis.NewClient(&redis.Options{
-		Addr: redisURL,
+		Addr: viper.GetString("redis_url"),
 	})
-	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
-
 	machineryConfig := &config.Config{
-		Broker:          "redis://" + redisURL,
+		Broker:          "redis://" + viper.GetString("redis_url"),
 		DefaultQueue:    "relay",
-		ResultBackend:   "redis://" + redisURL,
+		ResultBackend:   "redis://" + viper.GetString("redis_url"),
 		ResultsExpireIn: 5,
 	}
-	server, err := machinery.NewServer(machineryConfig)
+	machineryServer, _ = machinery.NewServer(machineryConfig)
+	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.0rc2; " + hostURL.Host + ")"
+	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
+
+	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]\n - Configrations")
+	fmt.Println("RELAY DOMAIN : ", hostURL.Host)
+	fmt.Println("REDIS URL : ", viper.GetString("redis_url"))
+}
+
+func main() {
+	initConfig()
+
+	err := machineryServer.RegisterTask("registor", registorActivity)
 	if err != nil {
 		panic(err.Error())
 	}
-	err = server.RegisterTask("registor", registorActivity)
-	if err != nil {
-		panic(err.Error())
-	}
-	err = server.RegisterTask("relay", relayActivity)
+	err = machineryServer.RegisterTask("relay", relayActivity)
 	if err != nil {
 		panic(err.Error())
 	}
 	workerID := uuid.NewV4()
-	worker := server.NewWorker(workerID.String(), 200)
-
-	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]\n - Configrations")
-	fmt.Println("RELAY DOMAIN : ", relayDomain)
-	fmt.Println("REDIS URL : ", redisURL)
-
+	worker := machineryServer.NewWorker(workerID.String(), 200)
 	err = worker.Launch()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
