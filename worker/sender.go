@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Songmu/go-httpdate"
+	httpdate "github.com/Songmu/go-httpdate"
 	"github.com/yukimochi/httpsig"
 )
 

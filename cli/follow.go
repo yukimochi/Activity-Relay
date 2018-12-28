@@ -8,8 +8,8 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/spf13/cobra"
-	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/State"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
+	state "github.com/yukimochi/Activity-Relay/State"
 )
 
 func followCmdInit() *cobra.Command {

@@ -10,10 +10,10 @@ import (
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
-	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
+	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
 // Actor : Relay's Actor

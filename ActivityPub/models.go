@@ -9,9 +9,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/patrickmn/go-cache"
-	"github.com/satori/go.uuid"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	cache "github.com/patrickmn/go-cache"
+	uuid "github.com/satori/go.uuid"
+	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
 // PublicKey : Activity Certificate.

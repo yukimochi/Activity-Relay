@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/yukimochi/Activity-Relay/State"
+	state "github.com/yukimochi/Activity-Relay/State"
 )
 
 const (

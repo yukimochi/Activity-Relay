@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/State"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
+	state "github.com/yukimochi/Activity-Relay/State"
 )
 
 func handleWebfinger(writer http.ResponseWriter, request *http.Request) {

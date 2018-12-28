@@ -9,8 +9,8 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
-	"github.com/yukimochi/Activity-Relay/State"
+	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
+	state "github.com/yukimochi/Activity-Relay/State"
 )
 
 var hostname *url.URL

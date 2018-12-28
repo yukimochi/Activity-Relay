@@ -10,11 +10,11 @@ import (
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
-	"github.com/patrickmn/go-cache"
+	cache "github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
-	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
-	"github.com/yukimochi/Activity-Relay/State"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
+	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
+	state "github.com/yukimochi/Activity-Relay/State"
 )
 
 // Actor : Relay's Actor
