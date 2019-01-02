@@ -1,4 +1,4 @@
-FROM golang:alpine AS build
+FROM golang:rc-alpine AS build
 
 WORKDIR /go/src/github.com/yukimochi/Activity-Relay
 COPY . /go/src/github.com/yukimochi/Activity-Relay
