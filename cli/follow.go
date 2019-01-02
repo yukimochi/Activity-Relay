@@ -161,8 +161,8 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 				createFollowRequestResponse(domain, "Reject")
 				break
 			}
+			cmd.Println("Invalid domain given")
 		}
-		cmd.Println("Invalid domain given")
 	}
 
 	return nil

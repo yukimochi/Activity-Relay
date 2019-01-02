@@ -191,3 +191,30 @@ func TestSetDomainInvalid(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 	relayState.Load()
 }
+
+func TestUnfollowDomain(t *testing.T) {
+	app := buildNewCmd()
+
+	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.Execute()
+
+	buffer := new(bytes.Buffer)
+	app.SetOutput(buffer)
+
+	app.SetArgs([]string{"domain", "unfollow", "subscription.example.jp"})
+	app.Execute()
+
+	valid := true
+	for _, domain := range relayState.LimitedDomains {
+		if domain == "subscription.example.jp" {
+			valid = false
+		}
+	}
+
+	if !valid {
+		t.Fatalf("Do not unfollow domain")
+	}
+
+	relayState.RedisClient.FlushAll().Result()
+	relayState.Load()
+}

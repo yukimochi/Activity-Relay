@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
+	state "github.com/yukimochi/Activity-Relay/State"
 )
 
 func domainCmdInit() *cobra.Command {
@@ -34,7 +37,31 @@ func domainCmdInit() *cobra.Command {
 	domainSet.Flags().BoolP("undo", "u", false, "Unset domain as limited or blocked")
 	domain.AddCommand(domainSet)
 
+	var domainUnfollow = &cobra.Command{
+		Use:   "unfollow [flags]",
+		Short: "Send Unfollow request for given domains",
+		Long:  "Send unfollow request for given domains.",
+		RunE:  unfollowDomains,
+	}
+	domain.AddCommand(domainUnfollow)
+
 	return domain
+}
+
+func createUnfollowRequestResponse(subscription state.Subscription) error {
+	activity := activitypub.Activity{
+		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		ID:      subscription.ActivityID,
+		Actor:   subscription.ActorID,
+		Type:    "Follow",
+		Object:  "https://www.w3.org/ns/activitystreams#Public",
+	}
+
+	resp := activity.GenerateResponse(hostname, "Reject")
+	jsonData, _ := json.Marshal(&resp)
+	pushRegistorJob(subscription.InboxURL, jsonData)
+
+	return nil
 }
 
 func listDomains(cmd *cobra.Command, args []string) error {
@@ -84,6 +111,23 @@ func setDomainType(cmd *cobra.Command, args []string) error {
 		}
 	default:
 		cmd.Println("Invalid type given")
+	}
+
+	return nil
+}
+
+func unfollowDomains(cmd *cobra.Command, args []string) error {
+	subscriptions := relayState.Subscriptions
+	for _, domain := range args {
+		for _, subscription := range subscriptions {
+			if domain == subscription.Domain {
+				cmd.Println("Unfollow [" + domain + "]")
+				createUnfollowRequestResponse(subscription)
+				relayState.DelSubscription(subscription.Domain)
+				break
+			}
+			fmt.Println("Invalid domain given")
+		}
 	}
 
 	return nil
