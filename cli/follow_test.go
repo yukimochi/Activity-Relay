@@ -102,7 +102,25 @@ func TestInvalidFollow(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain given" {
+	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
+		t.Fatalf("Invalid Responce.")
+	}
+
+	relayState.RedisClient.FlushAll().Result()
+	relayState.Load()
+}
+
+func TestInvalidRejectFollow(t *testing.T) {
+	app := buildNewCmd()
+
+	buffer := new(bytes.Buffer)
+	app.SetOutput(buffer)
+
+	app.SetArgs([]string{"follow", "reject", "unknown.tld"})
+	app.Execute()
+
+	output := buffer.String()
+	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
 		t.Fatalf("Invalid Responce.")
 	}
 
