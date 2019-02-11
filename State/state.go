@@ -106,6 +106,16 @@ func (config *RelayState) DelSubscription(domain string) {
 	config.Load()
 }
 
+// SelectSubscription : Select instance from string
+func (config *RelayState) SelectSubscription(domain string) *Subscription {
+	for _, subscription := range config.Subscriptions {
+		if domain == subscription.Domain {
+			return &subscription
+		}
+	}
+	return nil
+}
+
 // SetBlockedDomain : Set/Unset instance for blocked domain
 func (config *RelayState) SetBlockedDomain(domain string, value bool) {
 	if value {

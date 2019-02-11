@@ -119,15 +119,15 @@ func setDomainType(cmd *cobra.Command, args []string) error {
 func unfollowDomains(cmd *cobra.Command, args []string) error {
 	subscriptions := relayState.Subscriptions
 	for _, domain := range args {
-		for _, subscription := range subscriptions {
-			if domain == subscription.Domain {
-				cmd.Println("Unfollow [" + domain + "]")
-				createUnfollowRequestResponse(subscription)
-				relayState.DelSubscription(subscription.Domain)
-				break
-			}
+		if contains(subscriptions, domain) {
+			subscription := *relayState.SelectSubscription(domain)
+			cmd.Println("Unfollow [" + subscription.Domain + "]")
+			createUnfollowRequestResponse(subscription)
+			relayState.DelSubscription(subscription.Domain)
+			break
+		} else {
+			cmd.Println("Invalid domain [" + domain + "] given")
 		}
-		cmd.Println("Invalid domain [" + domain + "] given")
 	}
 
 	return nil
