@@ -64,6 +64,8 @@ func initConfig() {
 		ResultsExpireIn: 5,
 	}
 	machineryServer, _ = machinery.NewServer(machineryConfig)
+	newNullLogger := NewNullLogger()
+	log.DEBUG = newNullLogger
 	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.1; " + hostURL.Host + ")"
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 
@@ -83,9 +85,6 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	newNullLogger := NewNullLogger()
-	log.DEBUG = newNullLogger
 
 	workerID := uuid.NewV4()
 	worker := machineryServer.NewWorker(workerID.String(), 200)
