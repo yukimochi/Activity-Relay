@@ -9,6 +9,7 @@ import (
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
+	"github.com/RichardKnop/machinery/v1/log"
 	"github.com/go-redis/redis"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
@@ -82,6 +83,10 @@ func main() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+	newNullLogger := NewNullLogger()
+	log.DEBUG = newNullLogger
+
 	workerID := uuid.NewV4()
 	worker := machineryServer.NewWorker(workerID.String(), 200)
 	err = worker.Launch()
