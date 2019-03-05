@@ -12,6 +12,7 @@ jobs:
       - run:
           name: build
           command: |
+            go version
             go get -u github.com/golang/dep/cmd/dep
             dep ensure
             go test -coverprofile=coverage.txt -covermode=atomic -p 1 . ./worker ./cli ./State
