@@ -47,7 +47,7 @@ func initConfig() {
 		ResultsExpireIn: 5,
 	}
 	machineryServer, _ = machinery.NewServer(machineryConfig)
-	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.1; " + hostURL.Host + ")"
+	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.2; " + hostURL.Host + ")"
 	relayState = state.NewState(redisClient)
 	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
