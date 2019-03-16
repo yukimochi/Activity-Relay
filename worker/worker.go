@@ -54,16 +54,21 @@ func initConfig() {
 	viper.BindEnv("redis_url")
 	hostURL, _ = url.Parse("https://" + viper.GetString("relay_domain"))
 	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: viper.GetString("redis_url"),
-	})
+	redisOption, err := redis.ParseURL(viper.GetString("redis_url"))
+	if err != nil {
+		panic(err)
+	}
+	redisClient = redis.NewClient(redisOption)
 	machineryConfig := &config.Config{
-		Broker:          "redis://" + viper.GetString("redis_url"),
+		Broker:          viper.GetString("redis_url"),
 		DefaultQueue:    "relay",
-		ResultBackend:   "redis://" + viper.GetString("redis_url"),
+		ResultBackend:   viper.GetString("redis_url"),
 		ResultsExpireIn: 5,
 	}
-	machineryServer, _ = machinery.NewServer(machineryConfig)
+	machineryServer, err = machinery.NewServer(machineryConfig)
+	if err != nil {
+		panic(err)
+	}
 	newNullLogger := NewNullLogger()
 	log.DEBUG = newNullLogger
 	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.2; " + hostURL.Host + ")"

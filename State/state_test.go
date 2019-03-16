@@ -12,9 +12,11 @@ var redisClient *redis.Client
 
 func TestMain(m *testing.M) {
 	viper.BindEnv("redis_url")
-	redisClient = redis.NewClient(&redis.Options{
-		Addr: viper.GetString("redis_url"),
-	})
+	redisOption, err := redis.ParseURL(viper.GetString("redis_url"))
+	if err != nil {
+		panic(err)
+	}
+	redisClient = redis.NewClient(redisOption)
 
 	code := m.Run()
 	os.Exit(code)
