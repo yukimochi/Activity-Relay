@@ -28,7 +28,7 @@ See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki)
  - `RELAY_DOMAIN` (ex. `relay.toot.yukimochi.jp`)
  - `RELAY_SERVICENAME` (ex. `YUKIMOCHI Toot Relay Service`)
  - `RELAY_BIND` (ex. `0.0.0.0:8080`)
- - `REDIS_URL` (ex. `127.0.0.1:6379`)
+ - `REDIS_URL` (ex. `redis://127.0.0.1:6379/0`)
 
 
 ## License

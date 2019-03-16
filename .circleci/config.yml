@@ -5,7 +5,7 @@ jobs:
     docker:
       - image: circleci/golang
         environment:
-          REDIS_URL: localhost:6379
+          REDIS_URL: redis://localhost:6379/0
       - image: redis:alpine
     steps:
       - checkout

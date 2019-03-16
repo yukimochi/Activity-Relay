@@ -8,8 +8,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	viper.Set("Actor_pem", "misc/testKey.pem")
-	viper.Set("Relay_domain", "relay.yukimochi.example.org")
+	viper.Set("actor_pem", "misc/testKey.pem")
+	viper.Set("relay_domain", "relay.yukimochi.example.org")
 	initConfig()
 
 	// Load Config

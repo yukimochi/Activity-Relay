@@ -24,16 +24,21 @@ func initConfig() {
 	viper.BindEnv("redis_url")
 	hostkey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
 	hostname, _ = url.Parse("https://" + viper.GetString("relay_domain"))
-	redClient := redis.NewClient(&redis.Options{
-		Addr: viper.GetString("redis_url"),
-	})
+	redOption, err := redis.ParseURL(viper.GetString("redis_url"))
+	if err != nil {
+		panic(err)
+	}
+	redClient := redis.NewClient(redOption)
 	var macConfig = &config.Config{
-		Broker:          "redis://" + viper.GetString("redis_url"),
+		Broker:          viper.GetString("redis_url"),
 		DefaultQueue:    "relay",
-		ResultBackend:   "redis://" + viper.GetString("redis_url"),
+		ResultBackend:   viper.GetString("redis_url"),
 		ResultsExpireIn: 5,
 	}
-	macServer, _ = machinery.NewServer(macConfig)
+	macServer, err = machinery.NewServer(macConfig)
+	if err != nil {
+		panic(err)
+	}
 	relayState = state.NewState(redClient)
 }
 
