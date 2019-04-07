@@ -31,6 +31,7 @@ type Actor struct {
 	Context           interface{} `json:"@context"`
 	ID                string      `json:"id"`
 	Type              string      `json:"type"`
+	Name              string      `json:"name"`
 	PreferredUsername string      `json:"preferredUsername"`
 	Inbox             string      `json:"inbox"`
 	Endpoints         *Endpoints  `json:"endpoints"`
@@ -38,11 +39,12 @@ type Actor struct {
 }
 
 // GenerateSelfKey : Generate relay Actor from Publickey.
-func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey) {
+func (actor *Actor) GenerateSelfKey(hostname *url.URL, username string, publickey *rsa.PublicKey) {
 	actor.Context = []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"}
 	actor.ID = hostname.String() + "/actor"
 	actor.Type = "Service"
 	actor.PreferredUsername = "relay"
+	actor.Name = username
 	actor.Inbox = hostname.String() + "/inbox"
 	actor.PublicKey = PublicKey{
 		hostname.String() + "/actor#main-key",
@@ -148,6 +150,16 @@ func (activity *Activity) NestedActivity() (*Activity, error) {
 		return nil, errors.New("Can't assart type")
 	}
 	return nil, errors.New("Can't assart id")
+}
+
+// ActivityObject : ActivityPub Activity.
+type ActivityObject struct {
+	ID      string   `json:"id"`
+	Type    string   `json:"type"`
+	Name    string   `json:"name"`
+	Content string   `json:"content"`
+	To      []string `json:"to"`
+	Cc      []string `json:"cc"`
 }
 
 // Signature : ActivityPub Header Signature.

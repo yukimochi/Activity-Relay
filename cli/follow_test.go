@@ -127,3 +127,16 @@ func TestInvalidRejectFollow(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 	relayState.Load()
 }
+
+func TestCreateUpdateActorActivity(t *testing.T) {
+	app := buildNewCmd()
+
+	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.Execute()
+
+	app.SetArgs([]string{"follow", "update"})
+	app.Execute()
+
+	relayState.RedisClient.FlushAll().Result()
+	relayState.Load()
+}

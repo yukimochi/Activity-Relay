@@ -7,6 +7,7 @@ require (
 	github.com/Songmu/go-httpdate v1.0.0
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/cobra v0.0.3

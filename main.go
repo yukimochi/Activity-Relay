@@ -34,6 +34,7 @@ func initConfig() {
 	viper.BindEnv("actor_pem")
 	viper.BindEnv("relay_domain")
 	viper.BindEnv("relay_bind")
+	viper.BindEnv("relay_servicename")
 	viper.BindEnv("redis_url")
 	hostURL, _ = url.Parse("https://" + viper.GetString("relay_domain"))
 	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
@@ -55,7 +56,7 @@ func initConfig() {
 	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.2; " + hostURL.Host + ")"
 	relayState = state.NewState(redisClient)
 	actorCache = cache.New(5*time.Minute, 10*time.Minute)
-	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
+	Actor.GenerateSelfKey(hostURL, viper.GetString("relay_servicename"), &hostPrivatekey.PublicKey)
 	WebfingerResource.GenerateFromActor(hostURL, &Actor)
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]\n - Configrations")

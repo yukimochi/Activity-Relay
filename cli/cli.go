@@ -9,9 +9,13 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
 	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
 	state "github.com/yukimochi/Activity-Relay/State"
 )
+
+// Actor : Relay's Actor
+var Actor activitypub.Actor
 
 var hostname *url.URL
 var hostkey *rsa.PrivateKey
@@ -21,9 +25,16 @@ var relayState state.RelayState
 func initConfig() {
 	viper.BindEnv("actor_pem")
 	viper.BindEnv("relay_domain")
+	viper.BindEnv("relay_servicename")
 	viper.BindEnv("redis_url")
-	hostkey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
-	hostname, _ = url.Parse("https://" + viper.GetString("relay_domain"))
+	hostkey, err := keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
+	if err != nil {
+		panic(err)
+	}
+	hostname, err = url.Parse("https://" + viper.GetString("relay_domain"))
+	if err != nil {
+		panic(err)
+	}
 	redOption, err := redis.ParseURL(viper.GetString("redis_url"))
 	if err != nil {
 		panic(err)
@@ -40,6 +51,7 @@ func initConfig() {
 		panic(err)
 	}
 	relayState = state.NewState(redClient)
+	Actor.GenerateSelfKey(hostname, viper.GetString("relay_servicename"), &hostkey.PublicKey)
 }
 
 func buildNewCmd() *cobra.Command {

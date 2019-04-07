@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
+	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
 	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
 	state "github.com/yukimochi/Activity-Relay/State"
@@ -44,6 +45,14 @@ func followCmdInit() *cobra.Command {
 		RunE:  rejectFollow,
 	}
 	follow.AddCommand(followReject)
+
+	var updateActor = &cobra.Command{
+		Use:   "update",
+		Short: "Update actor object",
+		Long:  "Update actor object for whole subscribers.",
+		RunE:  updateActor,
+	}
+	follow.AddCommand(updateActor)
 
 	return follow
 }
@@ -85,7 +94,10 @@ func createFollowRequestResponse(domain string, response string) error {
 	}
 
 	resp := activity.GenerateResponse(hostname, response)
-	jsonData, _ := json.Marshal(&resp)
+	jsonData, err := json.Marshal(&resp)
+	if err != nil {
+		return err
+	}
 	pushRegistorJob(data["inbox_url"], jsonData)
 	relayState.RedisClient.Del("relay:pending:" + domain)
 	if response == "Accept" {
@@ -96,6 +108,25 @@ func createFollowRequestResponse(domain string, response string) error {
 			ActorID:    data["actor"],
 		})
 	}
+
+	return nil
+}
+
+func createUpdateActorActivity(subscription state.Subscription) error {
+	activity := activitypub.Activity{
+		Context: []string{"https://www.w3.org/ns/activitystreams"},
+		ID:      hostname.String() + "/activities/" + uuid.NewV4().String(),
+		Actor:   hostname.String() + "/actor",
+		Type:    "Update",
+		To:      []string{"https://www.w3.org/ns/activitystreams#Public"},
+		Object:  Actor,
+	}
+
+	jsonData, err := json.Marshal(&activity)
+	if err != nil {
+		return err
+	}
+	pushRegistorJob(subscription.InboxURL, jsonData)
 
 	return nil
 }
@@ -163,5 +194,15 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 		cmd.Println("Invalid domain [" + domain + "] given")
 	}
 
+	return nil
+}
+
+func updateActor(cmd *cobra.Command, args []string) error {
+	for _, subscription := range relayState.Subscriptions {
+		err := createUpdateActorActivity(subscription)
+		if err != nil {
+			cmd.Println("Failed Update Actor for " + subscription.Domain)
+		}
+	}
 	return nil
 }
