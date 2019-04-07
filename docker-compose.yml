@@ -14,7 +14,7 @@ services:
       - "ACTOR_PEM=/actor.pem"
       - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
-      - "REDIS_URL=redis:6379"
+      - "REDIS_URL=redis://redis:6379"
     volumes:
       - "./actor.pem:/actor.pem"
 
@@ -29,6 +29,6 @@ services:
       - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
       - "RELAY_BIND=0.0.0.0:8080"
-      - "REDIS_URL=redis:6379"
+      - "REDIS_URL=redis://redis:6379"
     volumes:
       - "./actor.pem:/actor.pem"
