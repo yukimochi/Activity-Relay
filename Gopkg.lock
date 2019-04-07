@@ -2,7 +2,7 @@
 
 
 [[projects]]
-  digest = "1:ce6b6155cb0e2a5cda58a7b3ba130d10642ce178715dc1925c54c449cefbfc1a"
+  digest = "1:dce41b029ff92ee7770a9038be145b59c744deec4b108a0319ba69ab6a7b0a6b"
   name = "cloud.google.com/go"
   packages = [
     "compute/metadata",
@@ -14,8 +14,8 @@
     "pubsub/internal/distribution",
   ]
   pruneopts = "UT"
-  revision = "f52f9bc132541d2aa914f42100c36d10b1ef7e0c"
-  version = "v0.37.0"
+  revision = "458e1f376a2b44413160b5d301183b65debaa3f6"
+  version = "v0.37.2"
 
 [[projects]]
   branch = "master"
@@ -53,8 +53,8 @@
     "v1/tracing",
   ]
   pruneopts = "UT"
-  revision = "a8f270f9f1e238f1894d5a6877be6171e422a7be"
-  version = "v1.5.9"
+  revision = "0b3ee9f47d3d1924e45ccceb1e83b38dadf40901"
+  version = "v1.6.0"
 
 [[projects]]
   digest = "1:3ec1b34a4c161eee98ba2530ed7bee201ad57705d4c8e1d8c4bf27b58ce1e728"
@@ -73,7 +73,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:77e2f1a92699048c85513c095841201105655cc92f9f121a707af874ac576018"
+  digest = "1:e4f2bb5ce3d2437451160127021ec371171c80c9e17e57e1bdec01717307ea46"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -115,8 +115,8 @@
     "service/sts",
   ]
   pruneopts = "UT"
-  revision = "2410a5b1bbbb4e64c57dd1030f204c8fbfb1c58a"
-  version = "v1.18.3"
+  revision = "56c1def75689cceec1fa6f14c2eedb4b798827f9"
+  version = "v1.19.11"
 
 [[projects]]
   branch = "master"
@@ -124,7 +124,7 @@
   name = "github.com/bradfitz/gomemcache"
   packages = ["memcache"]
   pruneopts = "UT"
-  revision = "bc664df9673713a0ccf26e3b55a673ec7301088b"
+  revision = "551aad21a6682b95329c1f5bd62ee5060d64f7e8"
 
 [[projects]]
   digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
@@ -276,7 +276,7 @@
   version = "v1.1.2"
 
 [[projects]]
-  digest = "1:450b7623b185031f3a456801155c8320209f75d0d4c4e633c6b1e59d44d6e392"
+  digest = "1:11e62d6050198055e6cd87ed57e5d8c669e84f839c16e16f192374d913d1a70d"
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -284,8 +284,8 @@
     "log",
   ]
   pruneopts = "UT"
-  revision = "1949ddbfd147afd4d964a9f00b24eb291e0e7c38"
-  version = "v1.0.2"
+  revision = "659c90643e714681897ec2521c60567dd21da733"
+  version = "v1.1.0"
 
 [[projects]]
   digest = "1:808cdddf087fb64baeae67b8dfaee2069034d9704923a3cb8bd96a995421a625"
@@ -296,12 +296,12 @@
   version = "v2.1.0"
 
 [[projects]]
-  digest = "1:95741de3af260a92cc5c7f3f3061e85273f5a81b5db20d4bd68da74bd521675e"
+  digest = "1:e0f50a07c0def90588d69f77178712c6fdc67eb6576365f551cce98b44b501bf"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c01d1270ff3e442a8a57cddc1c92dc1138598194"
-  version = "v1.2.0"
+  revision = "63909f0a90ab0f36909e8e044e46ace10cf13ba2"
+  version = "v1.3.0"
 
 [[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
@@ -312,15 +312,15 @@
   version = "v1.2.0"
 
 [[projects]]
-  digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
+  digest = "1:bb495ec276ab82d3dd08504bbc0594a65de8c3b22c6f2aaa92d05b73fbf3a82e"
   name = "github.com/spf13/afero"
   packages = [
     ".",
     "mem",
   ]
   pruneopts = "UT"
-  revision = "f4711e4db9e9a1d3887343acb72b2bbfc2f686f5"
-  version = "v1.2.1"
+  revision = "588a75ec4f32903aa5e39a2619ba6a4631e28424"
+  version = "v1.2.2"
 
 [[projects]]
   digest = "1:08d65904057412fc0270fc4812a1c90c594186819243160dc779a402d4b6d0bc"
@@ -368,7 +368,7 @@
   name = "github.com/streadway/amqp"
   packages = ["."]
   pruneopts = "UT"
-  revision = "14f78b41ce6da3d698c2ef2cc8c0ea7ce9e26688"
+  revision = "75d898a42a940fbc854dfd1a4199eabdc00cf024"
 
 [[projects]]
   branch = "master"
@@ -434,16 +434,18 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:1381b8539f9abce35487c1df5619c42d6920073a98aab88b68f33a4c8a0c7acc"
+  digest = "1:d1ff17c57578bd01afead8838fcb1d5a1e47ad35c610e047ae549a23bb977037"
   name = "go.opencensus.io"
   packages = [
     ".",
-    "exemplar",
     "internal",
     "internal/tagencoding",
+    "metric/metricdata",
+    "metric/metricproducer",
     "plugin/ocgrpc",
     "plugin/ochttp",
     "plugin/ochttp/propagation/b3",
+    "resource",
     "stats",
     "stats/internal",
     "stats/view",
@@ -454,8 +456,8 @@
     "trace/tracestate",
   ]
   pruneopts = "UT"
-  revision = "f305e5c4e2cf345eba88de13d10de1126fa45a61"
-  version = "v0.19.1"
+  revision = "46618d076d80f4eab85adbcb3be9a370be1dc4e0"
+  version = "v0.20.0"
 
 [[projects]]
   branch = "master"
@@ -469,11 +471,11 @@
     "sha3",
   ]
   pruneopts = "UT"
-  revision = "a1f597ede03a7bef967a422b5b3a5bd08805a01e"
+  revision = "38d8ce5564a5b71b2e3a00553993f1b9a7ae852f"
 
 [[projects]]
   branch = "master"
-  digest = "1:5b51b81e299d0dfd03f567fd8d8a2d7ee954b3b72c69292f07c49aae785b6dd9"
+  digest = "1:e87f576319e558a57920a69ccdeb7d597f18d5541633c529224c35aa2185e5f4"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -486,11 +488,11 @@
     "trace",
   ]
   pruneopts = "UT"
-  revision = "9f648a60d9775ef5c977e7669d1673a7a67bef33"
+  revision = "eb5bcb51f2a31c7d5141d810b70815c05d9c9146"
 
 [[projects]]
   branch = "master"
-  digest = "1:5e9f22cf754ab20a5dff0ae04b12516b112c5b81cd44dccccde148865084d730"
+  digest = "1:645cb780e4f3177111b40588f0a7f5950efcfb473e7ff41d8d81b2ba5eaa6ed5"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -500,7 +502,7 @@
     "jwt",
   ]
   pruneopts = "UT"
-  revision = "e64efc72b421e893cbf63f17ba2221e7d6d0b0f3"
+  revision = "9f3314589c9a9136388751d9adae6b0ed400978a"
 
 [[projects]]
   branch = "master"
@@ -515,14 +517,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:53df1464a35ecef619d5d29fc24427e34798c47c31f8a35ff709cb71b4009972"
+  digest = "1:d78755393cc6ee9bd63b4debeed9be209517adc3296e61ecdf97590b15260f45"
   name = "golang.org/x/sys"
   packages = [
     "cpu",
     "unix",
   ]
   pruneopts = "UT"
-  revision = "fead79001313d15903fb4605b4a1b781532cd93e"
+  revision = "4b34438f7a67ee5f45cc6132e2bad873a20324e9"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -562,11 +564,11 @@
     "transport/http/internal/propagation",
   ]
   pruneopts = "UT"
-  revision = "e742f5a8defa1f9f5d723dfa04c962e680dc33f0"
-  version = "v0.2.0"
+  revision = "bce707a4d0ea3488942724b3bcc1c8338f38f991"
+  version = "v0.3.0"
 
 [[projects]]
-  digest = "1:c4eaa5f79d36f76ef4bd0c4f96e36bc1b7b5a359528d1267f0cb7a5d58b7b5bb"
+  digest = "1:15b86ee56687b2b842431678dacd1050900cd5ea24a47fa908ac32ce540664b7"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -583,12 +585,12 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "e9657d882bb81064595ca3b56cbe2546bbabf7b1"
-  version = "v1.4.0"
+  revision = "54a98f90d1c46b7731eb8fb305d2a321c30ef610"
+  version = "v1.5.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:7ba623745e0f553da646f5f7c1338fa271c91c4be1cf1a9978369216f7be0c5b"
+  digest = "1:3225a050ce9eb2c772c3f4a173b89dba31f78be26da6e12651b93a6836cbea50"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
@@ -598,10 +600,10 @@
     "protobuf/field_mask",
   ]
   pruneopts = "UT"
-  revision = "5fe7a883aa19554f42890211544aa549836af7b7"
+  revision = "64821d5d210748c883cd2b809589555ae4654203"
 
 [[projects]]
-  digest = "1:9153ffce82afcac3bf963f2aac8df53a34859e293e7329b00ef42eea00fe100f"
+  digest = "1:4abdd62fcb53e7fb898e708754e3ec03254a870b35e826649b974c6811041808"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -638,8 +640,8 @@
     "tap",
   ]
   pruneopts = "UT"
-  revision = "2fdaae294f38ed9a121193c51ec99fecd3b13eb7"
-  version = "v1.19.0"
+  revision = "3507fb8e1a5ad030303c106fef3a47c9fdad16ad"
+  version = "v1.19.1"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
