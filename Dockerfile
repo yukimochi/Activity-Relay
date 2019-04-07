@@ -1,12 +1,10 @@
 FROM golang:alpine AS build
 
-WORKDIR /go/src/github.com/yukimochi/Activity-Relay
-COPY . /go/src/github.com/yukimochi/Activity-Relay
+WORKDIR /Activity-Relay
+COPY . /Activity-Relay
 
 RUN  mkdir -p /rootfs/usr/bin && \
      apk add -U --no-cache git && \
-     go get -u github.com/golang/dep/cmd/dep && \
-     dep ensure && \
      go build -o /rootfs/usr/bin/server . && \
      go build -o /rootfs/usr/bin/worker ./worker && \
      go build -o /rootfs/usr/bin/ar-cli ./cli
