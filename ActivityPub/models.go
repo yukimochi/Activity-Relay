@@ -26,6 +26,11 @@ type Endpoints struct {
 	SharedInbox string `json:"sharedInbox"`
 }
 
+// Image : Image Object.
+type Image struct {
+	URL string `json:"url"`
+}
+
 // Actor : ActivityPub Actor.
 type Actor struct {
 	Context           interface{} `json:"@context"`
@@ -33,18 +38,20 @@ type Actor struct {
 	Type              string      `json:"type"`
 	Name              string      `json:"name"`
 	PreferredUsername string      `json:"preferredUsername"`
+	Summary           string      `json:"summary"`
 	Inbox             string      `json:"inbox"`
 	Endpoints         *Endpoints  `json:"endpoints"`
 	PublicKey         PublicKey   `json:"publicKey"`
+	Icon              Image       `json:"icon"`
+	Image             Image       `json:"image"`
 }
 
 // GenerateSelfKey : Generate relay Actor from Publickey.
-func (actor *Actor) GenerateSelfKey(hostname *url.URL, username string, publickey *rsa.PublicKey) {
+func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey) {
 	actor.Context = []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"}
 	actor.ID = hostname.String() + "/actor"
 	actor.Type = "Service"
 	actor.PreferredUsername = "relay"
-	actor.Name = username
 	actor.Inbox = hostname.String() + "/inbox"
 	actor.PublicKey = PublicKey{
 		hostname.String() + "/actor#main-key",
