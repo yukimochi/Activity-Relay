@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"net/url"
 
 	"github.com/RichardKnop/machinery/v1"
@@ -23,10 +24,23 @@ var macServer *machinery.Server
 var relayState state.RelayState
 
 func initConfig() {
-	viper.BindEnv("actor_pem")
-	viper.BindEnv("relay_domain")
-	viper.BindEnv("relay_servicename")
-	viper.BindEnv("redis_url")
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("Config file is not exists. Use environment variables.")
+		viper.BindEnv("actor_pem")
+		viper.BindEnv("relay_domain")
+		viper.BindEnv("relay_bind")
+		viper.BindEnv("relay_servicename")
+		viper.BindEnv("redis_url")
+	} else {
+		Actor.Summary = viper.GetString("relay_summary")
+		Actor.Icon = activitypub.Image{viper.GetString("relay_icon")}
+		Actor.Image = activitypub.Image{viper.GetString("relay_image")}
+	}
+	Actor.Name = viper.GetString("relay_servicename")
+
 	hostkey, err := keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
 	if err != nil {
 		panic(err)
@@ -51,7 +65,7 @@ func initConfig() {
 		panic(err)
 	}
 	relayState = state.NewState(redClient)
-	Actor.GenerateSelfKey(hostname, viper.GetString("relay_servicename"), &hostkey.PublicKey)
+	Actor.GenerateSelfKey(hostname, &hostkey.PublicKey)
 }
 
 func buildNewCmd() *cobra.Command {

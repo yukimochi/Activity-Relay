@@ -17,6 +17,7 @@ services:
       - "REDIS_URL=redis://redis:6379"
     volumes:
       - "./actor.pem:/actor.pem"
+#       - "./config.yaml:/Activity-Relay/config.yaml"
 
   server:
     build: .
@@ -32,3 +33,4 @@ services:
       - "REDIS_URL=redis://redis:6379"
     volumes:
       - "./actor.pem:/actor.pem"
+#       - "./config.yaml:/Activity-Relay/config.yaml"

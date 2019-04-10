@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -11,7 +12,13 @@ import (
 var redisClient *redis.Client
 
 func TestMain(m *testing.M) {
-	viper.BindEnv("redis_url")
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("Config file is not exists. Use environment variables.")
+		viper.BindEnv("redis_url")
+	}
 	redisOption, err := redis.ParseURL(viper.GetString("redis_url"))
 	if err != nil {
 		panic(err)

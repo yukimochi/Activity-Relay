@@ -12,6 +12,7 @@ jobs:
           name: build
           command: |
             go version
+            rm config.yaml
             go test -coverprofile=coverage.txt -covermode=atomic -p 1 . ./worker ./cli ./State
             bash <(curl -s https://codecov.io/bash)
   docker:

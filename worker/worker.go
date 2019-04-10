@@ -48,10 +48,23 @@ func registorActivity(args ...string) error {
 }
 
 func initConfig() {
-	viper.BindEnv("actor_pem")
-	viper.BindEnv("relay_domain")
-	viper.BindEnv("relay_servicename")
-	viper.BindEnv("redis_url")
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("Config file is not exists. Use environment variables.")
+		viper.BindEnv("actor_pem")
+		viper.BindEnv("relay_domain")
+		viper.BindEnv("relay_bind")
+		viper.BindEnv("relay_servicename")
+		viper.BindEnv("redis_url")
+	} else {
+		Actor.Summary = viper.GetString("relay_summary")
+		Actor.Icon = activitypub.Image{viper.GetString("relay_icon")}
+		Actor.Image = activitypub.Image{viper.GetString("relay_image")}
+	}
+	Actor.Name = viper.GetString("relay_servicename")
+
 	hostURL, _ = url.Parse("https://" + viper.GetString("relay_domain"))
 	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
 	redisOption, err := redis.ParseURL(viper.GetString("redis_url"))
@@ -72,7 +85,7 @@ func initConfig() {
 	newNullLogger := NewNullLogger()
 	log.DEBUG = newNullLogger
 	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.2; " + hostURL.Host + ")"
-	Actor.GenerateSelfKey(hostURL, viper.GetString("relay_servicename"), &hostPrivatekey.PublicKey)
+	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]\n - Configrations")
 	fmt.Println("RELAY DOMAIN : ", hostURL.Host)

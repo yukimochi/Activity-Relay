@@ -1,0 +1,10 @@
+actor_pem: /actor.pem
+redis_url: redis://redis:6379
+
+relay_bind: 0.0.0.0:8080
+relay_domain: relay.toot.yukimochi.jp
+relay_servicename: YUKIMOCHI Toot Relay Service
+# relay_summary: |
+
+# relay_icon: https://
+# relay_image: https://
