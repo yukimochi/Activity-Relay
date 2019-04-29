@@ -32,11 +32,14 @@ func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKe
 	return nil
 }
 
-func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.PrivateKey) error {
+func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.PrivateKey, activityHost *string) error {
 	req, _ := http.NewRequest("POST", inboxURL, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json, application/ld+json")
 	req.Header.Set("User-Agent", uaString)
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
+	if activityHost != nil {
+		req.Header.Set("X-Relay-ActivityHost", *activityHost)
+	}
 	appendSignature(req, &body, KeyID, publicKey)
 	client := &http.Client{Timeout: time.Duration(5) * time.Second}
 	resp, err := client.Do(req)

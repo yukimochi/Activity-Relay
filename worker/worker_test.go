@@ -36,7 +36,7 @@ func TestRelayActivity(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := relayActivity(s.URL, "data")
+	err := relayActivity(s.URL, "data", "")
 	if err != nil {
 		t.Fatal("Failed - Data transfar not collect")
 	}
@@ -48,7 +48,7 @@ func TestRelayActivityNoHost(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := relayActivity("http://nohost.example.jp", "data")
+	err := relayActivity("http://nohost.example.jp", "data", "")
 	if err == nil {
 		t.Fatal("Failed - Error not reported.")
 	}
@@ -66,7 +66,7 @@ func TestRelayActivityResp500(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := relayActivity(s.URL, "data")
+	err := relayActivity(s.URL, "data", "")
 	if err == nil {
 		t.Fatal("Failed - Error not reported.")
 	}

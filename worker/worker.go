@@ -29,7 +29,8 @@ var uaString string
 func relayActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := sendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
+	activityHost := args[2]
+	err := sendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey, &activityHost)
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
 		mod, _ := redisClient.HSetNX("relay:statistics:"+domain.Host, "last_error", err.Error()).Result()
@@ -43,7 +44,7 @@ func relayActivity(args ...string) error {
 func registorActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := sendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey)
+	err := sendActivity(inboxURL, Actor.ID, []byte(body), hostPrivatekey, nil)
 	return err
 }
 

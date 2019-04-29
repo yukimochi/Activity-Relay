@@ -74,6 +74,7 @@ func contains(entries interface{}, finder string) bool {
 
 func pushRelayJob(sourceInbox string, body []byte) {
 	for _, domain := range relayState.Subscriptions {
+		sourceURL, _ := url.Parse(sourceInbox)
 		if sourceInbox != domain.Domain {
 			job := &tasks.Signature{
 				Name:       "relay",
@@ -88,6 +89,11 @@ func pushRelayJob(sourceInbox string, body []byte) {
 						Name:  "body",
 						Type:  "string",
 						Value: string(body),
+					},
+					{
+						Name:  "activityHost",
+						Type:  "string",
+						Value: sourceURL.Host,
 					},
 				},
 			}

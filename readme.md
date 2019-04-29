@@ -30,6 +30,9 @@ See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki)
  - `RELAY_BIND` (ex. `0.0.0.0:8080`)
  - `REDIS_URL` (ex. `redis://127.0.0.1:6379/0`)
 
+## Appended HTTP Header
+
+ - `X-Relay-ActivityHost` Indicates an activity domain.
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay?ref=badge_large)
