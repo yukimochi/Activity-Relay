@@ -31,10 +31,10 @@ func NewState(redisClient *redis.Client) RelayState {
 type RelayState struct {
 	RedisClient *redis.Client
 
-	RelayConfig    relayConfig    `json:"relayConfig"`
-	LimitedDomains []string       `json:"limitedDomains"`
-	BlockedDomains []string       `json:"blockedDomains"`
-	Subscriptions  []Subscription `json:"subscriptions"`
+	RelayConfig    relayConfig    `json:"relayConfig,omitempty"`
+	LimitedDomains []string       `json:"limitedDomains,omitempty"`
+	BlockedDomains []string       `json:"blockedDomains,omitempty"`
+	Subscriptions  []Subscription `json:"subscriptions,omitempty"`
 }
 
 // Load : Refrash content from redis
@@ -140,16 +140,16 @@ func (config *RelayState) SetLimitedDomain(domain string, value bool) {
 
 // Subscription : Instance subscription information
 type Subscription struct {
-	Domain     string `json:"domain"`
-	InboxURL   string `json:"inbox_url"`
-	ActivityID string `json:"activity_id"`
-	ActorID    string `json:"actor_id"`
+	Domain     string `json:"domain,omitempty"`
+	InboxURL   string `json:"inbox_url,omitempty"`
+	ActivityID string `json:"activity_id,omitempty"`
+	ActorID    string `json:"actor_id,omitempty"`
 }
 
 type relayConfig struct {
-	BlockService     bool `json:"blockService"`
-	ManuallyAccept   bool `json:"manuallyAccept"`
-	CreateAsAnnounce bool `json:"createAsAnnounce"`
+	BlockService     bool `json:"blockService,omitempty"`
+	ManuallyAccept   bool `json:"manuallyAccept,omitempty"`
+	CreateAsAnnounce bool `json:"createAsAnnounce,omitempty"`
 }
 
 func (config *relayConfig) load(redisClient *redis.Client) {

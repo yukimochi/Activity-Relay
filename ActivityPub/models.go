@@ -16,34 +16,34 @@ import (
 
 // PublicKey : Activity Certificate.
 type PublicKey struct {
-	ID           string `json:"id"`
-	Owner        string `json:"owner"`
-	PublicKeyPem string `json:"publicKeyPem"`
+	ID           string `json:"id,omitempty"`
+	Owner        string `json:"owner,omitempty"`
+	PublicKeyPem string `json:"publicKeyPem,omitempty"`
 }
 
 //Endpoints : Contains SharedInbox address.
 type Endpoints struct {
-	SharedInbox string `json:"sharedInbox"`
+	SharedInbox string `json:"sharedInbox,omitempty"`
 }
 
 // Image : Image Object.
 type Image struct {
-	URL string `json:"url"`
+	URL string `json:"url,omitempty"`
 }
 
 // Actor : ActivityPub Actor.
 type Actor struct {
-	Context           interface{} `json:"@context"`
-	ID                string      `json:"id"`
-	Type              string      `json:"type"`
-	Name              string      `json:"name"`
-	PreferredUsername string      `json:"preferredUsername"`
-	Summary           string      `json:"summary"`
-	Inbox             string      `json:"inbox"`
-	Endpoints         *Endpoints  `json:"endpoints"`
-	PublicKey         PublicKey   `json:"publicKey"`
-	Icon              Image       `json:"icon"`
-	Image             Image       `json:"image"`
+	Context           interface{} `json:"@context,omitempty"`
+	ID                string      `json:"id,omitempty"`
+	Type              string      `json:"type,omitempty"`
+	Name              string      `json:"name,omitempty"`
+	PreferredUsername string      `json:"preferredUsername,omitempty"`
+	Summary           string      `json:"summary,omitempty"`
+	Inbox             string      `json:"inbox,omitempty"`
+	Endpoints         *Endpoints  `json:"endpoints,omitempty"`
+	PublicKey         PublicKey   `json:"publicKey,omitempty"`
+	Icon              Image       `json:"icon,omitempty"`
+	Image             Image       `json:"image,omitempty"`
 }
 
 // GenerateSelfKey : Generate relay Actor from Publickey.
@@ -93,13 +93,13 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 
 // Activity : ActivityPub Activity.
 type Activity struct {
-	Context interface{} `json:"@context"`
-	ID      string      `json:"id"`
-	Actor   string      `json:"actor"`
-	Type    string      `json:"type"`
-	Object  interface{} `json:"object"`
-	To      []string    `json:"to"`
-	Cc      []string    `json:"cc"`
+	Context interface{} `json:"@context,omitempty"`
+	ID      string      `json:"id,omitempty"`
+	Actor   string      `json:"actor,omitempty"`
+	Type    string      `json:"type,omitempty"`
+	Object  interface{} `json:"object,omitempty"`
+	To      []string    `json:"to,omitempty"`
+	Cc      []string    `json:"cc,omitempty"`
 }
 
 // GenerateResponse : Generate activity response.
@@ -161,33 +161,33 @@ func (activity *Activity) NestedActivity() (*Activity, error) {
 
 // ActivityObject : ActivityPub Activity.
 type ActivityObject struct {
-	ID      string   `json:"id"`
-	Type    string   `json:"type"`
-	Name    string   `json:"name"`
-	Content string   `json:"content"`
-	To      []string `json:"to"`
-	Cc      []string `json:"cc"`
+	ID      string   `json:"id,omitempty"`
+	Type    string   `json:"type,omitempty"`
+	Name    string   `json:"name,omitempty"`
+	Content string   `json:"content,omitempty"`
+	To      []string `json:"to,omitempty"`
+	Cc      []string `json:"cc,omitempty"`
 }
 
 // Signature : ActivityPub Header Signature.
 type Signature struct {
-	Type           string `json:"type"`
-	Creator        string `json:"creator"`
-	Created        string `json:"created"`
-	SignatureValue string `json:"signatureValue"`
+	Type           string `json:"type,omitempty"`
+	Creator        string `json:"creator,omitempty"`
+	Created        string `json:"created,omitempty"`
+	SignatureValue string `json:"signatureValue,omitempty"`
 }
 
 // WebfingerLink : Webfinger Link Resource.
 type WebfingerLink struct {
-	Rel  string `json:"rel"`
-	Type string `json:"type"`
-	Href string `json:"href"`
+	Rel  string `json:"rel,omitempty"`
+	Type string `json:"type,omitempty"`
+	Href string `json:"href,omitempty"`
 }
 
 // WebfingerResource : Webfinger Resource.
 type WebfingerResource struct {
-	Subject string          `json:"subject"`
-	Links   []WebfingerLink `json:"links"`
+	Subject string          `json:"subject,omitempty"`
+	Links   []WebfingerLink `json:"links,omitempty"`
 }
 
 // GenerateFromActor : Generate Webfinger resource from Actor.
