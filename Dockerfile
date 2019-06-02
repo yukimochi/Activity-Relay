@@ -5,9 +5,9 @@ COPY . /Activity-Relay
 
 RUN  mkdir -p /rootfs/usr/bin && \
      apk add -U --no-cache git && \
-     go build -o /rootfs/usr/bin/server . && \
-     go build -o /rootfs/usr/bin/worker ./worker && \
-     go build -o /rootfs/usr/bin/ar-cli ./cli
+     go build -o /rootfs/usr/bin/server -ldflags "-X main.version=$(git describe --tags HEAD)" . && \
+     go build -o /rootfs/usr/bin/worker -ldflags "-X main.version=$(git describe --tags HEAD)"  ./worker && \
+     go build -o /rootfs/usr/bin/ar-cli -ldflags "-X main.version=$(git describe --tags HEAD)"  ./cli
 
 FROM alpine
 

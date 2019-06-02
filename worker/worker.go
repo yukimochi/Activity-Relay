@@ -17,14 +17,17 @@ import (
 	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
-// Actor : Relay's Actor
-var Actor activitypub.Actor
+var (
+	version string
 
-var hostURL *url.URL
-var hostPrivatekey *rsa.PrivateKey
-var machineryServer *machinery.Server
-var redisClient *redis.Client
-var uaString string
+	// Actor : Relay's Actor
+	Actor activitypub.Actor
+
+	hostURL         *url.URL
+	hostPrivatekey  *rsa.PrivateKey
+	redisClient     *redis.Client
+	machineryServer *machinery.Server
+)
 
 func relayActivity(args ...string) error {
 	inboxURL := args[0]
@@ -54,14 +57,14 @@ func initConfig() {
 	if err != nil {
 		fmt.Println("Config file is not exists. Use environment variables.")
 		viper.BindEnv("actor_pem")
-		viper.BindEnv("relay_domain")
-		viper.BindEnv("relay_bind")
-		viper.BindEnv("relay_servicename")
 		viper.BindEnv("redis_url")
+		viper.BindEnv("relay_bind")
+		viper.BindEnv("relay_domain")
+		viper.BindEnv("relay_servicename")
 	} else {
 		Actor.Summary = viper.GetString("relay_summary")
-		Actor.Icon = activitypub.Image{viper.GetString("relay_icon")}
-		Actor.Image = activitypub.Image{viper.GetString("relay_image")}
+		Actor.Icon = activitypub.Image{URL: viper.GetString("relay_icon")}
+		Actor.Image = activitypub.Image{URL: viper.GetString("relay_image")}
 	}
 	Actor.Name = viper.GetString("relay_servicename")
 
@@ -82,12 +85,13 @@ func initConfig() {
 	if err != nil {
 		panic(err)
 	}
+
+	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 	newNullLogger := NewNullLogger()
 	log.DEBUG = newNullLogger
-	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.3; " + hostURL.Host + ")"
-	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 
-	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]\n - Configrations")
+	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]", version)
+	fmt.Println(" - Configrations")
 	fmt.Println("RELAY DOMAIN : ", hostURL.Host)
 	fmt.Println("REDIS URL : ", viper.GetString("redis_url"))
 }

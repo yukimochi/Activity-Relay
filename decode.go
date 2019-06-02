@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/yukimochi/Activity-Relay/ActivityPub"
-	"github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/spf13/viper"
+	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
+	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
 	"github.com/yukimochi/httpsig"
 )
 
@@ -26,7 +28,7 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 	}
 	KeyID := verifier.KeyId()
 	remoteActor := new(activitypub.Actor)
-	err = remoteActor.RetrieveRemoteActor(KeyID, uaString, actorCache)
+	err = remoteActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}

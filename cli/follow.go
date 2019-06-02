@@ -74,7 +74,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 			},
 		},
 	}
-	_, err := macServer.SendTask(job)
+	_, err := machineryServer.SendTask(job)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}

@@ -17,18 +17,21 @@ import (
 	state "github.com/yukimochi/Activity-Relay/State"
 )
 
-// Actor : Relay's Actor
-var Actor activitypub.Actor
+var (
+	version string
 
-// WebfingerResource : Relay's Webfinger resource
-var WebfingerResource activitypub.WebfingerResource
+	// Actor : Relay's Actor
+	Actor activitypub.Actor
 
-var hostURL *url.URL
-var hostPrivatekey *rsa.PrivateKey
-var actorCache *cache.Cache
-var machineryServer *machinery.Server
-var relayState state.RelayState
-var uaString string
+	// WebfingerResource : Relay's Webfinger resource
+	WebfingerResource activitypub.WebfingerResource
+
+	hostURL         *url.URL
+	hostPrivatekey  *rsa.PrivateKey
+	relayState      state.RelayState
+	machineryServer *machinery.Server
+	actorCache      *cache.Cache
+)
 
 func initConfig() {
 	viper.SetConfigName("config")
@@ -37,14 +40,14 @@ func initConfig() {
 	if err != nil {
 		fmt.Println("Config file is not exists. Use environment variables.")
 		viper.BindEnv("actor_pem")
-		viper.BindEnv("relay_domain")
-		viper.BindEnv("relay_bind")
-		viper.BindEnv("relay_servicename")
 		viper.BindEnv("redis_url")
+		viper.BindEnv("relay_bind")
+		viper.BindEnv("relay_domain")
+		viper.BindEnv("relay_servicename")
 	} else {
 		Actor.Summary = viper.GetString("relay_summary")
-		Actor.Icon = activitypub.Image{viper.GetString("relay_icon")}
-		Actor.Image = activitypub.Image{viper.GetString("relay_image")}
+		Actor.Icon = activitypub.Image{URL: viper.GetString("relay_icon")}
+		Actor.Image = activitypub.Image{URL: viper.GetString("relay_image")}
 	}
 	Actor.Name = viper.GetString("relay_servicename")
 
@@ -55,6 +58,7 @@ func initConfig() {
 		panic(err)
 	}
 	redisClient := redis.NewClient(redisOption)
+	relayState = state.NewState(redisClient)
 	machineryConfig := &config.Config{
 		Broker:          viper.GetString("redis_url"),
 		DefaultQueue:    "relay",
@@ -65,13 +69,13 @@ func initConfig() {
 	if err != nil {
 		panic(err)
 	}
-	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.3; " + hostURL.Host + ")"
-	relayState = state.NewState(redisClient)
-	actorCache = cache.New(5*time.Minute, 10*time.Minute)
+
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
+	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 	WebfingerResource.GenerateFromActor(hostURL, &Actor)
 
-	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]\n - Configrations")
+	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]", version)
+	fmt.Println(" - Configrations")
 	fmt.Println("RELAY DOMAIN : ", hostURL.Host)
 	fmt.Println("REDIS URL : ", viper.GetString("redis_url"))
 	fmt.Println("BIND ADDRESS : ", viper.GetString("relay_bind"))
