@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 func TestRelayActivity(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := ioutil.ReadAll(r.Body)
-		if string(data) != "data" {
+		if string(data) != "data" || r.Header.Get("Content-Type") != "application/activity+json" {
 			w.WriteHeader(500)
 			w.Write(nil)
 		} else {
@@ -80,7 +80,7 @@ func TestRelayActivityResp500(t *testing.T) {
 func TestRegistorActivity(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := ioutil.ReadAll(r.Body)
-		if string(data) != "data" {
+		if string(data) != "data" || r.Header.Get("Content-Type") != "application/activity+json" {
 			w.WriteHeader(500)
 			w.Write(nil)
 		} else {
