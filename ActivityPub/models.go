@@ -73,7 +73,7 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 		}
 	}
 	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("Accept", "application/activity+json, application/ld+json")
+	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
 	client := new(http.Client)
 	resp, err := client.Do(req)
