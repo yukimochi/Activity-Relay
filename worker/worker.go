@@ -84,7 +84,7 @@ func initConfig() {
 	}
 	newNullLogger := NewNullLogger()
 	log.DEBUG = newNullLogger
-	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.2; " + hostURL.Host + ")"
+	uaString = viper.GetString("relay_servicename") + " (golang net/http; Activity-Relay v0.2.3; " + hostURL.Host + ")"
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]\n - Configrations")

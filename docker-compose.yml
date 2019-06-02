@@ -12,12 +12,13 @@ services:
     command: worker
     environment:
       - "ACTOR_PEM=/actor.pem"
-      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
+      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
+      - "RELAY_BIND=0.0.0.0:8080"
       - "REDIS_URL=redis://redis:6379"
     volumes:
       - "./actor.pem:/actor.pem"
-#       - "./config.yaml:/Activity-Relay/config.yaml"
+      # - "./config.yaml:/Activity-Relay/config.yaml"
 
   server:
     build: .
@@ -27,10 +28,10 @@ services:
     command: server
     environment:
       - "ACTOR_PEM=/actor.pem"
-      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
+      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
       - "RELAY_BIND=0.0.0.0:8080"
       - "REDIS_URL=redis://redis:6379"
     volumes:
       - "./actor.pem:/actor.pem"
-#       - "./config.yaml:/Activity-Relay/config.yaml"
+      # - "./config.yaml:/Activity-Relay/config.yaml"
