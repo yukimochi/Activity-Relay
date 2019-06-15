@@ -47,7 +47,7 @@ func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.Pri
 
 	fmt.Println(inboxURL, resp.StatusCode)
 	if resp.StatusCode/100 != 2 {
-		return errors.New(resp.Status)
+		return errors.New("Post " + inboxURL + ": " + resp.Status)
 	}
 
 	return nil
