@@ -126,7 +126,7 @@ func followAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) 
 	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
 		return nil
 	} else {
-		return errors.New("Follow only allowed for https://www.w3.org/ns/activitystreams#Public")
+		return nil
 	}
 }
 
@@ -134,7 +134,7 @@ func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor
 	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
 		return nil
 	} else {
-		return errors.New("Unfollow only allowed for https://www.w3.org/ns/activitystreams#Public")
+		return nil
 	}
 }
 
@@ -148,7 +148,7 @@ func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bo
 
 func relayAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) error {
 	if !contains(activity.To, "https://www.w3.org/ns/activitystreams#Public") && !contains(activity.Cc, "https://www.w3.org/ns/activitystreams#Public") {
-		return errors.New("Activity should contain https://www.w3.org/ns/activitystreams#Public as receiver")
+		return nil
 	}
 	domain, _ := url.Parse(activity.Actor)
 	if contains(relayState.Subscriptions, domain.Host) {
@@ -184,7 +184,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				if err != nil {
 					resp := activity.GenerateResponse(hostURL, "Reject")
 					jsonData, _ := json.Marshal(&resp)
-					go pushRegistorJob(actor.Inbox, jsonData)
+					go pushRegistorJob(actor.Endpoints.SharedInbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
 
 					writer.WriteHeader(202)
@@ -203,7 +203,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						} else {
 							resp := activity.GenerateResponse(hostURL, "Accept")
 							jsonData, _ := json.Marshal(&resp)
-							go pushRegistorJob(actor.Inbox, jsonData)
+							go pushRegistorJob(actor.Endpoints.SharedInbox, jsonData)
 							relayState.AddSubscription(state.Subscription{
 								Domain:     domain.Host,
 								InboxURL:   actor.Endpoints.SharedInbox,
@@ -211,11 +211,15 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 								ActorID:    actor.ID,
 							})
 							fmt.Println("Accept Follow Request : ", activity.Actor)
+							fb := activity.GenerateFollowbackRequest(hostURL)
+							fbjsonData, _ := json.Marshal(&fb)
+							go pushRegistorJob(actor.Endpoints.SharedInbox, fbjsonData)
+							fmt.Println("Send Follow Back Request : ", activity.Actor)
 						}
 					} else {
 						resp := activity.GenerateResponse(hostURL, "Reject")
 						jsonData, _ := json.Marshal(&resp)
-						go pushRegistorJob(actor.Inbox, jsonData)
+						go pushRegistorJob(actor.Endpoints.SharedInbox, jsonData)
 						fmt.Println("Reject Follow Request : ", activity.Actor)
 					}
 
@@ -251,7 +255,30 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.Write(nil)
 					}
 				}
-			case "Create", "Update", "Delete", "Announce":
+			case "Announce":
+				err = relayAcceptable(activity, actor)
+				if err != nil {
+					writer.WriteHeader(400)
+					writer.Write([]byte(err.Error()))
+				} else {
+					if suitableRelay(activity, actor) {
+						resp := activity.GenerateAnnounce(hostURL)
+						if value, ok := activity.Object.(string); ok {
+							resp.Object = value
+							jsonData, _ := json.Marshal(&resp)
+							go pushRelayJob(domain.Host, jsonData)
+							fmt.Println("Swapping Announce : ", activity.Actor)
+						} else {
+							fmt.Println("Skipping Relay Status : ", activity.Actor)
+						}
+					} else {
+						fmt.Println("Skipping Relay Status : ", activity.Actor)
+					}
+
+					writer.WriteHeader(202)
+					writer.Write(nil)
+				}
+			case "Create", "Update", "Delete":
 				err = relayAcceptable(activity, actor)
 				if err != nil {
 					writer.WriteHeader(400)
