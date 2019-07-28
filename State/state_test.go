@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 
 func TestInitialLoad(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient)
+	testState := NewState(redisClient, false)
 
 	if testState.RelayConfig.BlockService != false {
 		t.Fatalf("Failed read config.")
@@ -49,7 +49,7 @@ func TestInitialLoad(t *testing.T) {
 
 func TestAddLimited(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient)
+	testState := NewState(redisClient, false)
 
 	testState.SetLimitedDomain("example.com", true)
 
@@ -79,7 +79,7 @@ func TestAddLimited(t *testing.T) {
 
 func TestAddBlocked(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient)
+	testState := NewState(redisClient, false)
 
 	testState.SetBlockedDomain("example.com", true)
 
@@ -109,7 +109,7 @@ func TestAddBlocked(t *testing.T) {
 
 func TestAddSubscription(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient)
+	testState := NewState(redisClient, false)
 
 	testState.AddSubscription(Subscription{
 		Domain:   "example.com",
@@ -142,7 +142,7 @@ func TestAddSubscription(t *testing.T) {
 
 func TestLoadCompatiSubscription(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient)
+	testState := NewState(redisClient, false)
 
 	testState.AddSubscription(Subscription{
 		Domain:   "example.com",
@@ -167,7 +167,7 @@ func TestLoadCompatiSubscription(t *testing.T) {
 
 func TestSetConfig(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient)
+	testState := NewState(redisClient, false)
 
 	testState.SetConfig(BlockService, true)
 	if testState.RelayConfig.BlockService != true {
