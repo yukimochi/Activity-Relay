@@ -230,7 +230,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.WriteHeader(400)
 						writer.Write([]byte(err.Error()))
 					} else {
-						relayState.RedisClient.Del("relay:subscription:" + domain.Host)
+						relayState.DelSubscription(domain.Host)
 						fmt.Println("Accept Unfollow Request : ", activity.Actor)
 
 						writer.WriteHeader(202)
