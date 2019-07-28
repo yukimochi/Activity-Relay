@@ -58,7 +58,8 @@ func initConfig() {
 		panic(err)
 	}
 	redisClient := redis.NewClient(redisOption)
-	relayState = state.NewState(redisClient)
+	relayState = state.NewState(redisClient, true)
+	relayState.ListenNotify()
 	machineryConfig := &config.Config{
 		Broker:          viper.GetString("redis_url"),
 		DefaultQueue:    "relay",

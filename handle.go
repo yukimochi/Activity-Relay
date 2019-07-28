@@ -176,7 +176,6 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			writer.WriteHeader(400)
 			writer.Write(nil)
 		} else {
-			relayState.Load()
 			domain, _ := url.Parse(activity.Actor)
 			switch activity.Type {
 			case "Follow":
