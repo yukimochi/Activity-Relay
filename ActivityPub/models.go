@@ -102,6 +102,19 @@ type Activity struct {
 	Cc      []string    `json:"cc,omitempty"`
 }
 
+// GenerateFollowbackRequest : Generate follow response.
+func (activity *Activity) GenerateFollowbackRequest(host *url.URL) Activity {
+	return Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		host.String() + "/activities/" + uuid.NewV4().String(),
+		host.String() + "/actor",
+		"Follow",
+		activity.Actor,
+		[]string{activity.Actor},
+		nil,
+	}
+}
+
 // GenerateResponse : Generate activity response.
 func (activity *Activity) GenerateResponse(host *url.URL, responseType string) Activity {
 	return Activity{
@@ -110,7 +123,7 @@ func (activity *Activity) GenerateResponse(host *url.URL, responseType string) A
 		host.String() + "/actor",
 		responseType,
 		&activity,
-		nil,
+		[]string{activity.Actor},
 		nil,
 	}
 }
