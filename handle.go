@@ -250,7 +250,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.Write(nil)
 					}
 				}
-			case "Create", "Update", "Delete", "Announce":
+			case "Create", "Update", "Delete", "Announce", "Move":
 				err = relayAcceptable(activity, actor)
 				if err != nil {
 					writer.WriteHeader(400)
