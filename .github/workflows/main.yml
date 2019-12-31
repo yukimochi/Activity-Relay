@@ -1,0 +1,34 @@
+name: Test and Build
+on: [push]
+
+jobs:
+  go-test:
+    name: Test and Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-go@v1
+        with:
+          go-version: '1.13.x'
+      - name: Execute test and upload coverage
+        run: |
+          go version
+          go test -coverprofile=coverage.txt -covermode=atomic -p 1 . ./worker ./cli ./State
+          bash <(curl -s https://codecov.io/bash)
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}
+      - name: Build Docker Images
+        run: |
+          docker build -t docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:edge .
+          docker tag docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:edge docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:$(echo ${GITHUB_SHA}|head -c7)
+      - name: Push Docker Images to GitHub Packages
+        run: |
+          docker login docker.pkg.github.com -u ${{ secrets.REGISTORY_USER }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker push docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:edge
+          docker push docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:$(echo ${GITHUB_SHA}|head -c7)
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379/tcp
