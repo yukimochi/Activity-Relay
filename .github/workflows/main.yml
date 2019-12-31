@@ -20,13 +20,13 @@ jobs:
           REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}
       - name: Build Docker Images
         run: |
-          docker build -t ${{ secrets.REGISTORY_USER }}/activity-relay:edge .
-          docker tag ${{ secrets.REGISTORY_USER }}/activity-relay:edge ${{ secrets.REGISTORY_USER }}/activity-relay:$(echo ${GITHUB_SHA}|head -c7)
-      - name: Push Docker Images to DockerHub
+          docker build -t docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:edge .
+          docker tag docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:edge docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:$(echo ${GITHUB_SHA}|head -c7)
+      - name: Push Docker Images to GitHub Packages
         run: |
-          docker login -u ${{ secrets.REGISTORY_USER }} -p ${{ secrets.REGISTORY_PASS }}
-          docker push ${{ secrets.REGISTORY_USER }}/activity-relay:edge
-          docker push ${{ secrets.REGISTORY_USER }}/activity-relay:$(echo ${GITHUB_SHA}|head -c7)
+          docker login docker.pkg.github.com -u ${{ secrets.REGISTORY_USER }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker push docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:edge
+          docker push docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:$(echo ${GITHUB_SHA}|head -c7)
     services:
       redis:
         image: redis
