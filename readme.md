@@ -2,7 +2,7 @@
 
 ## Yet another powerful customizable ActivityPub relay server written in Go.
 
-[![CircleCI](https://circleci.com/gh/yukimochi/Activity-Relay.svg?style=svg)](https://circleci.com/gh/yukimochi/Activity-Relay)
+[![GitHub Actions](https://github.com/yukimochi/activity-relay/workflows/Test%20and%20Build/badge.svg)](https://github.com/yukimochi/Activity-Relay)
 [![codecov](https://codecov.io/gh/yukimochi/Activity-Relay/branch/master/graph/badge.svg)](https://codecov.io/gh/yukimochi/Activity-Relay)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay?ref=badge_shield)
 
