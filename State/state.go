@@ -19,20 +19,10 @@ const (
 	CreateAsAnnounce
 )
 
-// NewState : Create new RelayState instance with redis client
-func NewState(redisClient *redis.Client, notify bool) RelayState {
-	var config RelayState
-	config.RedisClient = redisClient
-	config.notify = notify
-
-	config.Load()
-	return config
-}
-
 // RelayState : Store subscriptions and relay configrations
 type RelayState struct {
 	RedisClient *redis.Client
-	notify      bool
+	notifiable  bool
 
 	RelayConfig    relayConfig    `json:"relayConfig,omitempty"`
 	LimitedDomains []string       `json:"limitedDomains,omitempty"`
@@ -40,17 +30,31 @@ type RelayState struct {
 	Subscriptions  []Subscription `json:"subscriptions,omitempty"`
 }
 
-func (config *RelayState) ListenNotify() {
-	go func() {
-		_, err := config.RedisClient.Subscribe("relay_refresh").Receive()
-		if err != nil {
-			panic(err)
-		}
-		ch := config.RedisClient.Subscribe("relay_refresh").Channel()
+// NewState : Create new RelayState instance with redis client
+func NewState(redisClient *redis.Client, notifiable bool) RelayState {
+	var config RelayState
+	config.RedisClient = redisClient
+	config.notifiable = notifiable
 
+	config.Load()
+	return config
+}
+
+func (config *RelayState) ListenNotify(c chan<- bool) {
+	_, err := config.RedisClient.Subscribe("relay_refresh").Receive()
+	if err != nil {
+		panic(err)
+	}
+	ch := config.RedisClient.Subscribe("relay_refresh").Channel()
+
+	cNotify := c != nil
+	go func() {
 		for range ch {
 			fmt.Println("Config refreshed from state changed notify.")
 			config.Load()
+			if cNotify {
+				c <- true
+			}
 		}
 	}()
 }
@@ -102,11 +106,8 @@ func (config *RelayState) SetConfig(key Config, value bool) {
 	case CreateAsAnnounce:
 		config.RedisClient.HSet("relay:config", "create_as_announce", strValue).Result()
 	}
-	if config.notify {
-		config.RedisClient.Publish("relay_refresh", "Config refreshing request.")
-	} else {
-		config.Load()
-	}
+
+	config.refresh()
 }
 
 // AddSubscription : Add new instance for subscription list
@@ -117,11 +118,7 @@ func (config *RelayState) AddSubscription(domain Subscription) {
 		"actor_id":    domain.ActorID,
 	})
 
-	if config.notify {
-		config.RedisClient.Publish("relay_refresh", "Config refreshing request.")
-	} else {
-		config.Load()
-	}
+	config.refresh()
 }
 
 // DelSubscription : Delete instance from subscription list
@@ -129,11 +126,7 @@ func (config *RelayState) DelSubscription(domain string) {
 	config.RedisClient.Del("relay:subscription:" + domain).Result()
 	config.RedisClient.Del("relay:pending:" + domain).Result()
 
-	if config.notify {
-		config.RedisClient.Publish("relay_refresh", "Config refreshing request.")
-	} else {
-		config.Load()
-	}
+	config.refresh()
 }
 
 // SelectSubscription : Select instance from string
@@ -154,11 +147,7 @@ func (config *RelayState) SetBlockedDomain(domain string, value bool) {
 		config.RedisClient.HDel("relay:config:blockedDomain", domain).Result()
 	}
 
-	if config.notify {
-		config.RedisClient.Publish("relay_refresh", "Config refreshing request.")
-	} else {
-		config.Load()
-	}
+	config.refresh()
 }
 
 // SetLimitedDomain : Set/Unset instance for limited domain
@@ -169,7 +158,11 @@ func (config *RelayState) SetLimitedDomain(domain string, value bool) {
 		config.RedisClient.HDel("relay:config:limitedDomain", domain).Result()
 	}
 
-	if config.notify {
+	config.refresh()
+}
+
+func (config *RelayState) refresh() {
+	if config.notifiable {
 		config.RedisClient.Publish("relay_refresh", "Config refreshing request.")
 	} else {
 		config.Load()

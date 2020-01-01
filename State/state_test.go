@@ -30,7 +30,7 @@ func TestMain(m *testing.M) {
 	redisClient.FlushAll().Result()
 }
 
-func TestInitialLoad(t *testing.T) {
+func TestLoadEmpty(t *testing.T) {
 	redisClient.FlushAll().Result()
 	testState := NewState(redisClient, false)
 
@@ -47,74 +47,58 @@ func TestInitialLoad(t *testing.T) {
 	redisClient.FlushAll().Result()
 }
 
-func TestAddLimited(t *testing.T) {
+func TestSetConfig(t *testing.T) {
+	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, false)
+	testState := NewState(redisClient, true)
+	testState.ListenNotify(ch)
 
-	testState.SetLimitedDomain("example.com", true)
-
-	valid := false
-	for _, domain := range testState.LimitedDomains {
-		if domain == "example.com" {
-			valid = true
-		}
+	testState.SetConfig(BlockService, true)
+	<-ch
+	if testState.RelayConfig.BlockService != true {
+		t.Fatalf("Failed enable config.")
 	}
-	if !valid {
-		t.Fatalf("Failed write config.")
+	testState.SetConfig(CreateAsAnnounce, true)
+	<-ch
+	if testState.RelayConfig.CreateAsAnnounce != true {
+		t.Fatalf("Failed enable config.")
 	}
-
-	testState.SetLimitedDomain("example.com", false)
-
-	for _, domain := range testState.LimitedDomains {
-		if domain == "example.com" {
-			valid = false
-		}
-	}
-	if !valid {
-		t.Fatalf("Failed write config.")
+	testState.SetConfig(ManuallyAccept, true)
+	<-ch
+	if testState.RelayConfig.ManuallyAccept != true {
+		t.Fatalf("Failed enable config.")
 	}
 
-	redisClient.FlushAll().Result()
-}
-
-func TestAddBlocked(t *testing.T) {
-	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, false)
-
-	testState.SetBlockedDomain("example.com", true)
-
-	valid := false
-	for _, domain := range testState.BlockedDomains {
-		if domain == "example.com" {
-			valid = true
-		}
+	testState.SetConfig(BlockService, false)
+	<-ch
+	if testState.RelayConfig.BlockService != false {
+		t.Fatalf("Failed disable config.")
 	}
-	if !valid {
-		t.Fatalf("Failed write config.")
+	testState.SetConfig(CreateAsAnnounce, false)
+	<-ch
+	if testState.RelayConfig.CreateAsAnnounce != false {
+		t.Fatalf("Failed disable config.")
 	}
-
-	testState.SetBlockedDomain("example.com", false)
-
-	for _, domain := range testState.BlockedDomains {
-		if domain == "example.com" {
-			valid = false
-		}
-	}
-	if !valid {
-		t.Fatalf("Failed write config.")
+	testState.SetConfig(ManuallyAccept, false)
+	<-ch
+	if testState.RelayConfig.ManuallyAccept != false {
+		t.Fatalf("Failed disable config.")
 	}
 
 	redisClient.FlushAll().Result()
 }
 
-func TestAddSubscription(t *testing.T) {
+func TestTreatSubscriptionNotify(t *testing.T) {
+	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, false)
+	testState := NewState(redisClient, true)
+	testState.ListenNotify(ch)
 
 	testState.AddSubscription(Subscription{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	})
+	<-ch
 
 	valid := false
 	for _, domain := range testState.Subscriptions {
@@ -127,9 +111,105 @@ func TestAddSubscription(t *testing.T) {
 	}
 
 	testState.DelSubscription("example.com")
+	<-ch
 
 	for _, domain := range testState.Subscriptions {
 		if domain.Domain == "example.com" {
+			valid = false
+		}
+	}
+	if !valid {
+		t.Fatalf("Failed write config.")
+	}
+
+	redisClient.FlushAll().Result()
+}
+
+func TestSelectDomain(t *testing.T) {
+	ch := make(chan bool)
+	redisClient.FlushAll().Result()
+	testState := NewState(redisClient, true)
+	testState.ListenNotify(ch)
+
+	exampleSubscription := Subscription{
+		Domain:   "example.com",
+		InboxURL: "https://example.com/inbox",
+	}
+
+	testState.AddSubscription(exampleSubscription)
+	<-ch
+
+	subscription := testState.SelectSubscription("example.com")
+	if *subscription != exampleSubscription {
+		t.Fatalf("Failed select domain.")
+	}
+
+	subscription = testState.SelectSubscription("example.org")
+	if subscription != nil {
+		t.Fatalf("Failed select domain.")
+	}
+
+	redisClient.FlushAll().Result()
+}
+
+func TestBlockedDomain(t *testing.T) {
+	ch := make(chan bool)
+	redisClient.FlushAll().Result()
+	testState := NewState(redisClient, true)
+	testState.ListenNotify(ch)
+
+	testState.SetBlockedDomain("example.com", true)
+	<-ch
+
+	valid := false
+	for _, domain := range testState.BlockedDomains {
+		if domain == "example.com" {
+			valid = true
+		}
+	}
+	if !valid {
+		t.Fatalf("Failed write config.")
+	}
+
+	testState.SetBlockedDomain("example.com", false)
+	<-ch
+
+	for _, domain := range testState.BlockedDomains {
+		if domain == "example.com" {
+			valid = false
+		}
+	}
+	if !valid {
+		t.Fatalf("Failed write config.")
+	}
+
+	redisClient.FlushAll().Result()
+}
+
+func TestLimitedDomain(t *testing.T) {
+	ch := make(chan bool)
+	redisClient.FlushAll().Result()
+	testState := NewState(redisClient, true)
+	testState.ListenNotify(ch)
+
+	testState.SetLimitedDomain("example.com", true)
+	<-ch
+
+	valid := false
+	for _, domain := range testState.LimitedDomains {
+		if domain == "example.com" {
+			valid = true
+		}
+	}
+	if !valid {
+		t.Fatalf("Failed write config.")
+	}
+
+	testState.SetLimitedDomain("example.com", false)
+	<-ch
+
+	for _, domain := range testState.LimitedDomains {
+		if domain == "example.com" {
 			valid = false
 		}
 	}
@@ -160,39 +240,6 @@ func TestLoadCompatiSubscription(t *testing.T) {
 	}
 	if !valid {
 		t.Fatalf("Failed load compati config.")
-	}
-
-	redisClient.FlushAll().Result()
-}
-
-func TestSetConfig(t *testing.T) {
-	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, false)
-
-	testState.SetConfig(BlockService, true)
-	if testState.RelayConfig.BlockService != true {
-		t.Fatalf("Failed enable config.")
-	}
-	testState.SetConfig(CreateAsAnnounce, true)
-	if testState.RelayConfig.CreateAsAnnounce != true {
-		t.Fatalf("Failed enable config.")
-	}
-	testState.SetConfig(ManuallyAccept, true)
-	if testState.RelayConfig.ManuallyAccept != true {
-		t.Fatalf("Failed enable config.")
-	}
-
-	testState.SetConfig(BlockService, false)
-	if testState.RelayConfig.BlockService != false {
-		t.Fatalf("Failed disable config.")
-	}
-	testState.SetConfig(CreateAsAnnounce, false)
-	if testState.RelayConfig.CreateAsAnnounce != false {
-		t.Fatalf("Failed disable config.")
-	}
-	testState.SetConfig(ManuallyAccept, false)
-	if testState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("Failed disable config.")
 	}
 
 	redisClient.FlushAll().Result()

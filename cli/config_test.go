@@ -24,6 +24,7 @@ func TestServiceBlock(t *testing.T) {
 		t.Fatalf("Not Disabled Blocking feature for service-type actor")
 	}
 }
+
 func TestManuallyAccept(t *testing.T) {
 	app := buildNewCmd()
 
@@ -40,6 +41,7 @@ func TestManuallyAccept(t *testing.T) {
 		t.Fatalf("Not Disabled Manually accept follow-request feature")
 	}
 }
+
 func TestCreateAsAnnounce(t *testing.T) {
 	app := buildNewCmd()
 
@@ -56,6 +58,7 @@ func TestCreateAsAnnounce(t *testing.T) {
 		t.Fatalf("Enable announce activity instead of relay create activity")
 	}
 }
+
 func TestInvalidConfig(t *testing.T) {
 	app := buildNewCmd()
 	buffer := new(bytes.Buffer)
@@ -115,6 +118,7 @@ func TestExportConfig(t *testing.T) {
 		t.Fatalf("Invalid Responce.")
 	}
 }
+
 func TestImportConfig(t *testing.T) {
 	app := buildNewCmd()
 
