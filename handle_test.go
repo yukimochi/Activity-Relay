@@ -242,6 +242,12 @@ func mockActor(req string) activitypub.Actor {
 		var actor activitypub.Actor
 		json.Unmarshal(body, &actor)
 		return actor
+	case "Application":
+		file, _ := os.Open("./misc/application.json")
+		body, _ := ioutil.ReadAll(file)
+		var actor activitypub.Actor
+		json.Unmarshal(body, &actor)
+		return actor
 	default:
 		panic("No assined request.")
 	}
@@ -251,6 +257,7 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	activity := mockActivity("Create")
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
+	applicationActor := mockActor("Application")
 
 	relayState.SetConfig(BlockService, false)
 
@@ -260,12 +267,16 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	if suitableRelay(&activity, &serviceActor) != true {
 		t.Fatalf("Failed - Service status not relay")
 	}
+	if suitableRelay(&activity, &applicationActor) != true {
+		t.Fatalf("Failed - Service status not relay")
+	}
 }
 
 func TestSuitableRelayBlockService(t *testing.T) {
 	activity := mockActivity("Create")
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
+	applicationActor := mockActor("Application")
 
 	relayState.SetConfig(BlockService, true)
 
@@ -274,6 +285,9 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	}
 	if suitableRelay(&activity, &serviceActor) != false {
 		t.Fatalf("Failed - Service status may relay when blocking mode")
+	}
+	if suitableRelay(&activity, &applicationActor) != false {
+		t.Fatalf("Failed - Application status may relay when blocking mode")
 	}
 	relayState.SetConfig(BlockService, false)
 }

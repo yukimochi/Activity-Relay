@@ -162,7 +162,7 @@ func suitableRelay(activity *activitypub.Activity, actor *activitypub.Actor) boo
 	if contains(relayState.LimitedDomains, domain.Host) {
 		return false
 	}
-	if relayState.RelayConfig.BlockService && actor.Type == "Service" {
+	if relayState.RelayConfig.BlockService && actor.Type != "Person" {
 		return false
 	}
 	return true
