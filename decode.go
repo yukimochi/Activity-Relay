@@ -33,6 +33,9 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 		return nil, nil, nil, err
 	}
 	PubKey, err := keyloader.ReadPublicKeyRSAfromString(remoteActor.PublicKey.PublicKeyPem)
+	if PubKey == nil {
+		return nil, nil, nil, errors.New("Failed parse PublicKey from string")
+	}
 	if err != nil {
 		return nil, nil, nil, err
 	}

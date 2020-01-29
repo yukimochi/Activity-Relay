@@ -82,6 +82,10 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != 200 {
+		return errors.New(resp.Status)
+	}
+
 	data, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &actor)
 	if err != nil {

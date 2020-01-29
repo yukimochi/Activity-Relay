@@ -25,6 +25,9 @@ func ReadPrivateKeyRSAfromPath(path string) (*rsa.PrivateKey, error) {
 func ReadPublicKeyRSAfromString(pemString string) (*rsa.PublicKey, error) {
 	pemByte := []byte(pemString)
 	decoded, _ := pem.Decode(pemByte)
+	defer func() {
+		recover()
+	}()
 	keyInterface, err := x509.ParsePKIXPublicKey(decoded.Bytes)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
