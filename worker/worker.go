@@ -91,7 +91,7 @@ func initConfig() {
 	log.DEBUG = newNullLogger
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Worker]", version)
-	fmt.Println(" - Configrations")
+	fmt.Println(" - Configurations")
 	fmt.Println("RELAY DOMAIN : ", hostURL.Host)
 	fmt.Println("REDIS URL : ", viper.GetString("redis_url"))
 }

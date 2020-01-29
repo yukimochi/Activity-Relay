@@ -19,7 +19,7 @@ const (
 	CreateAsAnnounce
 )
 
-// RelayState : Store subscriptions and relay configrations
+// RelayState : Store subscriptions and relay configurations
 type RelayState struct {
 	RedisClient *redis.Client
 	notifiable  bool

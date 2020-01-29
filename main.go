@@ -76,7 +76,7 @@ func initConfig() {
 	WebfingerResource.GenerateFromActor(hostURL, &Actor)
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]", version)
-	fmt.Println(" - Configrations")
+	fmt.Println(" - Configurations")
 	fmt.Println("RELAY DOMAIN : ", hostURL.Host)
 	fmt.Println("REDIS URL : ", viper.GetString("redis_url"))
 	fmt.Println("BIND ADDRESS : ", viper.GetString("relay_bind"))
