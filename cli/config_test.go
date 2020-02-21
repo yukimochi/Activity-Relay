@@ -69,7 +69,7 @@ func TestInvalidConfig(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid config given" {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 }
 
@@ -86,15 +86,15 @@ func TestListConfig(t *testing.T) {
 		switch strings.Split(row, ":")[0] {
 		case "Blocking for service-type actor ":
 			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Invalid Responce.")
+				t.Fatalf("Invalid Response.")
 			}
 		case "Manually accept follow-request ":
 			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Invalid Responce.")
+				t.Fatalf("Invalid Response.")
 			}
 		case "Announce activity instead of relay create activity ":
 			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Invalid Responce.")
+				t.Fatalf("Invalid Response.")
 			}
 		}
 	}
@@ -115,7 +115,7 @@ func TestExportConfig(t *testing.T) {
 	jsonData, err := ioutil.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 }
 
@@ -138,7 +138,7 @@ func TestImportConfig(t *testing.T) {
 	jsonData, err := ioutil.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()

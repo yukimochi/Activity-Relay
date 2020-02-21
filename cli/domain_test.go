@@ -24,7 +24,7 @@ subscription.example.jp
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
@@ -49,7 +49,7 @@ limitedDomain.example.jp
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
@@ -74,7 +74,7 @@ blockedDomain.example.jp
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
@@ -185,7 +185,7 @@ func TestSetDomainInvalid(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid type given" {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
@@ -230,7 +230,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
