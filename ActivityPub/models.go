@@ -205,3 +205,79 @@ func (resource *WebfingerResource) GenerateFromActor(hostname *url.URL, actor *A
 		},
 	}
 }
+
+// NodeinfoResources : Nodeinfo Resources.
+type NodeinfoResources struct {
+	NodeinfoLinks NodeinfoLinks
+	Nodeinfo      Nodeinfo
+}
+
+// NodeinfoLinks : Nodeinfo Link Resource.
+type NodeinfoLinks struct {
+	Links []NodeinfoLink `json:"links"`
+}
+
+// NodeinfoLink : Nodeinfo Link Resource.
+type NodeinfoLink struct {
+	Rel  string `json:"rel"`
+	Href string `json:"href"`
+}
+
+// Nodeinfo : Nodeinfo Resource.
+type Nodeinfo struct {
+	Version           string           `json:"version"`
+	Software          NodeinfoSoftware `json:"software"`
+	Protocols         []string         `json:"protocols"`
+	Services          NodeinfoServices `json:"services"`
+	OpenRegistrations bool             `json:"openRegistrations"`
+	Usage             NodeinfoUsage    `json:"usage"`
+	Metadata          NodeinfoMetadata `json:"metadata"`
+}
+
+// NodeinfoSoftware : NodeinfoSoftware Resource.
+type NodeinfoSoftware struct {
+	Name       string `json:"name"`
+	Version    string `json:"version"`
+	Repository string `json:"repository,omitempty"`
+}
+
+// NodeinfoServices : NodeinfoSoftware Resource.
+type NodeinfoServices struct {
+	Inbound  []string `json:"inbound"`
+	Outbound []string `json:"outbound"`
+}
+
+// NodeinfoUsage : NodeinfoUsage Resource.
+type NodeinfoUsage struct {
+	Users NodeinfoUsageUsers `json:"users"`
+}
+
+// NodeinfoUsageUsers : NodeinfoUsageUsers Resource.
+type NodeinfoUsageUsers struct {
+	Total          int `json:"total"`
+	ActiveMonth    int `json:"activeMonth"`
+	ActiveHalfyear int `json:"activeHalfyear"`
+}
+
+// NodeinfoMetadata : NodeinfoMetadata Resource.
+type NodeinfoMetadata struct {
+}
+
+// GenerateFromActor : Generate Webfinger resource from Actor.
+func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, actor *Actor, serverVersion string) {
+	resource.NodeinfoLinks.Links = []NodeinfoLink{
+		NodeinfoLink{
+			"http://nodeinfo.diaspora.software/ns/schema/2.1",
+			"https://" + hostname.Host + "/nodeinfo/2.1",
+		},
+	}
+	resource.Nodeinfo = Nodeinfo{
+		"2.1",
+		NodeinfoSoftware{"activity-relay", serverVersion, "https://github.com/yukimochi/Activity-Relay"},
+		[]string{"activitypub"},
+		NodeinfoServices{[]string{}, []string{}},
+		true,
+		NodeinfoUsage{NodeinfoUsageUsers{0, 0, 0}},
+		NodeinfoMetadata{},
+	}
+}

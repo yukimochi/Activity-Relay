@@ -35,6 +35,40 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
+func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "GET" {
+		writer.WriteHeader(400)
+		writer.Write(nil)
+	} else {
+		linksresource, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
+		if err != nil {
+			panic(err)
+		}
+		writer.Header().Add("Content-Type", "application/json")
+		writer.WriteHeader(200)
+		writer.Write(linksresource)
+	}
+}
+
+func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "GET" {
+		writer.WriteHeader(400)
+		writer.Write(nil)
+	} else {
+		userCount := len(relayState.Subscriptions)
+		Nodeinfo.Nodeinfo.Usage.Users.Total = userCount
+		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userCount
+		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userCount
+		linksresource, err := json.Marshal(&Nodeinfo.Nodeinfo)
+		if err != nil {
+			panic(err)
+		}
+		writer.Header().Add("Content-Type", "application/json")
+		writer.WriteHeader(200)
+		writer.Write(linksresource)
+	}
+}
+
 func handleActor(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		actor, err := json.Marshal(&Actor)

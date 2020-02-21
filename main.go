@@ -26,6 +26,9 @@ var (
 	// WebfingerResource : Relay's Webfinger resource
 	WebfingerResource activitypub.WebfingerResource
 
+	// Nodeinfo : Relay's Nodeinfo
+	Nodeinfo activitypub.NodeinfoResources
+
 	hostURL         *url.URL
 	hostPrivatekey  *rsa.PrivateKey
 	relayState      state.RelayState
@@ -74,6 +77,7 @@ func initConfig() {
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 	WebfingerResource.GenerateFromActor(hostURL, &Actor)
+	Nodeinfo.GenerateFromActor(hostURL, &Actor, version)
 
 	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]", version)
 	fmt.Println(" - Configurations")
@@ -96,7 +100,9 @@ func main() {
 	// Load Config
 	initConfig()
 
+	http.HandleFunc("/.well-known/nodeinfo", handleNodeinfoLink)
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
+	http.HandleFunc("/nodeinfo/2.1", handleNodeinfo)
 	http.HandleFunc("/actor", handleActor)
 	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		handleInbox(w, r, decodeActivity)

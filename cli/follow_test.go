@@ -29,7 +29,7 @@ example.com
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
@@ -103,7 +103,7 @@ func TestInvalidFollow(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()
@@ -121,7 +121,7 @@ func TestInvalidRejectFollow(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Invalid Responce.")
+		t.Fatalf("Invalid Response.")
 	}
 
 	relayState.RedisClient.FlushAll().Result()

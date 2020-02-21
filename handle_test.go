@@ -46,7 +46,7 @@ func TestHandleWebfingerGet(t *testing.T) {
 	var wfresource activitypub.WebfingerResource
 	err = json.Unmarshal(data, &wfresource)
 	if err != nil {
-		t.Fatalf("WebfingerResource responce is not valid.")
+		t.Fatalf("WebfingerResource response is not valid.")
 	}
 
 	domain, _ := url.Parse(wfresource.Links[0].Href)
@@ -70,6 +70,88 @@ func TestHandleWebfingerGetBadResource(t *testing.T) {
 	}
 	if r.StatusCode != 404 {
 		t.Fatalf("Failed - StatusCode is not 404.")
+	}
+}
+
+func TestHandleNodeinfoLinkGet(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(handleNodeinfoLink))
+	defer s.Close()
+
+	req, _ := http.NewRequest("GET", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.Header.Get("Content-Type") != "application/json" {
+		t.Fatalf("Failed - Content-Type not match.")
+	}
+	if r.StatusCode != 200 {
+		t.Fatalf("Failed - StatusCode is not 200.")
+	}
+	defer r.Body.Close()
+
+	data, _ := ioutil.ReadAll(r.Body)
+	var nodeinfoLinks activitypub.NodeinfoLinks
+	err = json.Unmarshal(data, &nodeinfoLinks)
+	if err != nil {
+		t.Fatalf("NodeinfoLinks response is not valid.")
+	}
+}
+
+func TestHandleNodeinfoLinkInvalidMethod(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(handleNodeinfoLink))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 400 {
+		t.Fatalf("Failed - StatusCode is not 400.")
+	}
+}
+
+func TestHandleNodeinfoGet(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(handleNodeinfo))
+	defer s.Close()
+
+	req, _ := http.NewRequest("GET", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.Header.Get("Content-Type") != "application/json" {
+		t.Fatalf("Failed - Content-Type not match.")
+	}
+	if r.StatusCode != 200 {
+		t.Fatalf("Failed - StatusCode is not 200.")
+	}
+	defer r.Body.Close()
+
+	data, _ := ioutil.ReadAll(r.Body)
+	var nodeinfo activitypub.Nodeinfo
+	err = json.Unmarshal(data, &nodeinfo)
+	if err != nil {
+		t.Fatalf("Nodeinfo response is not valid.")
+	}
+}
+
+func TestHandleNodeinfoInvalidMethod(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(handleNodeinfo))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("Failed - " + err.Error())
+	}
+	if r.StatusCode != 400 {
+		t.Fatalf("Failed - StatusCode is not 400.")
 	}
 }
 
@@ -108,7 +190,7 @@ func TestHandleActorGet(t *testing.T) {
 	var actor activitypub.Actor
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
-		t.Fatalf("Actor responce is not valid.")
+		t.Fatalf("Actor response is not valid.")
 	}
 
 	domain, _ := url.Parse(actor.ID)
