@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/rsa"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"time"
@@ -27,6 +28,7 @@ var (
 	hostPrivatekey  *rsa.PrivateKey
 	redisClient     *redis.Client
 	machineryServer *machinery.Server
+	httpClient      *http.Client
 )
 
 func relayActivity(args ...string) error {
@@ -85,6 +87,7 @@ func initConfig() {
 	if err != nil {
 		panic(err)
 	}
+	httpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
 
 	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
 	newNullLogger := NewNullLogger()

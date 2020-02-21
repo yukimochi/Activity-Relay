@@ -39,11 +39,11 @@ func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.Pri
 	req.Header.Set("User-Agent", fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host))
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
 	appendSignature(req, &body, KeyID, publicKey)
-	client := &http.Client{Timeout: time.Duration(5) * time.Second}
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	fmt.Println(inboxURL, resp.StatusCode)
 	if resp.StatusCode/100 != 2 {
