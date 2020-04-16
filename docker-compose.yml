@@ -3,6 +3,10 @@ services:
   redis:
     restart: always
     image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    volumes:
+      - "./redisdata:/data"
 
   worker:
     build: .
@@ -19,6 +23,8 @@ services:
     volumes:
       - "./actor.pem:/actor.pem"
       # - "./config.yaml:/Activity-Relay/config.yaml"
+    depends_on:
+      - redis
 
   server:
     build: .
@@ -35,3 +41,5 @@ services:
     volumes:
       - "./actor.pem:/actor.pem"
       # - "./config.yaml:/Activity-Relay/config.yaml"
+    depends_on:
+      - redis
