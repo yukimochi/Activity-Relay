@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-fed/httpsig"
 	"github.com/spf13/viper"
 	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
 	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/httpsig"
 )
 
 func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
