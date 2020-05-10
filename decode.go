@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-fed/httpsig"
 	"github.com/spf13/viper"
 	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
 	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
-	"github.com/yukimochi/httpsig"
 )
 
 func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
@@ -27,12 +27,12 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 		return nil, nil, nil, err
 	}
 	KeyID := verifier.KeyId()
-	remoteActor := new(activitypub.Actor)
-	err = remoteActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host), actorCache)
+	keyOwnerActor := new(activitypub.Actor)
+	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	PubKey, err := keyloader.ReadPublicKeyRSAfromString(remoteActor.PublicKey.PublicKeyPem)
+	PubKey, err := keyloader.ReadPublicKeyRSAfromString(keyOwnerActor.PublicKey.PublicKeyPem)
 	if PubKey == nil {
 		return nil, nil, nil, errors.New("Failed parse PublicKey from string")
 	}
@@ -55,11 +55,18 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 		return nil, nil, nil, errors.New("Digest header is mismatch")
 	}
 
+	// Parse Activity
 	var activity activitypub.Activity
 	err = json.Unmarshal(body, &activity)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	return &activity, remoteActor, body, nil
+	var remoteActor activitypub.Actor
+	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host), actorCache)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return &activity, &remoteActor, body, nil
 }
