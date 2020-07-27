@@ -136,7 +136,7 @@ func pushRelayJob(sourceInbox string, body []byte) {
 func pushRegistorJob(inboxURL string, body []byte) {
 	job := &tasks.Signature{
 		Name:       "registor",
-		RetryCount: 25,
+		RetryCount: 2,
 		Args: []tasks.Arg{
 			{
 				Name:  "inboxURL",
