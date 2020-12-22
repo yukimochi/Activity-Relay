@@ -112,7 +112,7 @@ func main() {
 	}
 
 	workerID := uuid.NewV4()
-	worker := machineryServer.NewWorker(workerID.String(), 200)
+	worker := machineryServer.NewWorker(workerID.String(), 20)
 	err = worker.Launch()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
