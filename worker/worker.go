@@ -63,6 +63,7 @@ func initConfig() {
 		viper.BindEnv("relay_bind")
 		viper.BindEnv("relay_domain")
 		viper.BindEnv("relay_servicename")
+		viper.BindEnv("job_concurrency")
 	} else {
 		Actor.Summary = viper.GetString("relay_summary")
 		Actor.Icon = activitypub.Image{URL: viper.GetString("relay_icon")}
@@ -112,7 +113,7 @@ func main() {
 	}
 
 	workerID := uuid.NewV4()
-	worker := machineryServer.NewWorker(workerID.String(), 20)
+	worker := machineryServer.NewWorker(workerID.String(), viper.GetInt("job_concurrency"))
 	err = worker.Launch()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

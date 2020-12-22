@@ -33,6 +33,7 @@ redis_url: redis://redis:6379
 relay_bind: 0.0.0.0:8080
 relay_domain: relay.toot.yukimochi.jp
 relay_servicename: YUKIMOCHI Toot Relay Service
+job_concurrency: 50
 # relay_summary: |
 
 # relay_icon: https://
@@ -48,6 +49,7 @@ relay_servicename: YUKIMOCHI Toot Relay Service
  - `RELAY_BIND` (ex. `0.0.0.0:8080`)
  - `RELAY_DOMAIN` (ex. `relay.toot.yukimochi.jp`)
  - `RELAY_SERVICENAME` (ex. `YUKIMOCHI Toot Relay Service`)
+ - `JOB_CONCURRENCY` (ex. `50`)
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay?ref=badge_large)
