@@ -13,9 +13,9 @@ func TestMain(m *testing.M) {
 	viper.Set("relay_domain", "relay.yukimochi.example.org")
 	initConfig()
 	relayState = state.NewState(relayState.RedisClient, false)
+	relayState.RedisClient.FlushAll().Result()
 
 	// Load Config
 	code := m.Run()
 	os.Exit(code)
-	relayState.RedisClient.FlushAll().Result()
 }

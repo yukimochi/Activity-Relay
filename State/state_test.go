@@ -10,6 +10,8 @@ import (
 )
 
 var redisClient *redis.Client
+var relayState RelayState
+var ch chan bool
 
 func TestMain(m *testing.M) {
 	viper.SetConfigName("config")
@@ -24,84 +26,79 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	redisClient = redis.NewClient(redisOption)
+	redisClient.FlushAll().Result()
+
+	ch = make(chan bool)
+	relayState = NewState(redisClient, true)
+	relayState.ListenNotify(ch)
 
 	code := m.Run()
-	os.Exit(code)
 	redisClient.FlushAll().Result()
+
+	os.Exit(code)
 }
 
 func TestLoadEmpty(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, false)
 
-	if testState.RelayConfig.BlockService != false {
+	if relayState.RelayConfig.BlockService != false {
 		t.Fatalf("Failed read config.")
 	}
-	if testState.RelayConfig.CreateAsAnnounce != false {
+	if relayState.RelayConfig.CreateAsAnnounce != false {
 		t.Fatalf("Failed read config.")
 	}
-	if testState.RelayConfig.ManuallyAccept != false {
+	if relayState.RelayConfig.ManuallyAccept != false {
 		t.Fatalf("Failed read config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestSetConfig(t *testing.T) {
-	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, true)
-	testState.ListenNotify(ch)
 
-	testState.SetConfig(BlockService, true)
+	relayState.SetConfig(BlockService, true)
 	<-ch
-	if testState.RelayConfig.BlockService != true {
+	if relayState.RelayConfig.BlockService != true {
 		t.Fatalf("Failed enable config.")
 	}
-	testState.SetConfig(CreateAsAnnounce, true)
+	relayState.SetConfig(CreateAsAnnounce, true)
 	<-ch
-	if testState.RelayConfig.CreateAsAnnounce != true {
+	if relayState.RelayConfig.CreateAsAnnounce != true {
 		t.Fatalf("Failed enable config.")
 	}
-	testState.SetConfig(ManuallyAccept, true)
+	relayState.SetConfig(ManuallyAccept, true)
 	<-ch
-	if testState.RelayConfig.ManuallyAccept != true {
+	if relayState.RelayConfig.ManuallyAccept != true {
 		t.Fatalf("Failed enable config.")
 	}
 
-	testState.SetConfig(BlockService, false)
+	relayState.SetConfig(BlockService, false)
 	<-ch
-	if testState.RelayConfig.BlockService != false {
+	if relayState.RelayConfig.BlockService != false {
 		t.Fatalf("Failed disable config.")
 	}
-	testState.SetConfig(CreateAsAnnounce, false)
+	relayState.SetConfig(CreateAsAnnounce, false)
 	<-ch
-	if testState.RelayConfig.CreateAsAnnounce != false {
+	if relayState.RelayConfig.CreateAsAnnounce != false {
 		t.Fatalf("Failed disable config.")
 	}
-	testState.SetConfig(ManuallyAccept, false)
+	relayState.SetConfig(ManuallyAccept, false)
 	<-ch
-	if testState.RelayConfig.ManuallyAccept != false {
+	if relayState.RelayConfig.ManuallyAccept != false {
 		t.Fatalf("Failed disable config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestTreatSubscriptionNotify(t *testing.T) {
-	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, true)
-	testState.ListenNotify(ch)
 
-	testState.AddSubscription(Subscription{
+	relayState.AddSubscription(Subscription{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	})
 	<-ch
 
 	valid := false
-	for _, domain := range testState.Subscriptions {
+	for _, domain := range relayState.Subscriptions {
 		if domain.Domain == "example.com" && domain.InboxURL == "https://example.com/inbox" {
 			valid = true
 		}
@@ -110,10 +107,10 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 		t.Fatalf("Failed write config.")
 	}
 
-	testState.DelSubscription("example.com")
+	relayState.DelSubscription("example.com")
 	<-ch
 
-	for _, domain := range testState.Subscriptions {
+	for _, domain := range relayState.Subscriptions {
 		if domain.Domain == "example.com" {
 			valid = false
 		}
@@ -121,48 +118,38 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed write config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestSelectDomain(t *testing.T) {
-	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, true)
-	testState.ListenNotify(ch)
 
 	exampleSubscription := Subscription{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	}
 
-	testState.AddSubscription(exampleSubscription)
+	relayState.AddSubscription(exampleSubscription)
 	<-ch
 
-	subscription := testState.SelectSubscription("example.com")
+	subscription := relayState.SelectSubscription("example.com")
 	if *subscription != exampleSubscription {
 		t.Fatalf("Failed select domain.")
 	}
 
-	subscription = testState.SelectSubscription("example.org")
+	subscription = relayState.SelectSubscription("example.org")
 	if subscription != nil {
 		t.Fatalf("Failed select domain.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestBlockedDomain(t *testing.T) {
-	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, true)
-	testState.ListenNotify(ch)
 
-	testState.SetBlockedDomain("example.com", true)
+	relayState.SetBlockedDomain("example.com", true)
 	<-ch
 
 	valid := false
-	for _, domain := range testState.BlockedDomains {
+	for _, domain := range relayState.BlockedDomains {
 		if domain == "example.com" {
 			valid = true
 		}
@@ -171,10 +158,10 @@ func TestBlockedDomain(t *testing.T) {
 		t.Fatalf("Failed write config.")
 	}
 
-	testState.SetBlockedDomain("example.com", false)
+	relayState.SetBlockedDomain("example.com", false)
 	<-ch
 
-	for _, domain := range testState.BlockedDomains {
+	for _, domain := range relayState.BlockedDomains {
 		if domain == "example.com" {
 			valid = false
 		}
@@ -182,21 +169,16 @@ func TestBlockedDomain(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed write config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestLimitedDomain(t *testing.T) {
-	ch := make(chan bool)
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, true)
-	testState.ListenNotify(ch)
 
-	testState.SetLimitedDomain("example.com", true)
+	relayState.SetLimitedDomain("example.com", true)
 	<-ch
 
 	valid := false
-	for _, domain := range testState.LimitedDomains {
+	for _, domain := range relayState.LimitedDomains {
 		if domain == "example.com" {
 			valid = true
 		}
@@ -205,10 +187,10 @@ func TestLimitedDomain(t *testing.T) {
 		t.Fatalf("Failed write config.")
 	}
 
-	testState.SetLimitedDomain("example.com", false)
+	relayState.SetLimitedDomain("example.com", false)
 	<-ch
 
-	for _, domain := range testState.LimitedDomains {
+	for _, domain := range relayState.LimitedDomains {
 		if domain == "example.com" {
 			valid = false
 		}
@@ -216,24 +198,21 @@ func TestLimitedDomain(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed write config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestLoadCompatiSubscription(t *testing.T) {
 	redisClient.FlushAll().Result()
-	testState := NewState(redisClient, false)
 
-	testState.AddSubscription(Subscription{
+	relayState.AddSubscription(Subscription{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	})
 
-	testState.RedisClient.HDel("relay:subscription:example.com", "activity_id", "actor_id")
-	testState.Load()
+	relayState.RedisClient.HDel("relay:subscription:example.com", "activity_id", "actor_id")
+	relayState.Load()
 
 	valid := false
-	for _, domain := range testState.Subscriptions {
+	for _, domain := range relayState.Subscriptions {
 		if domain.Domain == "example.com" && domain.InboxURL == "https://example.com/inbox" {
 			valid = true
 		}
@@ -241,6 +220,4 @@ func TestLoadCompatiSubscription(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed load compati config.")
 	}
-
-	redisClient.FlushAll().Result()
 }

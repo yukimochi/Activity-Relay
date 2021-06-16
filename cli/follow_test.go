@@ -7,6 +7,8 @@ import (
 )
 
 func TestListFollows(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
 	buffer := new(bytes.Buffer)
@@ -31,12 +33,11 @@ Total : 1
 	if output != valid {
 		t.Fatalf("Invalid Response.")
 	}
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }
 
 func TestAcceptFollow(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
 	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
@@ -59,12 +60,11 @@ func TestAcceptFollow(t *testing.T) {
 	if valid != 1 {
 		t.Fatalf("Not created subscription.")
 	}
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }
 
 func TestRejectFollow(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
 	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
@@ -87,12 +87,11 @@ func TestRejectFollow(t *testing.T) {
 	if valid != 0 {
 		t.Fatalf("Created subscription.")
 	}
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }
 
 func TestInvalidFollow(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
 	buffer := new(bytes.Buffer)
@@ -105,12 +104,11 @@ func TestInvalidFollow(t *testing.T) {
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
 		t.Fatalf("Invalid Response.")
 	}
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }
 
 func TestInvalidRejectFollow(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
 	buffer := new(bytes.Buffer)
@@ -123,9 +121,6 @@ func TestInvalidRejectFollow(t *testing.T) {
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
 		t.Fatalf("Invalid Response.")
 	}
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }
 
 func TestCreateUpdateActorActivity(t *testing.T) {
@@ -136,7 +131,4 @@ func TestCreateUpdateActorActivity(t *testing.T) {
 
 	app.SetArgs([]string{"follow", "update"})
 	app.Execute()
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }

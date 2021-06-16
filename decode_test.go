@@ -13,6 +13,8 @@ import (
 )
 
 func TestDecodeActivity(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	relayState.AddSubscription(state.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
@@ -38,11 +40,11 @@ func TestDecodeActivity(t *testing.T) {
 		fmt.Println(actor.ID)
 		t.Fatalf("Failed - retrieved actor is invalid")
 	}
-
-	relayState.DelSubscription("innocent.yukimochi.io")
 }
 
 func TestDecodeActivityWithNoSignature(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	relayState.AddSubscription(state.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
@@ -62,11 +64,11 @@ func TestDecodeActivityWithNoSignature(t *testing.T) {
 	if err.Error() != "neither \"Signature\" nor \"Authorization\" have signature parameters" {
 		t.Fatalf("Failed - Accept request without signature")
 	}
-
-	relayState.DelSubscription("innocent.yukimochi.io")
 }
 
 func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	relayState.AddSubscription(state.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
@@ -87,11 +89,11 @@ func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 	if err.Error() != "404 Not Found" {
 		t.Fatalf("Failed - Accept notfound KeyId")
 	}
-
-	relayState.DelSubscription("innocent.yukimochi.io")
 }
 
 func TestDecodeActivityWithInvalidDigest(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	relayState.AddSubscription(state.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
@@ -112,6 +114,4 @@ func TestDecodeActivityWithInvalidDigest(t *testing.T) {
 	if err.Error() != "crypto/rsa: verification error" {
 		t.Fatalf("Failed - Accept unvalid digest")
 	}
-
-	relayState.DelSubscription("innocent.yukimochi.io")
 }
