@@ -20,7 +20,6 @@ func TestMain(m *testing.M) {
 	// Load Config
 	code := m.Run()
 	os.Exit(code)
-	redisClient.FlushAll().Result()
 }
 
 func TestRelayActivity(t *testing.T) {

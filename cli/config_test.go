@@ -9,57 +9,68 @@ import (
 )
 
 func TestServiceBlock(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
-	relayState.SetConfig(BlockService, false)
 	app.SetArgs([]string{"config", "enable", "service-block"})
 	app.Execute()
+	relayState.Load()
 	if !relayState.RelayConfig.BlockService {
 		t.Fatalf("Not Enabled Blocking feature for service-type actor")
 	}
 
 	app.SetArgs([]string{"config", "enable", "-d", "service-block"})
 	app.Execute()
+	relayState.Load()
 	if relayState.RelayConfig.BlockService {
 		t.Fatalf("Not Disabled Blocking feature for service-type actor")
 	}
 }
 
 func TestManuallyAccept(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
-	relayState.SetConfig(ManuallyAccept, false)
 	app.SetArgs([]string{"config", "enable", "manually-accept"})
 	app.Execute()
+	relayState.Load()
 	if !relayState.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Enabled Manually accept follow-request feature")
 	}
 
 	app.SetArgs([]string{"config", "enable", "-d", "manually-accept"})
 	app.Execute()
+	relayState.Load()
 	if relayState.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Disabled Manually accept follow-request feature")
 	}
 }
 
 func TestCreateAsAnnounce(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
-	relayState.SetConfig(CreateAsAnnounce, false)
 	app.SetArgs([]string{"config", "enable", "create-as-announce"})
 	app.Execute()
+	relayState.Load()
 	if !relayState.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Enable announce activity instead of relay create activity")
 	}
 
 	app.SetArgs([]string{"config", "enable", "-d", "create-as-announce"})
 	app.Execute()
+	relayState.Load()
 	if relayState.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Enable announce activity instead of relay create activity")
 	}
 }
 
 func TestInvalidConfig(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
@@ -74,6 +85,8 @@ func TestInvalidConfig(t *testing.T) {
 }
 
 func TestListConfig(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
@@ -101,6 +114,8 @@ func TestListConfig(t *testing.T) {
 }
 
 func TestExportConfig(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
@@ -120,10 +135,13 @@ func TestExportConfig(t *testing.T) {
 }
 
 func TestImportConfig(t *testing.T) {
+	relayState.RedisClient.FlushAll().Result()
+
 	app := buildNewCmd()
 
 	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
+	relayState.Load()
 
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
@@ -140,7 +158,4 @@ func TestImportConfig(t *testing.T) {
 	if strings.Split(output, "\n")[0] != string(jsonData) {
 		t.Fatalf("Invalid Response.")
 	}
-
-	relayState.RedisClient.FlushAll().Result()
-	relayState.Load()
 }

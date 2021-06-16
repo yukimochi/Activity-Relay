@@ -26,6 +26,7 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	redisClient = redis.NewClient(redisOption)
+	redisClient.FlushAll().Result()
 
 	ch = make(chan bool)
 	relayState = NewState(redisClient, true)
@@ -49,8 +50,6 @@ func TestLoadEmpty(t *testing.T) {
 	if relayState.RelayConfig.ManuallyAccept != false {
 		t.Fatalf("Failed read config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestSetConfig(t *testing.T) {
@@ -87,8 +86,6 @@ func TestSetConfig(t *testing.T) {
 	if relayState.RelayConfig.ManuallyAccept != false {
 		t.Fatalf("Failed disable config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestTreatSubscriptionNotify(t *testing.T) {
@@ -121,8 +118,6 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed write config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestSelectDomain(t *testing.T) {
@@ -145,8 +140,6 @@ func TestSelectDomain(t *testing.T) {
 	if subscription != nil {
 		t.Fatalf("Failed select domain.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestBlockedDomain(t *testing.T) {
@@ -176,8 +169,6 @@ func TestBlockedDomain(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed write config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestLimitedDomain(t *testing.T) {
@@ -207,8 +198,6 @@ func TestLimitedDomain(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed write config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
 
 func TestLoadCompatiSubscription(t *testing.T) {
@@ -231,6 +220,4 @@ func TestLoadCompatiSubscription(t *testing.T) {
 	if !valid {
 		t.Fatalf("Failed load compati config.")
 	}
-
-	redisClient.FlushAll().Result()
 }
