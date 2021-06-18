@@ -1,5 +1,5 @@
 # ACTOR_PEM: FILL_WITH_EACH_TEST
-REDIS_URL: redis://localhost:6379
+# REDIS_URL: FILL_WITH_EACH_TEST
 
 RELAY_BIND: 0.0.0.0:8080
 RELAY_DOMAIN: relay.toot.yukimochi.jp
