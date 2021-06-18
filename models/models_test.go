@@ -21,7 +21,8 @@ func TestMain(m *testing.M) {
 
 	viper.SetConfigType("yaml")
 	viper.ReadConfig(file)
-	viper.Set("actor_pem", "../misc/testKey.pem")
+	viper.Set("ACTOR_PEM", "../misc/testKey.pem")
+	viper.BindEnv("REDIS_URL")
 
 	globalConfig, err = NewRelayConfig()
 	if err != nil {
