@@ -13,7 +13,7 @@ services:
     image: yukimochi/activity-relay
     restart: always
     init: true
-    command: worker
+    command: relay worker
     environment:
       - "ACTOR_PEM=/actor.pem"
       - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
