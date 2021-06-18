@@ -13,8 +13,8 @@
  - `github.com/yukimochi/Activity-Relay`
  - `github.com/yukimochi/Activity-Relay/api`
  - `github.com/yukimochi/Activity-Relay/deliver`
- - `github.com/yukimochi/Activity-Relay/worker`
- - `github.com/yukimochi/Activity-Relay/cli`
+ - `github.com/yukimochi/Activity-Relay/control`
+ - `github.com/yukimochi/Activity-Relay/models`
 
 ## Requirements
 

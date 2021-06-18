@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
@@ -36,13 +37,13 @@ func NewRelayConfig() (*RelayConfig, error) {
 
 	iconURL, err := url.ParseRequestURI(viper.GetString("RELAY_ICON"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "RELAY_ICON IS INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
+		fmt.Fprintln(os.Stderr, "RELAY_ICON: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
 		iconURL = nil
 	}
 
 	imageURL, err := url.ParseRequestURI(viper.GetString("RELAY_IMAGE"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "RELAY_IMAGE IS INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
+		fmt.Fprintln(os.Stderr, "RELAY_IMAGE: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
 		imageURL = nil
 	}
 
@@ -117,11 +118,12 @@ func (relayConfig *RelayConfig) RedisClient() *redis.Client {
 func (relayConfig *RelayConfig) DumpWelcomeMessage(moduleName string, version string) string {
 	return fmt.Sprintf(`Welcome to YUKIMOCHI Activity-Relay %s - %s
  - Configuration
-RELAY NAME   : %s
-RELAY DOMAIN : %s
-REDIS URL    : %s
-BIND ADDRESS : %s
-`, version, moduleName, relayConfig.serviceName, relayConfig.domain.Host, relayConfig.redisURL, relayConfig.serverBind)
+RELAY NAME      : %s
+RELAY DOMAIN    : %s
+REDIS URL       : %s
+BIND ADDRESS    : %s
+JOB_CONCURRENCY : %s
+`, version, moduleName, relayConfig.serviceName, relayConfig.domain.Host, relayConfig.redisURL, relayConfig.serverBind, strconv.Itoa(relayConfig.jobConcurrency))
 }
 
 // NewMachineryServer create Redis backed Machinery Server from RelayConfig.

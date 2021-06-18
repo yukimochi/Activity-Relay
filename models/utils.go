@@ -4,6 +4,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -52,6 +53,9 @@ func readPrivateKeyRSA(keyPath string) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 	decoded, _ := pem.Decode(file)
+	if decoded == nil {
+		return nil, errors.New("ACTOR_PEM IS INVALID. FAILED TO READ")
+	}
 	privateKey, err := x509.ParsePKCS1PrivateKey(decoded.Bytes)
 	if err != nil {
 		return nil, err
