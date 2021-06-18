@@ -24,6 +24,7 @@ type RelayConfig struct {
 	serviceSummary  string
 	serviceIconURL  *url.URL
 	serviceImageURL *url.URL
+	jobConcurrency  int
 }
 
 // NewRelayConfig create valid RelayConfig from viper configuration. If invalid configuration detected, return error.
@@ -43,6 +44,11 @@ func NewRelayConfig() (*RelayConfig, error) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "RELAY_IMAGE IS INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
 		imageURL = nil
+	}
+
+	jobConcurrency := viper.GetInt("JOB_CONCURRENCY")
+	if jobConcurrency < 1 {
+		return nil, errors.New("JOB_CONCURRENCY IS 0 OR EMPTY. SHOULD BE MORE THAN 1")
 	}
 
 	privateKey, err := readPrivateKeyRSA(viper.GetString("ACTOR_PEM"))
@@ -73,6 +79,7 @@ func NewRelayConfig() (*RelayConfig, error) {
 		serviceSummary:  viper.GetString("RELAY_SUMMARY"),
 		serviceIconURL:  iconURL,
 		serviceImageURL: imageURL,
+		jobConcurrency:  jobConcurrency,
 	}, nil
 }
 
@@ -86,9 +93,19 @@ func (relayConfig *RelayConfig) ServerHostname() *url.URL {
 	return relayConfig.domain
 }
 
-// ServerHostname is API Server's hostname definition.
+// ServerHostname is API Server's servername definition.
 func (relayConfig *RelayConfig) ServerServicename() string {
 	return relayConfig.serviceName
+}
+
+// JobConcurrency is API Worker's jobConcurrency definition.
+func (relayConfig *RelayConfig) JobConcurrency() int {
+	return relayConfig.jobConcurrency
+}
+
+// ActorKey is API Worker's HTTPSignature private key.
+func (relayConfig *RelayConfig) ActorKey() *rsa.PrivateKey {
+	return relayConfig.actorKey
 }
 
 // CreateRedisClient is create new redis client from RelayConfig.

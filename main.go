@@ -1,9 +1,15 @@
 /*
 Yet another powerful customizable ActivityPub relay server written in Go.
+
 Run Activity-Relay
+
 API Server
 	./Activity-Relay -c <Path of config file> server
+Job Worker
+	./Activity-Relay -c <Path of config file> worker
+
 Config
+
 YAML Format
 	ACTOR_PEM: actor.pem
 	REDIS_URL: redis://localhost:6379
@@ -16,6 +22,7 @@ YAML Format
 	RELAY_ICON: https://example.com/example_icon.png
 	RELAY_IMAGE: https://example.com/example_image.png
 Environment Variable
+
 This is Optional : When config file not exist, use environment variables.
 	- ACTOR_PEM
 	- REDIS_URL
@@ -26,6 +33,7 @@ This is Optional : When config file not exist, use environment variables.
 	- RELAY_SUMMARY
 	- RELAY_ICON
 	- RELAY_IMAGE
+
 */
 package main
 
@@ -36,6 +44,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/yukimochi/Activity-Relay/api"
+	"github.com/yukimochi/Activity-Relay/deliver"
 	"github.com/yukimochi/Activity-Relay/models"
 )
 
@@ -69,11 +78,28 @@ func buildCommand() *cobra.Command {
 		},
 	}
 
+	var worker = &cobra.Command{
+		Use:   "worker",
+		Short: "Activity-Relay Job Worker",
+		Long:  "Activity-Relay Job Worker is providing ActivityPub Activity deliverer",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			initConfig(cmd, args)
+			fmt.Println(globalConfig.DumpWelcomeMessage("Job Worker", version))
+			err := deliver.Entrypoint(globalConfig, version)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+			return nil
+		},
+	}
+
 	var app = &cobra.Command{
 		Short: "YUKIMOCHI Activity-Relay",
 		Long:  "YUKIMOCHI Activity-Relay - ActivityPub Relay Server",
 	}
 	app.AddCommand(server)
+	app.AddCommand(worker)
 
 	return app
 }

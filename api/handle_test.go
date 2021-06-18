@@ -26,7 +26,7 @@ func TestHandleWebfingerGet(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", s.URL, nil)
 	q := req.URL.Query()
-	q.Add("resource", "acct:relay@"+hostURL.Host)
+	q.Add("resource", "acct:relay@"+globalConfig.ServerHostname().Host)
 	req.URL.RawQuery = q.Encode()
 	client := new(http.Client)
 	r, err := client.Do(req)
@@ -49,7 +49,7 @@ func TestHandleWebfingerGet(t *testing.T) {
 	}
 
 	domain, _ := url.Parse(wfresource.Links[0].Href)
-	if domain.Host != hostURL.Host {
+	if domain.Host != globalConfig.ServerHostname().Host {
 		t.Fatalf("WebfingerResource's Host not valid.")
 	}
 }
@@ -193,7 +193,7 @@ func TestHandleActorGet(t *testing.T) {
 	}
 
 	domain, _ := url.Parse(actor.ID)
-	if domain.Host != hostURL.Host {
+	if domain.Host != globalConfig.ServerHostname().Host {
 		t.Fatalf("Actor's Host not valid.")
 	}
 }

@@ -26,7 +26,7 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	}
 	KeyID := verifier.KeyId()
 	keyOwnerActor := new(models.Actor)
-	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, hostURL.Host), actorCache)
+	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -61,7 +61,7 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	}
 
 	var remoteActor models.Actor
-	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, hostURL.Host), actorCache)
+	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}

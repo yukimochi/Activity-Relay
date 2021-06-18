@@ -214,7 +214,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			case "Follow":
 				err = followAcceptable(activity, actor)
 				if err != nil {
-					resp := activity.GenerateResponse(hostURL, "Reject")
+					resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 					jsonData, _ := json.Marshal(&resp)
 					go pushRegistorJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
@@ -233,7 +233,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							})
 							fmt.Println("Pending Follow Request : ", activity.Actor)
 						} else {
-							resp := activity.GenerateResponse(hostURL, "Accept")
+							resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Accept")
 							jsonData, _ := json.Marshal(&resp)
 							go pushRegistorJob(actor.Inbox, jsonData)
 							relayState.AddSubscription(models.Subscription{
@@ -245,7 +245,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							fmt.Println("Accept Follow Request : ", activity.Actor)
 						}
 					} else {
-						resp := activity.GenerateResponse(hostURL, "Reject")
+						resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 						jsonData, _ := json.Marshal(&resp)
 						go pushRegistorJob(actor.Inbox, jsonData)
 						fmt.Println("Reject Follow Request : ", activity.Actor)
@@ -297,7 +297,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							}
 							switch nestedObject.Type {
 							case "Note":
-								resp := nestedObject.GenerateAnnounce(hostURL)
+								resp := nestedObject.GenerateAnnounce(globalConfig.ServerHostname())
 								jsonData, _ := json.Marshal(&resp)
 								go pushRelayJob(domain.Host, jsonData)
 								fmt.Println("Accept Announce Note : ", activity.Actor)

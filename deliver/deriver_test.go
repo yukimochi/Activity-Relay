@@ -1,6 +1,7 @@
-package main
+package deliver
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -9,15 +10,33 @@ import (
 	"testing"
 
 	"github.com/spf13/viper"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func TestMain(m *testing.M) {
-	viper.Set("actor_pem", "../misc/testKey.pem")
-	viper.Set("relay_domain", "relay.yukimochi.example.org")
-	initConfig()
-	redisClient.FlushAll().Result()
+	var err error
 
-	// Load Config
+	testConfigPath := "../misc/config.yml"
+	file, _ := os.Open(testConfigPath)
+	defer file.Close()
+
+	viper.SetConfigType("yaml")
+	viper.ReadConfig(file)
+	viper.Set("ACTOR_PEM", "../misc/testKey.pem")
+	viper.BindEnv("REDIS_URL")
+
+	globalConfig, err = models.NewRelayConfig()
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+
+	err = initialize(globalConfig)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	redisClient.FlushAll().Result()
 	code := m.Run()
 	os.Exit(code)
 }
@@ -52,7 +71,7 @@ func TestRelayActivityNoHost(t *testing.T) {
 		t.Fatal("Failed - Error not reported.")
 	}
 	domain, _ := url.Parse("http://nohost.example.jp")
-	data, err := redisClient.HGet("relay:statistics:"+domain.Host, "last_error").Result()
+	data, _ := redisClient.HGet("relay:statistics:"+domain.Host, "last_error").Result()
 	if data == "" {
 		t.Fatal("Failed - Error not cached.")
 	}
@@ -70,7 +89,7 @@ func TestRelayActivityResp500(t *testing.T) {
 		t.Fatal("Failed - Error not reported.")
 	}
 	domain, _ := url.Parse(s.URL)
-	data, err := redisClient.HGet("relay:statistics:"+domain.Host, "last_error").Result()
+	data, _ := redisClient.HGet("relay:statistics:"+domain.Host, "last_error").Result()
 	if data == "" {
 		t.Fatal("Failed - Error not cached.")
 	}

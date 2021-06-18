@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1"
@@ -24,7 +23,6 @@ var (
 	// Nodeinfo : Relay's Nodeinfo
 	Nodeinfo models.NodeinfoResources
 
-	hostURL         *url.URL
 	relayState      models.RelayState
 	machineryServer *machinery.Server
 	actorCache      *cache.Cache
@@ -66,9 +64,8 @@ func initialize(globalConfig *models.RelayConfig) error {
 	Actor = models.NewActivityPubActorFromSelfKey(globalConfig)
 	actorCache = cache.New(5*time.Minute, 10*time.Minute)
 
-	hostURL = globalConfig.ServerHostname()
-	WebfingerResource.GenerateFromActor(hostURL, &Actor)
-	Nodeinfo.GenerateFromActor(hostURL, &Actor, version)
+	WebfingerResource.GenerateFromActor(globalConfig.ServerHostname(), &Actor)
+	Nodeinfo.GenerateFromActor(globalConfig.ServerHostname(), &Actor, version)
 
 	return nil
 }
