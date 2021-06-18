@@ -10,20 +10,19 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
 	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 var (
 	version string
 
 	// Actor : Relay's Actor
-	Actor activitypub.Actor
+	Actor models.Actor
 
 	hostname        *url.URL
 	hostkey         *rsa.PrivateKey
-	relayState      state.RelayState
+	relayState      models.RelayState
 	machineryServer *machinery.Server
 )
 
@@ -40,8 +39,8 @@ func initConfig() {
 		viper.BindEnv("relay_servicename")
 	} else {
 		Actor.Summary = viper.GetString("relay_summary")
-		Actor.Icon = activitypub.Image{URL: viper.GetString("relay_icon")}
-		Actor.Image = activitypub.Image{URL: viper.GetString("relay_image")}
+		Actor.Icon = &models.Image{URL: viper.GetString("relay_icon")}
+		Actor.Image = &models.Image{URL: viper.GetString("relay_image")}
 	}
 	Actor.Name = viper.GetString("relay_servicename")
 
@@ -58,7 +57,7 @@ func initConfig() {
 		panic(err)
 	}
 	redisClient := redis.NewClient(redisOption)
-	relayState = state.NewState(redisClient, true)
+	relayState = models.NewState(redisClient, true)
 	var machineryConfig = &config.Config{
 		Broker:          viper.GetString("redis_url"),
 		DefaultQueue:    "relay",

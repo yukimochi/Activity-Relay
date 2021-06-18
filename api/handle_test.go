@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -11,12 +11,11 @@ import (
 	"strconv"
 	"testing"
 
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 const (
-	BlockService state.Config = iota
+	BlockService models.Config = iota
 	ManuallyAccept
 	CreateAsAnnounce
 )
@@ -43,7 +42,7 @@ func TestHandleWebfingerGet(t *testing.T) {
 	defer r.Body.Close()
 
 	data, _ := ioutil.ReadAll(r.Body)
-	var wfresource activitypub.WebfingerResource
+	var wfresource models.WebfingerResource
 	err = json.Unmarshal(data, &wfresource)
 	if err != nil {
 		t.Fatalf("WebfingerResource response is not valid.")
@@ -92,7 +91,7 @@ func TestHandleNodeinfoLinkGet(t *testing.T) {
 	defer r.Body.Close()
 
 	data, _ := ioutil.ReadAll(r.Body)
-	var nodeinfoLinks activitypub.NodeinfoLinks
+	var nodeinfoLinks models.NodeinfoLinks
 	err = json.Unmarshal(data, &nodeinfoLinks)
 	if err != nil {
 		t.Fatalf("NodeinfoLinks response is not valid.")
@@ -133,7 +132,7 @@ func TestHandleNodeinfoGet(t *testing.T) {
 	defer r.Body.Close()
 
 	data, _ := ioutil.ReadAll(r.Body)
-	var nodeinfo activitypub.Nodeinfo
+	var nodeinfo models.Nodeinfo
 	err = json.Unmarshal(data, &nodeinfo)
 	if err != nil {
 		t.Fatalf("Nodeinfo response is not valid.")
@@ -187,7 +186,7 @@ func TestHandleActorGet(t *testing.T) {
 	defer r.Body.Close()
 
 	data, _ := ioutil.ReadAll(r.Body)
-	var actor activitypub.Actor
+	var actor models.Actor
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
 		t.Fatalf("Actor response is not valid.")
@@ -241,8 +240,8 @@ func TestContains(t *testing.T) {
 	}
 }
 
-func mockActivityDecoderProvider(activity *activitypub.Activity, actor *activitypub.Actor) func(r *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
-	return func(r *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
+func mockActivityDecoderProvider(activity *models.Activity, actor *models.Actor) func(r *http.Request) (*models.Activity, *models.Actor, []byte, error) {
+	return func(r *http.Request) (*models.Activity, *models.Actor, []byte, error) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Fatal(err)
@@ -252,57 +251,57 @@ func mockActivityDecoderProvider(activity *activitypub.Activity, actor *activity
 	}
 }
 
-func mockActivity(req string) activitypub.Activity {
+func mockActivity(req string) models.Activity {
 	switch req {
 	case "Follow":
-		file, _ := os.Open("./misc/follow.json")
+		file, _ := os.Open("../misc/follow.json")
 		body, _ := ioutil.ReadAll(file)
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Invalid-Follow":
-		file, _ := os.Open("./misc/followAsActor.json")
+		file, _ := os.Open("../misc/followAsActor.json")
 		body, _ := ioutil.ReadAll(file)
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Unfollow":
-		file, _ := os.Open("./misc/unfollow.json")
+		file, _ := os.Open("../misc/unfollow.json")
 		body, _ := ioutil.ReadAll(file)
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Invalid-Unfollow":
 		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://hacked.test.yukimochi.io/users/yukimochi\",\"object\":\"https://www.w3.org/ns/activitystreams#Public\"}}"
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "UnfollowAsActor":
 		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://relay.yukimochi.example.org/actor\"}}"
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "Create":
-		file, _ := os.Open("./misc/create.json")
+		file, _ := os.Open("../misc/create.json")
 		body, _ := ioutil.ReadAll(file)
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Create-Article":
 		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857/activity\",\"type\":\"Create\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:07:26Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"type\":\"Article\",\"summary\":null,\"inReplyTo\":null,\"published\":\"2018-11-15T11:07:26Z\",\"url\":\"https://mastodon.test.yukimochi.io/@yukimochi/101075045564444857\",\"attributedTo\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"sensitive\":false,\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"inReplyToAtomUri\":null,\"conversation\":\"tag:mastodon.test.yukimochi.io,2018-11-15:objectId=68:objectType=Conversation\",\"content\":\"<p>Actvity-Relay</p>\",\"contentMap\":{\"en\":\"<p>Actvity-Relay</p>\"},\"attachment\":[],\"tag\":[]},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:07:26Z\",\"signatureValue\":\"mMgl2GgVPgb1Kw6a2iDIZc7r0j3ob+Cl9y+QkCxIe6KmnUzb15e60UuhkE5j3rJnoTwRKqOFy1PMkSxlYW6fPG/5DBxW9I4kX+8sw8iH/zpwKKUOnXUJEqfwRrNH2ix33xcs/GkKPdedY6iAPV9vGZ10MSMOdypfYgU9r+UI0sTaaC2iMXH0WPnHQuYAI+Q1JDHIbDX5FH1WlDL6+8fKAicf3spBMxDwPHGPK8W2jmDLWdN2Vz4ffsCtWs5BCuqOKZrtTW0Rdd4HWzo40MnRXvBjv7yNlnnKzokANBqiOLWT7kNfK0+Vtnt6c/bNX64KBro53KR7wL3ZBvPVuv5rdQ==\"}}"
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "Announce":
-		file, _ := os.Open("./misc/announce.json")
+		file, _ := os.Open("../misc/announce.json")
 		body, _ := ioutil.ReadAll(file)
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Undo":
-		file, _ := os.Open("./misc/undo.json")
+		file, _ := os.Open("../misc/undo.json")
 		body, _ := ioutil.ReadAll(file)
-		var activity activitypub.Activity
+		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	default:
@@ -310,24 +309,24 @@ func mockActivity(req string) activitypub.Activity {
 	}
 }
 
-func mockActor(req string) activitypub.Actor {
+func mockActor(req string) models.Actor {
 	switch req {
 	case "Person":
-		file, _ := os.Open("./misc/person.json")
+		file, _ := os.Open("../misc/person.json")
 		body, _ := ioutil.ReadAll(file)
-		var actor activitypub.Actor
+		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	case "Service":
-		file, _ := os.Open("./misc/service.json")
+		file, _ := os.Open("../misc/service.json")
 		body, _ := ioutil.ReadAll(file)
-		var actor activitypub.Actor
+		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	case "Application":
-		file, _ := os.Open("./misc/application.json")
+		file, _ := os.Open("../misc/application.json")
 		body, _ := ioutil.ReadAll(file)
-		var actor activitypub.Actor
+		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	default:
@@ -529,7 +528,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -559,7 +558,7 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -589,7 +588,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -619,11 +618,11 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -652,7 +651,7 @@ func TestHandleInboxlimitedCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -680,11 +679,11 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -713,11 +712,11 @@ func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -765,7 +764,7 @@ func TestHandleInboxUndo(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})

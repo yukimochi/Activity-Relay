@@ -7,11 +7,11 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 const (
-	BlockService state.Config = iota
+	BlockService models.Config = iota
 	ManuallyAccept
 	CreateAsAnnounce
 )
@@ -126,7 +126,7 @@ func importConfig(cmd *cobra.Command, args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		return
 	}
-	var data state.RelayState
+	var data models.RelayState
 	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -154,7 +154,7 @@ func importConfig(cmd *cobra.Command, args []string) {
 		cmd.Println("Set [" + BlockedDomain + "] as blocked domain")
 	}
 	for _, Subscription := range data.Subscriptions {
-		relayState.AddSubscription(state.Subscription{
+		relayState.AddSubscription(models.Subscription{
 			Domain:     Subscription.Domain,
 			InboxURL:   Subscription.InboxURL,
 			ActivityID: Subscription.ActivityID,

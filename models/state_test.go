@@ -1,45 +1,12 @@
-package state
+package models
 
 import (
-	"fmt"
-	"os"
 	"testing"
-
-	"github.com/go-redis/redis"
-	"github.com/spf13/viper"
 )
 
-var redisClient *redis.Client
-var relayState RelayState
-var ch chan bool
-
-func TestMain(m *testing.M) {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Println("Config file is not exists. Use environment variables.")
-		viper.BindEnv("redis_url")
-	}
-	redisOption, err := redis.ParseURL(viper.GetString("redis_url"))
-	if err != nil {
-		panic(err)
-	}
-	redisClient = redis.NewClient(redisOption)
-	redisClient.FlushAll().Result()
-
-	ch = make(chan bool)
-	relayState = NewState(redisClient, true)
-	relayState.ListenNotify(ch)
-
-	code := m.Run()
-	redisClient.FlushAll().Result()
-
-	os.Exit(code)
-}
-
 func TestLoadEmpty(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
+	relayState.Load()
 
 	if relayState.RelayConfig.BlockService != false {
 		t.Fatalf("Failed read config.")
@@ -53,7 +20,7 @@ func TestLoadEmpty(t *testing.T) {
 }
 
 func TestSetConfig(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
 
 	relayState.SetConfig(BlockService, true)
 	<-ch
@@ -89,7 +56,7 @@ func TestSetConfig(t *testing.T) {
 }
 
 func TestTreatSubscriptionNotify(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
 
 	relayState.AddSubscription(Subscription{
 		Domain:   "example.com",
@@ -121,7 +88,7 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 }
 
 func TestSelectDomain(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
 
 	exampleSubscription := Subscription{
 		Domain:   "example.com",
@@ -143,7 +110,7 @@ func TestSelectDomain(t *testing.T) {
 }
 
 func TestBlockedDomain(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
 
 	relayState.SetBlockedDomain("example.com", true)
 	<-ch
@@ -172,7 +139,7 @@ func TestBlockedDomain(t *testing.T) {
 }
 
 func TestLimitedDomain(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
 
 	relayState.SetLimitedDomain("example.com", true)
 	<-ch
@@ -201,7 +168,7 @@ func TestLimitedDomain(t *testing.T) {
 }
 
 func TestLoadCompatiSubscription(t *testing.T) {
-	redisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll().Result()
 
 	relayState.AddSubscription(Subscription{
 		Domain:   "example.com",

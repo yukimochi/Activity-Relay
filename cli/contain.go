@@ -1,6 +1,6 @@
 package main
 
-import state "github.com/yukimochi/Activity-Relay/State"
+import "github.com/yukimochi/Activity-Relay/models"
 
 func contains(entries interface{}, finder string) bool {
 	switch entry := entries.(type) {
@@ -12,7 +12,7 @@ func contains(entries interface{}, finder string) bool {
 				return true
 			}
 		}
-	case []state.Subscription:
+	case []models.Subscription:
 		for i := 0; i < len(entry); i++ {
 			if entry[i].Domain == finder {
 				return true

@@ -13,7 +13,7 @@ jobs:
       - name: Execute test and upload coverage
         run: |
           go version
-          go test -coverprofile=coverage.txt -covermode=atomic -p 1 . ./worker ./cli ./State
+          go test -coverprofile=coverage.txt -covermode=atomic -p 1 ./api ./worker ./cli ./models
           bash <(curl -s https://codecov.io/bash)
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

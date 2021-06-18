@@ -14,15 +14,15 @@ import (
 	"github.com/go-redis/redis"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/viper"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
 	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 var (
 	version string
 
 	// Actor : Relay's Actor
-	Actor activitypub.Actor
+	Actor models.Actor
 
 	hostURL         *url.URL
 	hostPrivatekey  *rsa.PrivateKey
@@ -66,8 +66,8 @@ func initConfig() {
 		viper.BindEnv("job_concurrency")
 	} else {
 		Actor.Summary = viper.GetString("relay_summary")
-		Actor.Icon = activitypub.Image{URL: viper.GetString("relay_icon")}
-		Actor.Image = activitypub.Image{URL: viper.GetString("relay_image")}
+		Actor.Icon = &models.Image{URL: viper.GetString("relay_icon")}
+		Actor.Image = &models.Image{URL: viper.GetString("relay_image")}
 	}
 	Actor.Name = viper.GetString("relay_servicename")
 

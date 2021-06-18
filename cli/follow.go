@@ -9,8 +9,7 @@ import (
 	"github.com/RichardKnop/machinery/v1/tasks"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func followCmdInit() *cobra.Command {
@@ -85,7 +84,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	if err != nil {
 		return err
 	}
-	activity := activitypub.Activity{
+	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
 		ID:      data["activity_id"],
 		Actor:   data["actor"],
@@ -101,7 +100,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	pushRegistorJob(data["inbox_url"], jsonData)
 	relayState.RedisClient.Del("relay:pending:" + domain)
 	if response == "Accept" {
-		relayState.AddSubscription(state.Subscription{
+		relayState.AddSubscription(models.Subscription{
 			Domain:     domain,
 			InboxURL:   data["inbox_url"],
 			ActivityID: data["activity_id"],
@@ -112,8 +111,8 @@ func createFollowRequestResponse(domain string, response string) error {
 	return nil
 }
 
-func createUpdateActorActivity(subscription state.Subscription) error {
-	activity := activitypub.Activity{
+func createUpdateActorActivity(subscription models.Subscription) error {
+	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams"},
 		ID:      hostname.String() + "/activities/" + uuid.NewV4().String(),
 		Actor:   hostname.String() + "/actor",

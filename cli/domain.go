@@ -5,8 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func domainCmdInit() *cobra.Command {
@@ -48,8 +47,8 @@ func domainCmdInit() *cobra.Command {
 	return domain
 }
 
-func createUnfollowRequestResponse(subscription state.Subscription) error {
-	activity := activitypub.Activity{
+func createUnfollowRequestResponse(subscription models.Subscription) error {
+	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
 		ID:      subscription.ActivityID,
 		Actor:   subscription.ActorID,
