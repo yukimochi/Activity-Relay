@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 func TestListFollows(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
@@ -19,10 +19,10 @@ func TestListFollows(t *testing.T) {
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
 		"actor":       "https://example.com/user/example",
-		"object":      "https://" + hostname.Host + "/actor",
+		"object":      "https://" + globalConfig.ServerHostname().Host + "/actor",
 	})
 
-	app.SetArgs([]string{"follow", "list"})
+	app.SetArgs([]string{"list"})
 	app.Execute()
 
 	output := buffer.String()
@@ -38,17 +38,17 @@ Total : 1
 func TestAcceptFollow(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := followCmdInit()
 
 	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
 		"actor":       "https://example.com/user/example",
-		"object":      "https://" + hostname.Host + "/actor",
+		"object":      "https://" + globalConfig.ServerHostname().Host + "/actor",
 	})
 
-	app.SetArgs([]string{"follow", "accept", "example.com"})
+	app.SetArgs([]string{"accept", "example.com"})
 	app.Execute()
 
 	valid, _ := relayState.RedisClient.Exists("relay:pending:example.com").Result()
@@ -65,17 +65,17 @@ func TestAcceptFollow(t *testing.T) {
 func TestRejectFollow(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := followCmdInit()
 
 	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
 		"actor":       "https://example.com/user/example",
-		"object":      "https://" + hostname.Host + "/actor",
+		"object":      "https://" + globalConfig.ServerHostname().Host + "/actor",
 	})
 
-	app.SetArgs([]string{"follow", "reject", "example.com"})
+	app.SetArgs([]string{"reject", "example.com"})
 	app.Execute()
 
 	valid, _ := relayState.RedisClient.Exists("relay:pending:example.com").Result()
@@ -92,12 +92,12 @@ func TestRejectFollow(t *testing.T) {
 func TestInvalidFollow(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"follow", "accept", "unknown.tld"})
+	app.SetArgs([]string{"accept", "unknown.tld"})
 	app.Execute()
 
 	output := buffer.String()
@@ -109,12 +109,12 @@ func TestInvalidFollow(t *testing.T) {
 func TestInvalidRejectFollow(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
 	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"follow", "reject", "unknown.tld"})
+	app.SetArgs([]string{"reject", "unknown.tld"})
 	app.Execute()
 
 	output := buffer.String()
@@ -124,11 +124,13 @@ func TestInvalidRejectFollow(t *testing.T) {
 }
 
 func TestCreateUpdateActorActivity(t *testing.T) {
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 
-	app.SetArgs([]string{"follow", "update"})
+	app = followCmdInit()
+
+	app.SetArgs([]string{"update"})
 	app.Execute()
 }

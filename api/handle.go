@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -9,8 +9,7 @@ import (
 	"os"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
@@ -95,7 +94,7 @@ func contains(entries interface{}, finder string) bool {
 			}
 		}
 		return false
-	case []state.Subscription:
+	case []models.Subscription:
 		for i := 0; i < len(entry); i++ {
 			if entry[i].Domain == finder {
 				return true
@@ -156,7 +155,7 @@ func pushRegistorJob(inboxURL string, body []byte) {
 	}
 }
 
-func followAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) error {
+func followAcceptable(activity *models.Activity, actor *models.Actor) error {
 	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
 		return nil
 	} else {
@@ -164,7 +163,7 @@ func followAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) 
 	}
 }
 
-func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) error {
+func unFollowAcceptable(activity *models.Activity, actor *models.Actor) error {
 	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
 		return nil
 	} else {
@@ -172,7 +171,7 @@ func unFollowAcceptable(activity *activitypub.Activity, actor *activitypub.Actor
 	}
 }
 
-func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bool {
+func suitableFollow(activity *models.Activity, actor *models.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
 	if contains(relayState.BlockedDomains, domain.Host) {
 		return false
@@ -180,7 +179,7 @@ func suitableFollow(activity *activitypub.Activity, actor *activitypub.Actor) bo
 	return true
 }
 
-func relayAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) error {
+func relayAcceptable(activity *models.Activity, actor *models.Actor) error {
 	if !contains(activity.To, "https://www.w3.org/ns/activitystreams#Public") && !contains(activity.Cc, "https://www.w3.org/ns/activitystreams#Public") {
 		return errors.New("Activity should contain https://www.w3.org/ns/activitystreams#Public as receiver")
 	}
@@ -191,7 +190,7 @@ func relayAcceptable(activity *activitypub.Activity, actor *activitypub.Actor) e
 	return errors.New("To use the relay service, Subscribe me in advance")
 }
 
-func suitableRelay(activity *activitypub.Activity, actor *activitypub.Actor) bool {
+func suitableRelay(activity *models.Activity, actor *models.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
 	if contains(relayState.LimitedDomains, domain.Host) {
 		return false
@@ -202,7 +201,7 @@ func suitableRelay(activity *activitypub.Activity, actor *activitypub.Actor) boo
 	return true
 }
 
-func handleInbox(writer http.ResponseWriter, request *http.Request, activityDecoder func(*http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error)) {
+func handleInbox(writer http.ResponseWriter, request *http.Request, activityDecoder func(*http.Request) (*models.Activity, *models.Actor, []byte, error)) {
 	switch request.Method {
 	case "POST":
 		activity, actor, body, err := activityDecoder(request)
@@ -215,7 +214,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			case "Follow":
 				err = followAcceptable(activity, actor)
 				if err != nil {
-					resp := activity.GenerateResponse(hostURL, "Reject")
+					resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 					jsonData, _ := json.Marshal(&resp)
 					go pushRegistorJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
@@ -234,10 +233,10 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							})
 							fmt.Println("Pending Follow Request : ", activity.Actor)
 						} else {
-							resp := activity.GenerateResponse(hostURL, "Accept")
+							resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Accept")
 							jsonData, _ := json.Marshal(&resp)
 							go pushRegistorJob(actor.Inbox, jsonData)
-							relayState.AddSubscription(state.Subscription{
+							relayState.AddSubscription(models.Subscription{
 								Domain:     domain.Host,
 								InboxURL:   actor.Endpoints.SharedInbox,
 								ActivityID: activity.ID,
@@ -246,7 +245,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							fmt.Println("Accept Follow Request : ", activity.Actor)
 						}
 					} else {
-						resp := activity.GenerateResponse(hostURL, "Reject")
+						resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 						jsonData, _ := json.Marshal(&resp)
 						go pushRegistorJob(actor.Inbox, jsonData)
 						fmt.Println("Reject Follow Request : ", activity.Actor)
@@ -298,7 +297,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							}
 							switch nestedObject.Type {
 							case "Note":
-								resp := nestedObject.GenerateAnnounce(hostURL)
+								resp := nestedObject.GenerateAnnounce(globalConfig.ServerHostname())
 								jsonData, _ := json.Marshal(&resp)
 								go pushRelayJob(domain.Host, jsonData)
 								fmt.Println("Accept Announce Note : ", activity.Actor)

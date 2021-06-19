@@ -1,4 +1,4 @@
-package main
+package deliver
 
 // NullLogger : Null logger for debug output
 type NullLogger struct {

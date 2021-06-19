@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@master
       - name: Build Docker Images
         run: |
+          git fetch --prune --unshallow
           docker build -t activity-relay:$(echo ${GITHUB_SHA}|head -c7) .
       - name: Push Docker Images to DockerHub
         run: |

@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"crypto/sha256"
@@ -9,13 +9,11 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/spf13/viper"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
+	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/httpsig"
 )
 
-func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.Actor, []byte, error) {
+func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []byte, error) {
 	request.Header.Set("Host", request.Host)
 	dataLen, _ := strconv.Atoi(request.Header.Get("Content-Length"))
 	body := make([]byte, dataLen)
@@ -27,12 +25,12 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 		return nil, nil, nil, err
 	}
 	KeyID := verifier.KeyId()
-	keyOwnerActor := new(activitypub.Actor)
-	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host), actorCache)
+	keyOwnerActor := new(models.Actor)
+	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	PubKey, err := keyloader.ReadPublicKeyRSAfromString(keyOwnerActor.PublicKey.PublicKeyPem)
+	PubKey, err := models.ReadPublicKeyRSAfromString(keyOwnerActor.PublicKey.PublicKeyPem)
 	if PubKey == nil {
 		return nil, nil, nil, errors.New("Failed parse PublicKey from string")
 	}
@@ -56,14 +54,14 @@ func decodeActivity(request *http.Request) (*activitypub.Activity, *activitypub.
 	}
 
 	// Parse Activity
-	var activity activitypub.Activity
+	var activity models.Activity
 	err = json.Unmarshal(body, &activity)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	var remoteActor activitypub.Actor
-	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host), actorCache)
+	var remoteActor models.Actor
+	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}

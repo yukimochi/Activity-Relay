@@ -1,12 +1,11 @@
-package main
+package control
 
 import (
 	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func domainCmdInit() *cobra.Command {
@@ -20,7 +19,9 @@ func domainCmdInit() *cobra.Command {
 		Use:   "list [flags]",
 		Short: "List domain",
 		Long:  "List domain which filtered given type.",
-		RunE:  listDomains,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(listDomains, cmd, args)
+		},
 	}
 	domainList.Flags().StringP("type", "t", "subscriber", "domain type [subscriber,limited,blocked]")
 	domain.AddCommand(domainList)
@@ -30,7 +31,9 @@ func domainCmdInit() *cobra.Command {
 		Short: "Set or unset domain as limited or blocked",
 		Long:  "Set or unset domain as limited or blocked.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  setDomainType,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(setDomainType, cmd, args)
+		},
 	}
 	domainSet.Flags().StringP("type", "t", "", "Apply domain type [limited,blocked]")
 	domainSet.MarkFlagRequired("type")
@@ -41,15 +44,17 @@ func domainCmdInit() *cobra.Command {
 		Use:   "unfollow [flags]",
 		Short: "Send Unfollow request for given domains",
 		Long:  "Send unfollow request for given domains.",
-		RunE:  unfollowDomains,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(unfollowDomains, cmd, args)
+		},
 	}
 	domain.AddCommand(domainUnfollow)
 
 	return domain
 }
 
-func createUnfollowRequestResponse(subscription state.Subscription) error {
-	activity := activitypub.Activity{
+func createUnfollowRequestResponse(subscription models.Subscription) error {
+	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
 		ID:      subscription.ActivityID,
 		Actor:   subscription.ActorID,
@@ -57,7 +62,7 @@ func createUnfollowRequestResponse(subscription state.Subscription) error {
 		Object:  "https://www.w3.org/ns/activitystreams#Public",
 	}
 
-	resp := activity.GenerateResponse(hostname, "Reject")
+	resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 	jsonData, _ := json.Marshal(&resp)
 	pushRegistorJob(subscription.InboxURL, jsonData)
 

@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -9,18 +9,18 @@ import (
 	"strconv"
 	"testing"
 
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func TestDecodeActivity(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("./misc/create.json")
+	file, _ := os.Open("../misc/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
@@ -45,12 +45,12 @@ func TestDecodeActivity(t *testing.T) {
 func TestDecodeActivityWithNoSignature(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("./misc/create.json")
+	file, _ := os.Open("../misc/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
@@ -69,12 +69,12 @@ func TestDecodeActivityWithNoSignature(t *testing.T) {
 func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("./misc/create.json")
+	file, _ := os.Open("../misc/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
@@ -94,12 +94,12 @@ func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 func TestDecodeActivityWithInvalidDigest(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(state.Subscription{
+	relayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("./misc/create.json")
+	file, _ := os.Open("../misc/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))

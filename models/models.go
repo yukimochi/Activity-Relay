@@ -1,4 +1,4 @@
-package activitypub
+package models
 
 import (
 	"crypto/rsa"
@@ -11,7 +11,6 @@ import (
 
 	cache "github.com/patrickmn/go-cache"
 	uuid "github.com/satori/go.uuid"
-	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
 )
 
 // PublicKey : Activity Certificate.
@@ -42,8 +41,8 @@ type Actor struct {
 	Inbox             string      `json:"inbox,omitempty"`
 	Endpoints         *Endpoints  `json:"endpoints,omitempty"`
 	PublicKey         PublicKey   `json:"publicKey,omitempty"`
-	Icon              Image       `json:"icon,omitempty"`
-	Image             Image       `json:"image,omitempty"`
+	Icon              *Image      `json:"icon,omitempty"`
+	Image             *Image      `json:"image,omitempty"`
 }
 
 // GenerateSelfKey : Generate relay Actor from Publickey.
@@ -56,8 +55,46 @@ func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey)
 	actor.PublicKey = PublicKey{
 		hostname.String() + "/actor#main-key",
 		hostname.String() + "/actor",
-		keyloader.GeneratePublicKeyPEMString(publickey),
+		generatePublicKeyPEMString(publickey),
 	}
+}
+
+func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
+	hostname := globalConfig.domain.String()
+	publicKey := &globalConfig.actorKey.PublicKey
+	publicKeyPemString := generatePublicKeyPEMString(publicKey)
+
+	newActor := Actor{
+		Context:           []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		ID:                hostname + "/actor",
+		Type:              "Service",
+		Name:              globalConfig.serviceName,
+		PreferredUsername: "relay",
+		Summary:           globalConfig.serviceSummary,
+		Inbox:             hostname + "/inbox",
+		PublicKey: struct {
+			ID           string `json:"id,omitempty"`
+			Owner        string `json:"owner,omitempty"`
+			PublicKeyPem string `json:"publicKeyPem,omitempty"`
+		}{
+			ID:           hostname + "/actor#main-key",
+			Owner:        hostname + "/actor",
+			PublicKeyPem: publicKeyPemString,
+		},
+	}
+
+	if globalConfig.serviceIconURL != nil {
+		newActor.Icon = &Image{
+			URL: globalConfig.serviceIconURL.String(),
+		}
+	}
+	if globalConfig.serviceImageURL != nil {
+		newActor.Image = &Image{
+			URL: globalConfig.serviceImageURL.String(),
+		}
+	}
+
+	return newActor
 }
 
 // RetrieveRemoteActor : Retrieve Actor from remote instance.

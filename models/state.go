@@ -1,4 +1,4 @@
-package state
+package models
 
 import (
 	"fmt"

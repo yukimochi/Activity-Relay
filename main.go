@@ -1,112 +1,145 @@
+/*
+Yet another powerful customizable ActivityPub relay server written in Go.
+
+Run Activity-Relay
+
+API Server
+	./Activity-Relay -c <Path of config file> server
+Job Worker
+	./Activity-Relay -c <Path of config file> worker
+CLI Management Utility
+	./Activity-Relay -c <Path of config file> control
+
+Config
+
+YAML Format
+	ACTOR_PEM: actor.pem
+	REDIS_URL: redis://localhost:6379
+	RELAY_BIND: 0.0.0.0:8080
+	RELAY_DOMAIN: relay.toot.yukimochi.jp
+	RELAY_SERVICENAME: YUKIMOCHI Toot Relay Service
+	JOB_CONCURRENCY: 50
+	RELAY_SUMMARY: |
+		YUKIMOCHI Toot Relay Service is Running by Activity-Relay
+	RELAY_ICON: https://example.com/example_icon.png
+	RELAY_IMAGE: https://example.com/example_image.png
+Environment Variable
+
+This is Optional : When config file not exist, use environment variables.
+	- ACTOR_PEM
+	- REDIS_URL
+	- RELAY_BIND
+	- RELAY_DOMAIN
+	- RELAY_SERVICENAME
+	- JOB_CONCURRENCY
+	- RELAY_SUMMARY
+	- RELAY_ICON
+	- RELAY_IMAGE
+
+*/
 package main
 
 import (
-	"crypto/rsa"
 	"fmt"
-	"net/http"
-	"net/url"
-	"time"
+	"os"
 
-	"github.com/RichardKnop/machinery/v1"
-	"github.com/RichardKnop/machinery/v1/config"
-	"github.com/go-redis/redis"
-	cache "github.com/patrickmn/go-cache"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	keyloader "github.com/yukimochi/Activity-Relay/KeyLoader"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/api"
+	"github.com/yukimochi/Activity-Relay/control"
+	"github.com/yukimochi/Activity-Relay/deliver"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 var (
 	version string
 
-	// Actor : Relay's Actor
-	Actor activitypub.Actor
-
-	// WebfingerResource : Relay's Webfinger resource
-	WebfingerResource activitypub.WebfingerResource
-
-	// Nodeinfo : Relay's Nodeinfo
-	Nodeinfo activitypub.NodeinfoResources
-
-	hostURL         *url.URL
-	hostPrivatekey  *rsa.PrivateKey
-	relayState      state.RelayState
-	machineryServer *machinery.Server
-	actorCache      *cache.Cache
+	globalConfig *models.RelayConfig
 )
 
-func initConfig() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
-	if err != nil {
-		fmt.Println("Config file is not exists. Use environment variables.")
-		viper.BindEnv("actor_pem")
-		viper.BindEnv("redis_url")
-		viper.BindEnv("relay_bind")
-		viper.BindEnv("relay_domain")
-		viper.BindEnv("relay_servicename")
-	} else {
-		Actor.Summary = viper.GetString("relay_summary")
-		Actor.Icon = activitypub.Image{URL: viper.GetString("relay_icon")}
-		Actor.Image = activitypub.Image{URL: viper.GetString("relay_image")}
-	}
-	Actor.Name = viper.GetString("relay_servicename")
+func main() {
+	var app = buildCommand()
+	app.PersistentFlags().StringP("config", "c", "config.yml", "Path of config file.")
 
-	hostURL, _ = url.Parse("https://" + viper.GetString("relay_domain"))
-	hostPrivatekey, _ = keyloader.ReadPrivateKeyRSAfromPath(viper.GetString("actor_pem"))
-	redisOption, err := redis.ParseURL(viper.GetString("redis_url"))
-	if err != nil {
-		panic(err)
-	}
-	redisClient := redis.NewClient(redisOption)
-	relayState = state.NewState(redisClient, true)
-	relayState.ListenNotify(nil)
-	machineryConfig := &config.Config{
-		Broker:          viper.GetString("redis_url"),
-		DefaultQueue:    "relay",
-		ResultBackend:   viper.GetString("redis_url"),
-		ResultsExpireIn: 5,
-	}
-	machineryServer, err = machinery.NewServer(machineryConfig)
-	if err != nil {
-		panic(err)
-	}
-
-	Actor.GenerateSelfKey(hostURL, &hostPrivatekey.PublicKey)
-	actorCache = cache.New(5*time.Minute, 10*time.Minute)
-	WebfingerResource.GenerateFromActor(hostURL, &Actor)
-	Nodeinfo.GenerateFromActor(hostURL, &Actor, version)
-
-	fmt.Println("Welcome to YUKIMOCHI Activity-Relay [Server]", version)
-	fmt.Println(" - Configurations")
-	fmt.Println("RELAY DOMAIN : ", hostURL.Host)
-	fmt.Println("REDIS URL : ", viper.GetString("redis_url"))
-	fmt.Println("BIND ADDRESS : ", viper.GetString("relay_bind"))
-	fmt.Println(" - Blocked Domain")
-	domains, _ := redisClient.HKeys("relay:config:blockedDomain").Result()
-	for _, domain := range domains {
-		fmt.Println(domain)
-	}
-	fmt.Println(" - Limited Domain")
-	domains, _ = redisClient.HKeys("relay:config:limitedDomain").Result()
-	for _, domain := range domains {
-		fmt.Println(domain)
-	}
+	app.Execute()
 }
 
-func main() {
-	// Load Config
-	initConfig()
+func buildCommand() *cobra.Command {
+	var server = &cobra.Command{
+		Use:   "server",
+		Short: "Activity-Relay API Server",
+		Long:  "Activity-Relay API Server is providing WebFinger API, ActivityPub inbox",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			initConfig(cmd)
+			fmt.Println(globalConfig.DumpWelcomeMessage("API Server", version))
+			err := api.Entrypoint(globalConfig, version)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err.Error())
+				os.Exit(1)
+			}
+			return nil
+		},
+	}
 
-	http.HandleFunc("/.well-known/nodeinfo", handleNodeinfoLink)
-	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
-	http.HandleFunc("/nodeinfo/2.1", handleNodeinfo)
-	http.HandleFunc("/actor", handleActor)
-	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, decodeActivity)
-	})
+	var worker = &cobra.Command{
+		Use:   "worker",
+		Short: "Activity-Relay Job Worker",
+		Long:  "Activity-Relay Job Worker is providing ActivityPub Activity deliverer",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			initConfig(cmd)
+			fmt.Println(globalConfig.DumpWelcomeMessage("Job Worker", version))
+			err := deliver.Entrypoint(globalConfig, version)
+			if err != nil {
+				fmt.Println(err.Error())
+				os.Exit(1)
+			}
+			return nil
+		},
+	}
 
-	http.ListenAndServe(viper.GetString("relay_bind"), nil)
+	var command = &cobra.Command{
+		Use:   "control",
+		Short: "Activity-Relay CLI",
+		Long:  "Activity-Relay CLI Management Utility",
+	}
+	control.BuildCommand(command)
+
+	var app = &cobra.Command{
+		Short: "YUKIMOCHI Activity-Relay",
+		Long:  "YUKIMOCHI Activity-Relay - ActivityPub Relay Server",
+	}
+	app.AddCommand(server)
+	app.AddCommand(worker)
+	app.AddCommand(command)
+
+	return app
+}
+
+func initConfig(cmd *cobra.Command) {
+	configPath := cmd.Flag("config").Value.String()
+	file, err := os.Open(configPath)
+	defer file.Close()
+
+	if err == nil {
+		viper.SetConfigType("yaml")
+		viper.ReadConfig(file)
+	} else {
+		fmt.Fprintln(os.Stderr, "Config file not exist. Use environment variables.")
+
+		viper.BindEnv("ACTOR_PEM")
+		viper.BindEnv("REDIS_URL")
+		viper.BindEnv("RELAY_BIND")
+		viper.BindEnv("RELAY_DOMAIN")
+		viper.BindEnv("RELAY_SERVICENAME")
+		viper.BindEnv("JOB_CONCURRENCY")
+		viper.BindEnv("RELAY_SUMMARY")
+		viper.BindEnv("RELAY_ICON")
+		viper.BindEnv("RELAY_IMAGE")
+	}
+
+	globalConfig, err = models.NewRelayConfig()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 }

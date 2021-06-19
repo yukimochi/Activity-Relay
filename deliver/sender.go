@@ -1,4 +1,4 @@
-package main
+package deliver
 
 import (
 	"bytes"
@@ -11,7 +11,6 @@ import (
 	"time"
 
 	httpdate "github.com/Songmu/go-httpdate"
-	"github.com/spf13/viper"
 	"github.com/yukimochi/httpsig"
 )
 
@@ -36,7 +35,7 @@ func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKe
 func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.PrivateKey) error {
 	req, _ := http.NewRequest("POST", inboxURL, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json")
-	req.Header.Set("User-Agent", fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", viper.GetString("relay_servicename"), version, hostURL.Host))
+	req.Header.Set("User-Agent", fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host))
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
 	appendSignature(req, &body, KeyID, publicKey)
 	resp, err := httpClient.Do(req)

@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
 	"encoding/json"
@@ -9,8 +9,7 @@ import (
 	"github.com/RichardKnop/machinery/v1/tasks"
 	uuid "github.com/satori/go.uuid"
 	"github.com/spf13/cobra"
-	activitypub "github.com/yukimochi/Activity-Relay/ActivityPub"
-	state "github.com/yukimochi/Activity-Relay/State"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func followCmdInit() *cobra.Command {
@@ -24,7 +23,9 @@ func followCmdInit() *cobra.Command {
 		Use:   "list",
 		Short: "List follow request",
 		Long:  "List follow request.",
-		RunE:  listFollows,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(listFollows, cmd, args)
+		},
 	}
 	follow.AddCommand(followList)
 
@@ -33,7 +34,9 @@ func followCmdInit() *cobra.Command {
 		Short: "Accept follow request",
 		Long:  "Accept follow request by domain.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  acceptFollow,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(acceptFollow, cmd, args)
+		},
 	}
 	follow.AddCommand(followAccept)
 
@@ -42,7 +45,9 @@ func followCmdInit() *cobra.Command {
 		Short: "Reject follow request",
 		Long:  "Reject follow request by domain.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  rejectFollow,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(rejectFollow, cmd, args)
+		},
 	}
 	follow.AddCommand(followReject)
 
@@ -50,7 +55,9 @@ func followCmdInit() *cobra.Command {
 		Use:   "update",
 		Short: "Update actor object",
 		Long:  "Update actor object for whole subscribers.",
-		RunE:  updateActor,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(updateActor, cmd, args)
+		},
 	}
 	follow.AddCommand(updateActor)
 
@@ -85,7 +92,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	if err != nil {
 		return err
 	}
-	activity := activitypub.Activity{
+	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
 		ID:      data["activity_id"],
 		Actor:   data["actor"],
@@ -93,7 +100,7 @@ func createFollowRequestResponse(domain string, response string) error {
 		Object:  data["object"],
 	}
 
-	resp := activity.GenerateResponse(hostname, response)
+	resp := activity.GenerateResponse(globalConfig.ServerHostname(), response)
 	jsonData, err := json.Marshal(&resp)
 	if err != nil {
 		return err
@@ -101,7 +108,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	pushRegistorJob(data["inbox_url"], jsonData)
 	relayState.RedisClient.Del("relay:pending:" + domain)
 	if response == "Accept" {
-		relayState.AddSubscription(state.Subscription{
+		relayState.AddSubscription(models.Subscription{
 			Domain:     domain,
 			InboxURL:   data["inbox_url"],
 			ActivityID: data["activity_id"],
@@ -112,11 +119,11 @@ func createFollowRequestResponse(domain string, response string) error {
 	return nil
 }
 
-func createUpdateActorActivity(subscription state.Subscription) error {
-	activity := activitypub.Activity{
+func createUpdateActorActivity(subscription models.Subscription) error {
+	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams"},
-		ID:      hostname.String() + "/activities/" + uuid.NewV4().String(),
-		Actor:   hostname.String() + "/actor",
+		ID:      globalConfig.ServerHostname().String() + "/activities/" + uuid.NewV4().String(),
+		Actor:   globalConfig.ServerHostname().String() + "/actor",
 		Type:    "Update",
 		To:      []string{"https://www.w3.org/ns/activitystreams#Public"},
 		Object:  Actor,
