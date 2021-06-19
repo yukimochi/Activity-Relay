@@ -69,6 +69,8 @@ func initConfig(cmd *cobra.Command) error {
 		os.Exit(1)
 	}
 
+	initialize(globalConfig)
+
 	return nil
 }
 
