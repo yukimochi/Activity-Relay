@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
 	"encoding/json"
@@ -23,7 +23,9 @@ func followCmdInit() *cobra.Command {
 		Use:   "list",
 		Short: "List follow request",
 		Long:  "List follow request.",
-		RunE:  listFollows,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(listFollows, cmd, args)
+		},
 	}
 	follow.AddCommand(followList)
 
@@ -32,7 +34,9 @@ func followCmdInit() *cobra.Command {
 		Short: "Accept follow request",
 		Long:  "Accept follow request by domain.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  acceptFollow,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(acceptFollow, cmd, args)
+		},
 	}
 	follow.AddCommand(followAccept)
 
@@ -41,7 +45,9 @@ func followCmdInit() *cobra.Command {
 		Short: "Reject follow request",
 		Long:  "Reject follow request by domain.",
 		Args:  cobra.MinimumNArgs(1),
-		RunE:  rejectFollow,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(rejectFollow, cmd, args)
+		},
 	}
 	follow.AddCommand(followReject)
 
@@ -49,7 +55,9 @@ func followCmdInit() *cobra.Command {
 		Use:   "update",
 		Short: "Update actor object",
 		Long:  "Update actor object for whole subscribers.",
-		RunE:  updateActor,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(updateActor, cmd, args)
+		},
 	}
 	follow.AddCommand(updateActor)
 
@@ -92,7 +100,7 @@ func createFollowRequestResponse(domain string, response string) error {
 		Object:  data["object"],
 	}
 
-	resp := activity.GenerateResponse(hostname, response)
+	resp := activity.GenerateResponse(globalConfig.ServerHostname(), response)
 	jsonData, err := json.Marshal(&resp)
 	if err != nil {
 		return err
@@ -114,8 +122,8 @@ func createFollowRequestResponse(domain string, response string) error {
 func createUpdateActorActivity(subscription models.Subscription) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams"},
-		ID:      hostname.String() + "/activities/" + uuid.NewV4().String(),
-		Actor:   hostname.String() + "/actor",
+		ID:      globalConfig.ServerHostname().String() + "/activities/" + uuid.NewV4().String(),
+		Actor:   globalConfig.ServerHostname().String() + "/actor",
 		Type:    "Update",
 		To:      []string{"https://www.w3.org/ns/activitystreams#Public"},
 		Object:  Actor,

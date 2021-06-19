@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
 	"encoding/json"
@@ -27,7 +27,9 @@ func configCmdInit() *cobra.Command {
 		Use:   "list",
 		Short: "List all relay configration",
 		Long:  "List all relay configration.",
-		Run:   listConfig,
+		Run: func(cmd *cobra.Command, args []string) {
+			initProxy(listConfig, cmd, args)
+		},
 	}
 	config.AddCommand(configList)
 
@@ -35,7 +37,9 @@ func configCmdInit() *cobra.Command {
 		Use:   "export",
 		Short: "Export all relay information",
 		Long:  "Export all relay information by JSON format.",
-		Run:   exportConfig,
+		Run: func(cmd *cobra.Command, args []string) {
+			initProxy(exportConfig, cmd, args)
+		},
 	}
 	config.AddCommand(configExport)
 
@@ -43,7 +47,9 @@ func configCmdInit() *cobra.Command {
 		Use:   "import [flags]",
 		Short: "Import all relay information",
 		Long:  "Import all relay information from JSON file.",
-		Run:   importConfig,
+		Run: func(cmd *cobra.Command, args []string) {
+			initProxy(importConfig, cmd, args)
+		},
 	}
 	configImport.Flags().String("json", "", "JSON file-path")
 	configImport.MarkFlagRequired("json")
@@ -60,7 +66,9 @@ func configCmdInit() *cobra.Command {
  - create-as-announce
 	Enable announce activity instead of relay create activity (not recommend)`,
 		Args: cobra.MinimumNArgs(1),
-		RunE: configEnable,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return initProxyE(configEnable, cmd, args)
+		},
 	}
 	configEnable.Flags().BoolP("disable", "d", false, "Disable configration instead of Enable")
 	config.AddCommand(configEnable)

@@ -1,4 +1,4 @@
-package main
+package control
 
 import "github.com/yukimochi/Activity-Relay/models"
 

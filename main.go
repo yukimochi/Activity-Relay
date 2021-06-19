@@ -7,6 +7,8 @@ API Server
 	./Activity-Relay -c <Path of config file> server
 Job Worker
 	./Activity-Relay -c <Path of config file> worker
+CLI Management Utility
+	./Activity-Relay -c <Path of config file> control
 
 Config
 
@@ -44,6 +46,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/yukimochi/Activity-Relay/api"
+	"github.com/yukimochi/Activity-Relay/control"
 	"github.com/yukimochi/Activity-Relay/deliver"
 	"github.com/yukimochi/Activity-Relay/models"
 )
@@ -67,7 +70,7 @@ func buildCommand() *cobra.Command {
 		Short: "Activity-Relay API Server",
 		Long:  "Activity-Relay API Server is providing WebFinger API, ActivityPub inbox",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			initConfig(cmd, args)
+			initConfig(cmd)
 			fmt.Println(globalConfig.DumpWelcomeMessage("API Server", version))
 			err := api.Entrypoint(globalConfig, version)
 			if err != nil {
@@ -83,7 +86,7 @@ func buildCommand() *cobra.Command {
 		Short: "Activity-Relay Job Worker",
 		Long:  "Activity-Relay Job Worker is providing ActivityPub Activity deliverer",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			initConfig(cmd, args)
+			initConfig(cmd)
 			fmt.Println(globalConfig.DumpWelcomeMessage("Job Worker", version))
 			err := deliver.Entrypoint(globalConfig, version)
 			if err != nil {
@@ -94,17 +97,25 @@ func buildCommand() *cobra.Command {
 		},
 	}
 
+	var command = &cobra.Command{
+		Use:   "control",
+		Short: "Activity-Relay CLI",
+		Long:  "Activity-Relay CLI Management Utility",
+	}
+	control.BuildCommand(command)
+
 	var app = &cobra.Command{
 		Short: "YUKIMOCHI Activity-Relay",
 		Long:  "YUKIMOCHI Activity-Relay - ActivityPub Relay Server",
 	}
 	app.AddCommand(server)
 	app.AddCommand(worker)
+	app.AddCommand(command)
 
 	return app
 }
 
-func initConfig(cmd *cobra.Command, args []string) {
+func initConfig(cmd *cobra.Command) {
 	configPath := cmd.Flag("config").Value.String()
 	file, err := os.Open(configPath)
 	defer file.Close()

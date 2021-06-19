@@ -20,13 +20,29 @@
 
  - [Redis](https://github.com/antirez/redis)
 
-## Installation Manual
+## Run
 
-See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki)
+### API Server
 
-## Configration
+```bash
+relay -c <Path of config file> server
+```
 
-### `config.yml`
+### Job Worker
+
+```bash
+relay -c <Path of config file> worker
+```
+
+### CLI Management Utility
+
+```bash
+relay -c <Path of config file> control
+```
+
+## Config
+
+### YAML Format
 
 ```yaml config.yml
 ACTOR_PEM: /actor.pem
@@ -42,7 +58,7 @@ JOB_CONCURRENCY: 50
 # RELAY_IMAGE: https://
 ```
 
-### `Environment Variable`
+### Environment Variable
 
  This is **Optional** : When `config.yml` not exists, use environment variable.
 
@@ -58,3 +74,16 @@ JOB_CONCURRENCY: 50
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay?ref=badge_large)
+
+## Project Sponsors
+
+Thank you for your support.
+
+### Monthly Donation
+
+**[My Doner List](https://relay.toot.yukimochi.jp#patreon-list)**
+  
+#### Donation Platform
+ - [Patreon](https://www.patreon.com/yukimochi)
+ - [pixiv fanbox](https://yukimochi.fanbox.cc)
+ - [fantia](https://fantia.jp/fanclubs/11264)

@@ -1,4 +1,4 @@
-package main
+package control
 
 import (
 	"bytes"
@@ -9,15 +9,16 @@ import (
 func TestListDomainSubscriber(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app := configCmdInit()
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"domain", "list"})
+	app = domainCmdInit()
+	app.SetOutput(buffer)
+	app.SetArgs([]string{"list"})
 	app.Execute()
 
 	output := buffer.String()
@@ -33,16 +34,17 @@ Total : 1
 func TestListDomainLimited(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"domain", "list", "-t", "limited"})
+	app = domainCmdInit()
+	app.SetOutput(buffer)
+	app.SetArgs([]string{"list", "-t", "limited"})
 	app.Execute()
 
 	output := buffer.String()
@@ -58,16 +60,17 @@ Total : 1
 func TestListDomainBlocked(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"domain", "list", "-t", "blocked"})
+	app = domainCmdInit()
+	app.SetOutput(buffer)
+	app.SetArgs([]string{"list", "-t", "blocked"})
 	app.Execute()
 
 	output := buffer.String()
@@ -83,9 +86,9 @@ Total : 1
 func TestSetDomainBlocked(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := domainCmdInit()
 
-	app.SetArgs([]string{"domain", "set", "-t", "blocked", "testdomain.example.jp"})
+	app.SetArgs([]string{"set", "-t", "blocked", "testdomain.example.jp"})
 	app.Execute()
 	relayState.Load()
 
@@ -104,9 +107,9 @@ func TestSetDomainBlocked(t *testing.T) {
 func TestSetDomainLimited(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := domainCmdInit()
 
-	app.SetArgs([]string{"domain", "set", "-t", "limited", "testdomain.example.jp"})
+	app.SetArgs([]string{"set", "-t", "limited", "testdomain.example.jp"})
 	app.Execute()
 	relayState.Load()
 
@@ -125,12 +128,13 @@ func TestSetDomainLimited(t *testing.T) {
 func TestUnsetDomainBlocked(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 
-	app.SetArgs([]string{"domain", "set", "-t", "blocked", "-u", "blockedDomain.example.jp"})
+	app = domainCmdInit()
+	app.SetArgs([]string{"set", "-t", "blocked", "-u", "blockedDomain.example.jp"})
 	app.Execute()
 	relayState.Load()
 
@@ -149,12 +153,13 @@ func TestUnsetDomainBlocked(t *testing.T) {
 func TestUnsetDomainLimited(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 
-	app.SetArgs([]string{"domain", "set", "-t", "limited", "-u", "limitedDomain.example.jp"})
+	app = domainCmdInit()
+	app.SetArgs([]string{"set", "-t", "limited", "-u", "limitedDomain.example.jp"})
 	app.Execute()
 	relayState.Load()
 
@@ -173,16 +178,17 @@ func TestUnsetDomainLimited(t *testing.T) {
 func TestSetDomainInvalid(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"domain", "set", "-t", "hoge", "hoge.example.jp"})
+	app = domainCmdInit()
+	app.SetOutput(buffer)
+	app.SetArgs([]string{"set", "-t", "hoge", "hoge.example.jp"})
 	app.Execute()
 
 	output := buffer.String()
@@ -194,12 +200,13 @@ func TestSetDomainInvalid(t *testing.T) {
 func TestUnfollowDomain(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 
-	app.SetArgs([]string{"domain", "unfollow", "subscription.example.jp"})
+	app = domainCmdInit()
+	app.SetArgs([]string{"unfollow", "subscription.example.jp"})
 	app.Execute()
 	relayState.Load()
 
@@ -218,16 +225,17 @@ func TestUnfollowDomain(t *testing.T) {
 func TestInvalidUnfollowDomain(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	app := buildNewCmd()
+	app := configCmdInit()
 
-	app.SetArgs([]string{"config", "import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
 
-	app.SetArgs([]string{"domain", "unfollow", "unknown.tld"})
+	app = domainCmdInit()
+	app.SetOutput(buffer)
+	app.SetArgs([]string{"unfollow", "unknown.tld"})
 	app.Execute()
 
 	output := buffer.String()
