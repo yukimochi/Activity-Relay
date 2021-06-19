@@ -10,5 +10,5 @@ RUN  mkdir -p /rootfs/usr/bin && \
 FROM alpine
 
 COPY --from=build /rootfs/usr/bin /usr/bin
-RUN  chmod +x /usr/bin/relay /usr/bin/worker /usr/bin/ar-cli && \
+RUN  chmod +x /usr/bin/relay && \
      apk add -U --no-cache ca-certificates
