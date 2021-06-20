@@ -126,7 +126,7 @@ func TestInvalidRejectFollow(t *testing.T) {
 func TestCreateUpdateActorActivity(t *testing.T) {
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 
 	app = followCmdInit()

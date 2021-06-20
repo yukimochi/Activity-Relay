@@ -10,7 +10,7 @@ func TestListDomainSubscriber(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
@@ -36,7 +36,7 @@ func TestListDomainLimited(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
@@ -62,7 +62,7 @@ func TestListDomainBlocked(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
@@ -130,7 +130,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 
 	app = domainCmdInit()
@@ -155,7 +155,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 
 	app = domainCmdInit()
@@ -180,7 +180,7 @@ func TestSetDomainInvalid(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
@@ -202,7 +202,7 @@ func TestUnfollowDomain(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 
 	app = domainCmdInit()
@@ -227,7 +227,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 

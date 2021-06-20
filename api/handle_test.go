@@ -254,19 +254,19 @@ func mockActivityDecoderProvider(activity *models.Activity, actor *models.Actor)
 func mockActivity(req string) models.Activity {
 	switch req {
 	case "Follow":
-		file, _ := os.Open("../misc/follow.json")
+		file, _ := os.Open("../misc/test/follow.json")
 		body, _ := ioutil.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Invalid-Follow":
-		file, _ := os.Open("../misc/followAsActor.json")
+		file, _ := os.Open("../misc/test/followAsActor.json")
 		body, _ := ioutil.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Unfollow":
-		file, _ := os.Open("../misc/unfollow.json")
+		file, _ := os.Open("../misc/test/unfollow.json")
 		body, _ := ioutil.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
@@ -282,7 +282,7 @@ func mockActivity(req string) models.Activity {
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "Create":
-		file, _ := os.Open("../misc/create.json")
+		file, _ := os.Open("../misc/test/create.json")
 		body, _ := ioutil.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
@@ -293,13 +293,13 @@ func mockActivity(req string) models.Activity {
 		json.Unmarshal([]byte(body), &activity)
 		return activity
 	case "Announce":
-		file, _ := os.Open("../misc/announce.json")
+		file, _ := os.Open("../misc/test/announce.json")
 		body, _ := ioutil.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Undo":
-		file, _ := os.Open("../misc/undo.json")
+		file, _ := os.Open("../misc/test/undo.json")
 		body, _ := ioutil.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
@@ -312,19 +312,19 @@ func mockActivity(req string) models.Activity {
 func mockActor(req string) models.Actor {
 	switch req {
 	case "Person":
-		file, _ := os.Open("../misc/person.json")
+		file, _ := os.Open("../misc/test/person.json")
 		body, _ := ioutil.ReadAll(file)
 		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	case "Service":
-		file, _ := os.Open("../misc/service.json")
+		file, _ := os.Open("../misc/test/service.json")
 		body, _ := ioutil.ReadAll(file)
 		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	case "Application":
-		file, _ := os.Open("../misc/application.json")
+		file, _ := os.Open("../misc/test/application.json")
 		body, _ := ioutil.ReadAll(file)
 		var actor models.Actor
 		json.Unmarshal(body, &actor)

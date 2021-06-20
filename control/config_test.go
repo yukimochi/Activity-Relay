@@ -123,7 +123,7 @@ func TestExportConfig(t *testing.T) {
 	app.SetArgs([]string{"export"})
 	app.Execute()
 
-	file, err := os.Open("../misc/blankConfig.json")
+	file, err := os.Open("../misc/test/blankConfig.json")
 	if err != nil {
 		t.Fatalf("Test resource fetch error.")
 	}
@@ -139,7 +139,7 @@ func TestImportConfig(t *testing.T) {
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"import", "--json", "../misc/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
 	relayState.Load()
 
@@ -149,7 +149,7 @@ func TestImportConfig(t *testing.T) {
 	app.SetArgs([]string{"export"})
 	app.Execute()
 
-	file, err := os.Open("../misc/exampleConfig.json")
+	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Test resource fetch error.")
 	}

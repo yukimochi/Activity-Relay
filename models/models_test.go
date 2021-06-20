@@ -15,13 +15,13 @@ var ch chan bool
 func TestMain(m *testing.M) {
 	var err error
 
-	testConfigPath := "../misc/config.yml"
+	testConfigPath := "../misc/test/config.yml"
 	file, _ := os.Open(testConfigPath)
 	defer file.Close()
 
 	viper.SetConfigType("yaml")
 	viper.ReadConfig(file)
-	viper.Set("ACTOR_PEM", "../misc/testKey.pem")
+	viper.Set("ACTOR_PEM", "../misc/test/testKey.pem")
 	viper.BindEnv("REDIS_URL")
 
 	globalConfig, err = NewRelayConfig()

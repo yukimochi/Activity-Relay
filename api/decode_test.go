@@ -20,7 +20,7 @@ func TestDecodeActivity(t *testing.T) {
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("../misc/create.json")
+	file, _ := os.Open("../misc/test/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
@@ -50,7 +50,7 @@ func TestDecodeActivityWithNoSignature(t *testing.T) {
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("../misc/create.json")
+	file, _ := os.Open("../misc/test/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
@@ -74,7 +74,7 @@ func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("../misc/create.json")
+	file, _ := os.Open("../misc/test/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
@@ -99,7 +99,7 @@ func TestDecodeActivityWithInvalidDigest(t *testing.T) {
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
-	file, _ := os.Open("../misc/create.json")
+	file, _ := os.Open("../misc/test/create.json")
 	body, _ := ioutil.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
