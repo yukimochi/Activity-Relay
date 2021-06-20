@@ -81,7 +81,7 @@ Thank you for your support.
 
 ### Monthly Donation
 
-**[My Donner List](https://relay.toot.yukimochi.jp#patreon-list)**
+**[My Donator List](https://relay.toot.yukimochi.jp#patreon-list)**
   
 #### Donation Platform
  - [Patreon](https://www.patreon.com/yukimochi)
