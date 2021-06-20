@@ -32,13 +32,13 @@ func relayActivity(args ...string) error {
 	err := sendActivity(inboxURL, Actor.ID, []byte(body), globalConfig.ActorKey())
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
-		eval_script := "local change = redis.call('HSETNX',KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
-		redisClient.Eval(eval_script, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
+		evalScript := "local change = redis.call('HSETNX',KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
+		redisClient.Eval(evalScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
 	}
 	return err
 }
 
-func registorActivity(args ...string) error {
+func registerActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
 	err := sendActivity(inboxURL, Actor.ID, []byte(body), globalConfig.ActorKey())
@@ -55,7 +55,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 		return err
 	}
 
-	err = machineryServer.RegisterTask("registor", registorActivity)
+	err = machineryServer.RegisterTask("register", registerActivity)
 	if err != nil {
 		return err
 	}

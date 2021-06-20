@@ -42,13 +42,13 @@ func TestHandleWebfingerGet(t *testing.T) {
 	defer r.Body.Close()
 
 	data, _ := ioutil.ReadAll(r.Body)
-	var wfresource models.WebfingerResource
-	err = json.Unmarshal(data, &wfresource)
+	var webfingerResource models.WebfingerResource
+	err = json.Unmarshal(data, &webfingerResource)
 	if err != nil {
 		t.Fatalf("WebfingerResource response is not valid.")
 	}
 
-	domain, _ := url.Parse(wfresource.Links[0].Href)
+	domain, _ := url.Parse(webfingerResource.Links[0].Href)
 	if domain.Host != globalConfig.ServerHostname().Host {
 		t.Fatalf("WebfingerResource's Host not valid.")
 	}
@@ -305,7 +305,7 @@ func mockActivity(req string) models.Activity {
 		json.Unmarshal(body, &activity)
 		return activity
 	default:
-		panic("No assined request.")
+		panic("No assigned request.")
 	}
 }
 
@@ -330,7 +330,7 @@ func mockActor(req string) models.Actor {
 		json.Unmarshal(body, &actor)
 		return actor
 	default:
-		panic("No assined request.")
+		panic("No assigned request.")
 	}
 }
 
@@ -642,7 +642,7 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	relayState.RedisClient.Del("relay:subscription:example.org").Result()
 }
 
-func TestHandleInboxlimitedCreate(t *testing.T) {
+func TestHandleInboxLimitedCreate(t *testing.T) {
 	activity := mockActivity("Create")
 	actor := mockActor("Person")
 	domain, _ := url.Parse(activity.Actor)

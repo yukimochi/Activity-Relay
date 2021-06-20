@@ -167,7 +167,7 @@ func TestLimitedDomain(t *testing.T) {
 	}
 }
 
-func TestLoadCompatiSubscription(t *testing.T) {
+func TestLoadCompatibleSubscription(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
 	relayState.AddSubscription(Subscription{

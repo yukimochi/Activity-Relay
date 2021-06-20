@@ -56,7 +56,7 @@ func TestRelayActivity(t *testing.T) {
 
 	err := relayActivity(s.URL, "data")
 	if err != nil {
-		t.Fatal("Failed - Data transfar not collect")
+		t.Fatal("Failed - Data transfer not collect")
 	}
 }
 
@@ -95,7 +95,7 @@ func TestRelayActivityResp500(t *testing.T) {
 	}
 }
 
-func TestRegistorActivity(t *testing.T) {
+func TestRegisterActivity(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := ioutil.ReadAll(r.Body)
 		if string(data) != "data" || r.Header.Get("Content-Type") != "application/activity+json" {
@@ -108,32 +108,32 @@ func TestRegistorActivity(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := registorActivity(s.URL, "data")
+	err := registerActivity(s.URL, "data")
 	if err != nil {
-		t.Fatal("Failed - Data transfar not collect")
+		t.Fatal("Failed - Data transfer not collect")
 	}
 }
 
-func TestRegistorActivityNoHost(t *testing.T) {
+func TestRegisterActivityNoHost(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 	}))
 	defer s.Close()
 
-	err := registorActivity("http://nohost.example.jp", "data")
+	err := registerActivity("http://nohost.example.jp", "data")
 	if err == nil {
 		t.Fatal("Failed - Error not reported.")
 	}
 }
 
-func TestRegistorActivityResp500(t *testing.T) {
+func TestRegisterActivityResp500(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		w.Write(nil)
 	}))
 	defer s.Close()
 
-	err := registorActivity(s.URL, "data")
+	err := registerActivity(s.URL, "data")
 	if err == nil {
 		t.Fatal("Failed - Error not reported.")
 	}

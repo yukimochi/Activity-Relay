@@ -64,7 +64,7 @@ func createUnfollowRequestResponse(subscription models.Subscription) error {
 
 	resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 	jsonData, _ := json.Marshal(&resp)
-	pushRegistorJob(subscription.InboxURL, jsonData)
+	pushRegisterJob(subscription.InboxURL, jsonData)
 
 	return nil
 }

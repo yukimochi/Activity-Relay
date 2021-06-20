@@ -92,7 +92,7 @@ func (config *RelayState) Load() {
 	config.Subscriptions = subscriptions
 }
 
-// SetConfig : Set relay configration
+// SetConfig : Set relay configuration
 func (config *RelayState) SetConfig(key Config, value bool) {
 	strValue := 0
 	if value {

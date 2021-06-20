@@ -12,7 +12,7 @@ func TestListFollows(t *testing.T) {
 	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
@@ -95,7 +95,7 @@ func TestInvalidFollow(t *testing.T) {
 	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	app.SetArgs([]string{"accept", "unknown.tld"})
 	app.Execute()
@@ -112,7 +112,7 @@ func TestInvalidRejectFollow(t *testing.T) {
 	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	app.SetArgs([]string{"reject", "unknown.tld"})
 	app.Execute()

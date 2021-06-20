@@ -20,13 +20,13 @@ func configCmdInit() *cobra.Command {
 	var config = &cobra.Command{
 		Use:   "config",
 		Short: "Manage configuration for relay",
-		Long:  "Enable/disable relay costomize and import/export relay database.",
+		Long:  "Enable/disable relay customize and import/export relay database.",
 	}
 
 	var configList = &cobra.Command{
 		Use:   "list",
-		Short: "List all relay configration",
-		Long:  "List all relay configration.",
+		Short: "List all relay configuration",
+		Long:  "List all relay configuration.",
 		Run: func(cmd *cobra.Command, args []string) {
 			initProxy(listConfig, cmd, args)
 		},
@@ -57,8 +57,8 @@ func configCmdInit() *cobra.Command {
 
 	var configEnable = &cobra.Command{
 		Use:   "enable",
-		Short: "Enable/disable relay configration",
-		Long: `Enable or disable relay configration.
+		Short: "Enable/disable relay configuration",
+		Long: `Enable or disable relay configuration.
  - service-block
 	Blocking feature for service-type actor.
  - manually-accept
@@ -70,7 +70,7 @@ func configCmdInit() *cobra.Command {
 			return initProxyE(configEnable, cmd, args)
 		},
 	}
-	configEnable.Flags().BoolP("disable", "d", false, "Disable configration instead of Enable")
+	configEnable.Flags().BoolP("disable", "d", false, "Disable configuration instead of Enable")
 	config.AddCommand(configEnable)
 
 	return config
@@ -168,6 +168,6 @@ func importConfig(cmd *cobra.Command, args []string) {
 			ActivityID: Subscription.ActivityID,
 			ActorID:    Subscription.ActorID,
 		})
-		cmd.Println("Regist [" + Subscription.Domain + "] as subscriber")
+		cmd.Println("Register [" + Subscription.Domain + "] as subscriber")
 	}
 }

@@ -73,7 +73,7 @@ func TestInvalidConfig(t *testing.T) {
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	app.SetArgs([]string{"enable", "hoge"})
 	app.Execute()
@@ -89,7 +89,7 @@ func TestListConfig(t *testing.T) {
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	app.SetArgs([]string{"list"})
 	app.Execute()
@@ -118,7 +118,7 @@ func TestExportConfig(t *testing.T) {
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	app.SetArgs([]string{"export"})
 	app.Execute()
@@ -127,7 +127,7 @@ func TestExportConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test resource fetch error.")
 	}
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, _ := ioutil.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
 		t.Fatalf("Invalid Response.")
@@ -144,7 +144,7 @@ func TestImportConfig(t *testing.T) {
 	relayState.Load()
 
 	buffer := new(bytes.Buffer)
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 
 	app.SetArgs([]string{"export"})
 	app.Execute()
@@ -153,7 +153,7 @@ func TestImportConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test resource fetch error.")
 	}
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, _ := ioutil.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
 		t.Fatalf("Invalid Response.")

@@ -20,13 +20,13 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		request := resource[0]
 		if request == WebfingerResource.Subject {
-			wfresource, err := json.Marshal(&WebfingerResource)
+			webfingerResource, err := json.Marshal(&WebfingerResource)
 			if err != nil {
 				panic(err)
 			}
 			writer.Header().Add("Content-Type", "application/json")
 			writer.WriteHeader(200)
-			writer.Write(wfresource)
+			writer.Write(webfingerResource)
 		} else {
 			writer.WriteHeader(404)
 			writer.Write(nil)
@@ -39,13 +39,13 @@ func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write(nil)
 	} else {
-		linksresource, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
+		linksResource, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
 		if err != nil {
 			panic(err)
 		}
 		writer.Header().Add("Content-Type", "application/json")
 		writer.WriteHeader(200)
-		writer.Write(linksresource)
+		writer.Write(linksResource)
 	}
 }
 
@@ -58,13 +58,13 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		Nodeinfo.Nodeinfo.Usage.Users.Total = userCount
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userCount
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userCount
-		linksresource, err := json.Marshal(&Nodeinfo.Nodeinfo)
+		linksResource, err := json.Marshal(&Nodeinfo.Nodeinfo)
 		if err != nil {
 			panic(err)
 		}
 		writer.Header().Add("Content-Type", "application/json")
 		writer.WriteHeader(200)
-		writer.Write(linksresource)
+		writer.Write(linksResource)
 	}
 }
 
@@ -132,9 +132,9 @@ func pushRelayJob(sourceInbox string, body []byte) {
 	}
 }
 
-func pushRegistorJob(inboxURL string, body []byte) {
+func pushRegisterJob(inboxURL string, body []byte) {
 	job := &tasks.Signature{
-		Name:       "registor",
+		Name:       "register",
 		RetryCount: 2,
 		Args: []tasks.Arg{
 			{
@@ -181,13 +181,13 @@ func suitableFollow(activity *models.Activity, actor *models.Actor) bool {
 
 func relayAcceptable(activity *models.Activity, actor *models.Actor) error {
 	if !contains(activity.To, "https://www.w3.org/ns/activitystreams#Public") && !contains(activity.Cc, "https://www.w3.org/ns/activitystreams#Public") {
-		return errors.New("Activity should contain https://www.w3.org/ns/activitystreams#Public as receiver")
+		return errors.New("activity should contain https://www.w3.org/ns/activitystreams#Public as receiver")
 	}
 	domain, _ := url.Parse(activity.Actor)
 	if contains(relayState.Subscriptions, domain.Host) {
 		return nil
 	}
-	return errors.New("To use the relay service, Subscribe me in advance")
+	return errors.New("to use the relay service, Subscribe me in advance")
 }
 
 func suitableRelay(activity *models.Activity, actor *models.Actor) bool {
@@ -216,7 +216,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				if err != nil {
 					resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 					jsonData, _ := json.Marshal(&resp)
-					go pushRegistorJob(actor.Inbox, jsonData)
+					go pushRegisterJob(actor.Inbox, jsonData)
 					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
 
 					writer.WriteHeader(202)
@@ -235,7 +235,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						} else {
 							resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Accept")
 							jsonData, _ := json.Marshal(&resp)
-							go pushRegistorJob(actor.Inbox, jsonData)
+							go pushRegisterJob(actor.Inbox, jsonData)
 							relayState.AddSubscription(models.Subscription{
 								Domain:     domain.Host,
 								InboxURL:   actor.Endpoints.SharedInbox,
@@ -247,7 +247,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					} else {
 						resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 						jsonData, _ := json.Marshal(&resp)
-						go pushRegistorJob(actor.Inbox, jsonData)
+						go pushRegisterJob(actor.Inbox, jsonData)
 						fmt.Println("Reject Follow Request : ", activity.Actor)
 					}
 

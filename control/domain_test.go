@@ -17,7 +17,7 @@ func TestListDomainSubscriber(t *testing.T) {
 	buffer := new(bytes.Buffer)
 
 	app = domainCmdInit()
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 	app.SetArgs([]string{"list"})
 	app.Execute()
 
@@ -43,7 +43,7 @@ func TestListDomainLimited(t *testing.T) {
 	buffer := new(bytes.Buffer)
 
 	app = domainCmdInit()
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 	app.SetArgs([]string{"list", "-t", "limited"})
 	app.Execute()
 
@@ -69,7 +69,7 @@ func TestListDomainBlocked(t *testing.T) {
 	buffer := new(bytes.Buffer)
 
 	app = domainCmdInit()
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 	app.SetArgs([]string{"list", "-t", "blocked"})
 	app.Execute()
 
@@ -187,7 +187,7 @@ func TestSetDomainInvalid(t *testing.T) {
 	buffer := new(bytes.Buffer)
 
 	app = domainCmdInit()
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 	app.SetArgs([]string{"set", "-t", "hoge", "hoge.example.jp"})
 	app.Execute()
 
@@ -234,7 +234,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	buffer := new(bytes.Buffer)
 
 	app = domainCmdInit()
-	app.SetOutput(buffer)
+	app.SetOut(buffer)
 	app.SetArgs([]string{"unfollow", "unknown.tld"})
 	app.Execute()
 

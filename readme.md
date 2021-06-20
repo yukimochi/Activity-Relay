@@ -60,7 +60,7 @@ JOB_CONCURRENCY: 50
 
 ### Environment Variable
 
- This is **Optional** : When `config.yml` not exists, use environment variable.
+ This is **Optional** : When `config.yaml` not exists, use environment variable.
 
  - ACTOR_PEM
  - REDIS_URL
@@ -81,7 +81,7 @@ Thank you for your support.
 
 ### Monthly Donation
 
-**[My Doner List](https://relay.toot.yukimochi.jp#patreon-list)**
+**[My Donner List](https://relay.toot.yukimochi.jp#patreon-list)**
   
 #### Donation Platform
  - [Patreon](https://www.patreon.com/yukimochi)

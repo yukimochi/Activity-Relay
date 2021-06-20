@@ -4,7 +4,7 @@ package deliver
 type NullLogger struct {
 }
 
-// NewNullLogger : Create Nulllogger
+// NewNullLogger : Create NullLogger
 func NewNullLogger() *NullLogger {
 	var newNullLogger NullLogger
 	return &newNullLogger

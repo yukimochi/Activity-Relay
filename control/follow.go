@@ -64,9 +64,9 @@ func followCmdInit() *cobra.Command {
 	return follow
 }
 
-func pushRegistorJob(inboxURL string, body []byte) {
+func pushRegisterJob(inboxURL string, body []byte) {
 	job := &tasks.Signature{
-		Name:       "registor",
+		Name:       "register",
 		RetryCount: 25,
 		Args: []tasks.Arg{
 			{
@@ -105,7 +105,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	if err != nil {
 		return err
 	}
-	pushRegistorJob(data["inbox_url"], jsonData)
+	pushRegisterJob(data["inbox_url"], jsonData)
 	relayState.RedisClient.Del("relay:pending:" + domain)
 	if response == "Accept" {
 		relayState.AddSubscription(models.Subscription{
@@ -133,7 +133,7 @@ func createUpdateActorActivity(subscription models.Subscription) error {
 	if err != nil {
 		return err
 	}
-	pushRegistorJob(subscription.InboxURL, jsonData)
+	pushRegisterJob(subscription.InboxURL, jsonData)
 
 	return nil
 }

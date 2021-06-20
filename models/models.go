@@ -45,8 +45,8 @@ type Actor struct {
 	Image             *Image      `json:"image,omitempty"`
 }
 
-// GenerateSelfKey : Generate relay Actor from Publickey.
-func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey) {
+// GenerateSelfKey : Generate relay Actor from PublicKey.
+func (actor *Actor) GenerateSelfKey(hostname *url.URL, publicKey *rsa.PublicKey) {
 	actor.Context = []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"}
 	actor.ID = hostname.String() + "/actor"
 	actor.Type = "Service"
@@ -55,7 +55,7 @@ func (actor *Actor) GenerateSelfKey(hostname *url.URL, publickey *rsa.PublicKey)
 	actor.PublicKey = PublicKey{
 		hostname.String() + "/actor#main-key",
 		hostname.String() + "/actor",
-		generatePublicKeyPEMString(publickey),
+		generatePublicKeyPEMString(publicKey),
 	}
 }
 
@@ -195,9 +195,9 @@ func (activity *Activity) NestedActivity() (*Activity, error) {
 				}, nil
 			}
 		}
-		return nil, errors.New("Can't assart type")
+		return nil, errors.New("can't assert type")
 	}
-	return nil, errors.New("Can't assart id")
+	return nil, errors.New("can't assert id")
 }
 
 // ActivityObject : ActivityPub Activity.
@@ -235,7 +235,7 @@ type WebfingerResource struct {
 func (resource *WebfingerResource) GenerateFromActor(hostname *url.URL, actor *Actor) {
 	resource.Subject = "acct:" + actor.PreferredUsername + "@" + hostname.Host
 	resource.Links = []WebfingerLink{
-		WebfingerLink{
+		{
 			"self",
 			"application/activity+json",
 			actor.ID,
@@ -303,7 +303,7 @@ type NodeinfoMetadata struct {
 // GenerateFromActor : Generate Webfinger resource from Actor.
 func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, actor *Actor, serverVersion string) {
 	resource.NodeinfoLinks.Links = []NodeinfoLink{
-		NodeinfoLink{
+		{
 			"http://nodeinfo.diaspora.software/ns/schema/2.1",
 			"https://" + hostname.Host + "/nodeinfo/2.1",
 		},

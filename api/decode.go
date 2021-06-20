@@ -26,11 +26,11 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	}
 	KeyID := verifier.KeyId()
 	keyOwnerActor := new(models.Actor)
-	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host), actorCache)
+	err = keyOwnerActor.RetrieveRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServiceName(), version, globalConfig.ServerHostname().Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	PubKey, err := models.ReadPublicKeyRSAfromString(keyOwnerActor.PublicKey.PublicKeyPem)
+	PubKey, err := models.ReadPublicKeyRSAFromString(keyOwnerActor.PublicKey.PublicKeyPem)
 	if PubKey == nil {
 		return nil, nil, nil, errors.New("Failed parse PublicKey from string")
 	}
@@ -47,9 +47,9 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	hash := sha256.New()
 	hash.Write(body)
 	b := hash.Sum(nil)
-	calcurateDigest := "SHA-256=" + base64.StdEncoding.EncodeToString(b)
+	calculatedDigest := "SHA-256=" + base64.StdEncoding.EncodeToString(b)
 
-	if givenDigest != calcurateDigest {
+	if givenDigest != calculatedDigest {
 		return nil, nil, nil, errors.New("Digest header is mismatch")
 	}
 
@@ -61,7 +61,7 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	}
 
 	var remoteActor models.Actor
-	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServicename(), version, globalConfig.ServerHostname().Host), actorCache)
+	err = remoteActor.RetrieveRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServiceName(), version, globalConfig.ServerHostname().Host), actorCache)
 	if err != nil {
 		return nil, nil, nil, err
 	}

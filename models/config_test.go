@@ -81,15 +81,15 @@ func TestRelayConfig_ServerHostname(t *testing.T) {
 }
 
 func TestRelayConfig_DumpWelcomeMessage(t *testing.T) {
-	relayconfig := createRelayConfig(t)
-	w := relayconfig.DumpWelcomeMessage("Testing", "")
+	relayConfig := createRelayConfig(t)
+	w := relayConfig.DumpWelcomeMessage("Testing", "")
 
 	informations := map[string]string{
 		"module NAME":  "Testing",
-		"RELAY NANE":   relayconfig.serviceName,
-		"RELAY DOMAIN": relayconfig.domain.Host,
-		"REDIS URL":    relayconfig.redisURL,
-		"BIND ADDRESS": relayconfig.serverBind,
+		"RELAY NANE":   relayConfig.serviceName,
+		"RELAY DOMAIN": relayConfig.domain.Host,
+		"REDIS URL":    relayConfig.redisURL,
+		"BIND ADDRESS": relayConfig.serverBind,
 	}
 
 	for key, information := range informations {

@@ -94,8 +94,8 @@ func (relayConfig *RelayConfig) ServerHostname() *url.URL {
 	return relayConfig.domain
 }
 
-// ServerHostname is API Server's servername definition.
-func (relayConfig *RelayConfig) ServerServicename() string {
+// ServerServiceName is API Server's servername definition.
+func (relayConfig *RelayConfig) ServerServiceName() string {
 	return relayConfig.serviceName
 }
 
@@ -109,7 +109,7 @@ func (relayConfig *RelayConfig) ActorKey() *rsa.PrivateKey {
 	return relayConfig.actorKey
 }
 
-// CreateRedisClient is create new redis client from RelayConfig.
+// RedisClient is return redis client from RelayConfig.
 func (relayConfig *RelayConfig) RedisClient() *redis.Client {
 	return relayConfig.redisClient
 }

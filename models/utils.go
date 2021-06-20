@@ -12,7 +12,7 @@ import (
 	"github.com/go-redis/redis"
 )
 
-func ReadPublicKeyRSAfromString(pemString string) (*rsa.PublicKey, error) {
+func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
 	pemByte := []byte(pemString)
 	decoded, _ := pem.Decode(pemByte)
 	defer func() {
