@@ -45,7 +45,7 @@ relay -c <Path of config file> control
 ### YAML Format
 
 ```yaml config.yml
-ACTOR_PEM: /actor.pem
+ACTOR_PEM: /var/lib/relay/actor.pem
 REDIS_URL: redis://redis:6379
 
 RELAY_BIND: 0.0.0.0:8080
@@ -60,7 +60,7 @@ JOB_CONCURRENCY: 50
 
 ### Environment Variable
 
- This is **Optional** : When `config.yaml` not exists, use environment variable.
+ This is **Optional** : When `config.yml` not exists, use environment variable.
 
  - ACTOR_PEM
  - REDIS_URL

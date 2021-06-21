@@ -1,4 +1,4 @@
-ACTOR_PEM: /actor.pem
+ACTOR_PEM: /var/lib/relay/actor.pem
 REDIS_URL: redis://redis:6379
 
 RELAY_BIND: 0.0.0.0:8080

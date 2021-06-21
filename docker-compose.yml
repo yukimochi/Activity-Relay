@@ -11,35 +11,25 @@ services:
   worker:
     build: .
     image: yukimochi/activity-relay
+    working_dir: /var/lib/relay
     restart: always
     init: true
     command: relay worker
-    environment:
-      - "ACTOR_PEM=/actor.pem"
-      - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
-      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
-      - "RELAY_BIND=0.0.0.0:8080"
-      - "REDIS_URL=redis://redis:6379"
     volumes:
-      - "./actor.pem:/actor.pem"
-      # - "./config.yaml:/Activity-Relay/config.yaml"
+      - "./actor.pem:/var/lib/relay/actor.pem"
+      - "./config.yml:/var/lib/relay/config.yml"
     depends_on:
       - redis
 
   server:
     build: .
     image: yukimochi/activity-relay
+    working_dir: /var/lib/relay
     restart: always
     init: true
     command: relay server
-    environment:
-      - "ACTOR_PEM=/actor.pem"
-      - "RELAY_DOMAIN=relay.toot.yukimochi.jp"
-      - "RELAY_SERVICENAME=YUKIMOCHI Toot Relay Service"
-      - "RELAY_BIND=0.0.0.0:8080"
-      - "REDIS_URL=redis://redis:6379"
     volumes:
-      - "./actor.pem:/actor.pem"
-      # - "./config.yaml:/Activity-Relay/config.yaml"
+      - "./actor.pem:/var/lib/relay/actor.pem"
+      - "./config.yml:/var/lib/relay/config.yml"
     depends_on:
       - redis
