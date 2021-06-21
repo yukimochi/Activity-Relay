@@ -1,0 +1,25 @@
+# relay-worker.service
+#
+# For using YUKIMOCHI Activity-Relay.
+#
+# See https://github.com/yukimochi/Activity-Relay/wiki for instructions.
+
+[Unit]
+Description=YUKIMOCHI Activity-Relay Job Worker
+Documentation=https://github.com/yukimochi/Activity-Relay/wiki
+After=network.target network-online.target
+Requires=network-online.target
+
+[Service]
+Type=simple
+User=relay
+Group=relay
+ExecStart=/usr/bin/relay --config /var/lib/relay/config.yaml worker
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+LimitNPROC=512
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
