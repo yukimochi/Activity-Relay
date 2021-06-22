@@ -25,19 +25,19 @@
 ### API Server
 
 ```bash
-relay -c <Path of config file> server
+relay --config /path/to/config.yml server
 ```
 
 ### Job Worker
 
 ```bash
-relay -c <Path of config file> worker
+relay --config /path/to/config.yml worker
 ```
 
 ### CLI Management Utility
 
 ```bash
-relay -c <Path of config file> control
+relay --config /path/to/config.yml control
 ```
 
 ## Config
@@ -71,6 +71,10 @@ JOB_CONCURRENCY: 50
  - RELAY_SUMMARY
  - RELAY_ICON
  - RELAY_IMAGE
+
+## [Document](https://github.com/yukimochi/Activity-Relay/wiki)
+
+See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki) to build / install / manage relay.
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay?ref=badge_large)
