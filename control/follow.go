@@ -3,11 +3,11 @@ package control
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"
 )
@@ -83,7 +83,7 @@ func pushRegisterJob(inboxURL string, body []byte) {
 	}
 	_, err := machineryServer.SendTask(job)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 	}
 }
 

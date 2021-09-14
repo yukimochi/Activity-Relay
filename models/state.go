@@ -1,10 +1,10 @@
 package models
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
 )
 
 // Config : Enum for RelayConfig
@@ -50,7 +50,7 @@ func (config *RelayState) ListenNotify(c chan<- bool) {
 	cNotify := c != nil
 	go func() {
 		for range ch {
-			fmt.Println("Config refreshed from state changed notify.")
+			logrus.Info("Config refreshed from state changed notify.")
 			config.Load()
 			if cNotify {
 				c <- true

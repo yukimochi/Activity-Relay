@@ -1,10 +1,10 @@
 package control
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/RichardKnop/machinery/v1"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/yukimochi/Activity-Relay/models"
@@ -50,7 +50,7 @@ func initConfig(cmd *cobra.Command) error {
 		viper.SetConfigType("yaml")
 		viper.ReadConfig(file)
 	} else {
-		fmt.Fprintln(os.Stderr, "Config file not exist. Use environment variables.")
+		logrus.Warn("Config file not exist. Use environment variables.")
 
 		viper.BindEnv("ACTOR_PEM")
 		viper.BindEnv("REDIS_URL")
@@ -65,8 +65,7 @@ func initConfig(cmd *cobra.Command) error {
 
 	globalConfig, err = models.NewRelayConfig()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		logrus.Fatal(err)
 	}
 
 	initialize(globalConfig)

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	httpdate "github.com/Songmu/go-httpdate"
+	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/httpsig"
 )
 
@@ -44,7 +45,7 @@ func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.Pri
 	}
 	defer resp.Body.Close()
 
-	fmt.Println(inboxURL, resp.StatusCode)
+	logrus.Debug(inboxURL, resp.StatusCode)
 	if resp.StatusCode/100 != 2 {
 		return errors.New("Post " + inboxURL + ": " + resp.Status)
 	}
