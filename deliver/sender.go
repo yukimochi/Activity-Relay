@@ -11,8 +11,8 @@ import (
 	"time"
 
 	httpdate "github.com/Songmu/go-httpdate"
+	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
-	"github.com/yukimochi/httpsig"
 )
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKey *rsa.PrivateKey) error {
@@ -22,11 +22,11 @@ func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKe
 	request.Header.Set("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(b))
 	request.Header.Set("Host", request.Host)
 
-	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature)
+	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, 3600)
 	if err != nil {
 		return err
 	}
-	err = signer.SignRequest(publicKey, KeyID, request)
+	err = signer.SignRequest(publicKey, KeyID, request, *body)
 	if err != nil {
 		return err
 	}
