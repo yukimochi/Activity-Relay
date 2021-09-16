@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-fed/httpsig"
 	"github.com/yukimochi/Activity-Relay/models"
-	"github.com/yukimochi/httpsig"
 )
 
 func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []byte, error) {

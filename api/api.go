@@ -1,12 +1,12 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1"
 	cache "github.com/patrickmn/go-cache"
+	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 )
 
@@ -40,7 +40,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 
 	registResourceHandlers()
 
-	fmt.Println("Staring API Server at", globalConfig.ServerBind())
+	logrus.Info("Staring API Server at ", globalConfig.ServerBind())
 	err = http.ListenAndServe(globalConfig.ServerBind(), nil)
 	if err != nil {
 		return err

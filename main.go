@@ -43,6 +43,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/yukimochi/Activity-Relay/api"
@@ -58,6 +59,10 @@ var (
 )
 
 func main() {
+	logrus.SetFormatter(&logrus.TextFormatter{
+		ForceColors: true,
+	})
+
 	var app = buildCommand()
 	app.PersistentFlags().StringP("config", "c", "config.yml", "Path of config file.")
 
@@ -74,8 +79,7 @@ func buildCommand() *cobra.Command {
 			fmt.Println(globalConfig.DumpWelcomeMessage("API Server", version))
 			err := api.Entrypoint(globalConfig, version)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err.Error())
-				os.Exit(1)
+				logrus.Fatal(err.Error())
 			}
 			return nil
 		},
@@ -90,8 +94,7 @@ func buildCommand() *cobra.Command {
 			fmt.Println(globalConfig.DumpWelcomeMessage("Job Worker", version))
 			err := deliver.Entrypoint(globalConfig, version)
 			if err != nil {
-				fmt.Println(err.Error())
-				os.Exit(1)
+				logrus.Fatal(err.Error())
 			}
 			return nil
 		},
@@ -124,7 +127,7 @@ func initConfig(cmd *cobra.Command) {
 		viper.SetConfigType("yaml")
 		viper.ReadConfig(file)
 	} else {
-		fmt.Fprintln(os.Stderr, "Config file not exist. Use environment variables.")
+		logrus.Error("Config file not exist. Use environment variables.")
 
 		viper.BindEnv("ACTOR_PEM")
 		viper.BindEnv("REDIS_URL")
@@ -139,7 +142,6 @@ func initConfig(cmd *cobra.Command) {
 
 	globalConfig, err = models.NewRelayConfig()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		logrus.Fatal(err.Error())
 	}
 }

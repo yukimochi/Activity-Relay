@@ -1,16 +1,15 @@
 package deliver
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/log"
 	"github.com/go-redis/redis"
 	uuid "github.com/satori/go.uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 )
 
@@ -68,7 +67,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 	worker := machineryServer.NewWorker(workerID.String(), globalConfig.JobConcurrency())
 	err = worker.Launch()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 	}
 
 	return nil

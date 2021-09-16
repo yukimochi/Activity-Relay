@@ -3,12 +3,11 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
+	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 )
 
@@ -126,7 +125,7 @@ func pushRelayJob(sourceInbox string, body []byte) {
 			}
 			_, err := machineryServer.SendTask(job)
 			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
+				logrus.Error(err)
 			}
 		}
 	}
@@ -151,7 +150,7 @@ func pushRegisterJob(inboxURL string, body []byte) {
 	}
 	_, err := machineryServer.SendTask(job)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 	}
 }
 
@@ -217,7 +216,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 					jsonData, _ := json.Marshal(&resp)
 					go pushRegisterJob(actor.Inbox, jsonData)
-					fmt.Println("Reject Follow Request : ", err.Error(), activity.Actor)
+					logrus.Error("Reject Follow Request : ", err.Error(), activity.Actor)
 
 					writer.WriteHeader(202)
 					writer.Write(nil)
@@ -231,7 +230,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 								"actor":       actor.ID,
 								"object":      activity.Object.(string),
 							})
-							fmt.Println("Pending Follow Request : ", activity.Actor)
+							logrus.Info("Pending Follow Request : ", activity.Actor)
 						} else {
 							resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Accept")
 							jsonData, _ := json.Marshal(&resp)
@@ -242,13 +241,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 								ActivityID: activity.ID,
 								ActorID:    actor.ID,
 							})
-							fmt.Println("Accept Follow Request : ", activity.Actor)
+							logrus.Info("Accept Follow Request : ", activity.Actor)
 						}
 					} else {
 						resp := activity.GenerateResponse(globalConfig.ServerHostname(), "Reject")
 						jsonData, _ := json.Marshal(&resp)
 						go pushRegisterJob(actor.Inbox, jsonData)
-						fmt.Println("Reject Follow Request : ", activity.Actor)
+						logrus.Info("Reject Follow Request : ", activity.Actor)
 					}
 
 					writer.WriteHeader(202)
@@ -259,12 +258,12 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				if nestedActivity.Type == "Follow" && nestedActivity.Actor == activity.Actor {
 					err = unFollowAcceptable(nestedActivity, actor)
 					if err != nil {
-						fmt.Println("Reject Unfollow Request : ", err.Error())
+						logrus.Error("Reject Unfollow Request : ", err.Error())
 						writer.WriteHeader(400)
 						writer.Write([]byte(err.Error()))
 					} else {
 						relayState.DelSubscription(domain.Host)
-						fmt.Println("Accept Unfollow Request : ", activity.Actor)
+						logrus.Info("Accept Unfollow Request : ", activity.Actor)
 
 						writer.WriteHeader(202)
 						writer.Write(nil)
@@ -277,7 +276,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					} else {
 						domain, _ := url.Parse(activity.Actor)
 						go pushRelayJob(domain.Host, body)
-						fmt.Println("Accept Relay Status : ", activity.Actor)
+						logrus.Debug("Accept Relay Status : ", activity.Actor)
 
 						writer.WriteHeader(202)
 						writer.Write(nil)
@@ -293,23 +292,23 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						if relayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
 							nestedObject, err := activity.NestedActivity()
 							if err != nil {
-								fmt.Println("Fail Assert activity : activity.Actor")
+								logrus.Error("Fail Decode Activity : ", err.Error())
 							}
 							switch nestedObject.Type {
 							case "Note":
 								resp := nestedObject.GenerateAnnounce(globalConfig.ServerHostname())
 								jsonData, _ := json.Marshal(&resp)
 								go pushRelayJob(domain.Host, jsonData)
-								fmt.Println("Accept Announce Note : ", activity.Actor)
+								logrus.Debug("Accept Announce Note : ", activity.Actor)
 							default:
-								fmt.Println("Skipping Announce", nestedObject.Type, ": ", activity.Actor)
+								logrus.Debug("Skipping Announce", nestedObject.Type, ": ", activity.Actor)
 							}
 						} else {
 							go pushRelayJob(domain.Host, body)
-							fmt.Println("Accept Relay Status : ", activity.Actor)
+							logrus.Debug("Accept Relay Status : ", activity.Actor)
 						}
 					} else {
-						fmt.Println("Skipping Relay Status : ", activity.Actor)
+						logrus.Debug("Skipping Relay Status : ", activity.Actor)
 					}
 
 					writer.WriteHeader(202)

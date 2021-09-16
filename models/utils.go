@@ -5,11 +5,10 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"os"
 
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
 )
 
 func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
@@ -20,7 +19,7 @@ func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
 	}()
 	keyInterface, err := x509.ParsePKIXPublicKey(decoded.Bytes)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 		return nil, err
 	}
 	pub := keyInterface.(*rsa.PublicKey)

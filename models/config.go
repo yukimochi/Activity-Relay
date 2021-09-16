@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"strconv"
 
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -37,13 +37,13 @@ func NewRelayConfig() (*RelayConfig, error) {
 
 	iconURL, err := url.ParseRequestURI(viper.GetString("RELAY_ICON"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "RELAY_ICON: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
+		logrus.Warn("RELAY_ICON: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
 		iconURL = nil
 	}
 
 	imageURL, err := url.ParseRequestURI(viper.GetString("RELAY_IMAGE"))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "RELAY_IMAGE: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
+		logrus.Warn("RELAY_IMAGE: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
 		imageURL = nil
 	}
 

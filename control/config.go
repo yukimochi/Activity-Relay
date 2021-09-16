@@ -2,10 +2,10 @@ package control
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"
 )
@@ -126,18 +126,18 @@ func exportConfig(cmd *cobra.Command, args []string) {
 func importConfig(cmd *cobra.Command, args []string) {
 	file, err := os.Open(cmd.Flag("json").Value.String())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 		return
 	}
 	jsonData, err := ioutil.ReadAll(file)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 		return
 	}
 	var data models.RelayState
 	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		logrus.Error(err)
 		return
 	}
 
