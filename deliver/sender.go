@@ -13,26 +13,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKey *rsa.PrivateKey) error {
+func appendSignature(request *http.Request, body *[]byte, KeyID string, privateKey *rsa.PrivateKey) error {
 	request.Header.Set("Host", request.Host)
 
-	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, 3600)
+	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "(created)", "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, 3600)
 	if err != nil {
 		return err
 	}
-	err = signer.SignRequest(publicKey, KeyID, request, *body)
+	err = signer.SignRequest(privateKey, KeyID, request, *body)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func sendActivity(inboxURL string, KeyID string, body []byte, publicKey *rsa.PrivateKey) error {
+func sendActivity(inboxURL string, KeyID string, body []byte, privateKey *rsa.PrivateKey) error {
 	req, _ := http.NewRequest("POST", inboxURL, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json")
 	req.Header.Set("User-Agent", fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServiceName(), version, globalConfig.ServerHostname().Host))
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
-	appendSignature(req, &body, KeyID, publicKey)
+	appendSignature(req, &body, KeyID, privateKey)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
