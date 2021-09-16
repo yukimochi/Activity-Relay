@@ -3,8 +3,6 @@ package deliver
 import (
 	"bytes"
 	"crypto/rsa"
-	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,10 +14,6 @@ import (
 )
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, publicKey *rsa.PrivateKey) error {
-	hash := sha256.New()
-	hash.Write(*body)
-	b := hash.Sum(nil)
-	request.Header.Set("Digest", "SHA-256="+base64.StdEncoding.EncodeToString(b))
 	request.Header.Set("Host", request.Host)
 
 	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, 3600)
