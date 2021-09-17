@@ -54,6 +54,7 @@ import (
 
 var (
 	version string
+	verbose bool
 
 	globalConfig *models.RelayConfig
 )
@@ -65,6 +66,7 @@ func main() {
 
 	var app = buildCommand()
 	app.PersistentFlags().StringP("config", "c", "config.yml", "Path of config file.")
+	app.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Show debug log in stdout.")
 
 	app.Execute()
 }
@@ -119,6 +121,11 @@ func buildCommand() *cobra.Command {
 }
 
 func initConfig(cmd *cobra.Command) {
+	if verbose {
+		logrus.SetLevel(logrus.DebugLevel)
+		fmt.Println("DEBUG VIEW")
+	}
+
 	configPath := cmd.Flag("config").Value.String()
 	file, err := os.Open(configPath)
 	defer file.Close()
