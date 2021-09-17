@@ -1,0 +1,32 @@
+name: Release Build
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Relase Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Build Docker Images
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          git fetch --prune --unshallow
+          docker build -t activity-relay:${GITHUB_REF#refs/tags/} .
+      - name: Push Docker Images to DockerHub
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          docker login -u ${{ secrets.REGISTORY_USER }} -p ${{ secrets.REGISTORY_PASS }}
+          docker tag activity-relay:${GITHUB_REF#refs/tags/} ${{ secrets.REGISTORY_USER }}/activity-relay:${GITHUB_REF#refs/tags/}
+          docker push ${{ secrets.REGISTORY_USER }}/activity-relay:${GITHUB_REF#refs/tags/}
+      - name: Push Docker Images to GitHub Packages
+        env:
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          docker login docker.pkg.github.com -u ${{ secrets.REGISTORY_USER }} -p ${{ secrets.GITHUB_TOKEN }}
+          docker tag activity-relay:${GITHUB_REF#refs/tags/} docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:${GITHUB_REF#refs/tags/}
+          docker push docker.pkg.github.com/${{ secrets.REGISTORY_USER }}/activity-relay/activity-relay:${GITHUB_REF#refs/tags/}
