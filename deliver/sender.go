@@ -39,7 +39,7 @@ func sendActivity(inboxURL string, KeyID string, body []byte, privateKey *rsa.Pr
 	}
 	defer resp.Body.Close()
 
-	logrus.Debug(inboxURL, resp.StatusCode)
+	logrus.Debug(inboxURL, " ", resp.StatusCode)
 	if resp.StatusCode/100 != 2 {
 		return errors.New("Post " + inboxURL + ": " + resp.Status)
 	}
