@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@master
       - uses: actions/setup-go@v1
         with:
-          go-version: '1.16.x'
+          go-version: '1.19.x'
       - name: Execute test and upload coverage
         run: |
           go version
