@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/RichardKnop/machinery v1.10.0
 	github.com/Songmu/go-httpdate v1.0.0
-	github.com/go-fed/httpsig v0.1.1-0.20200204213531-0ef28562fabe
+	github.com/go-fed/httpsig v1.1.0
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/satori/go.uuid v1.2.0
