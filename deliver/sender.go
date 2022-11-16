@@ -9,8 +9,16 @@ import (
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"regexp"
 	"time"
 )
+
+func compatibilityForHTTPSignature11(request *http.Request, algorithm httpsig.Algorithm) {
+	signature := request.Header.Get("Signature")
+	regexp := regexp.MustCompile("algorithm=\"hs2019\"")
+	signature = regexp.ReplaceAllString(signature, string("algorithm=\""+algorithm+"\""))
+	request.Header.Set("Signature", signature)
+}
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, privateKey *rsa.PrivateKey) error {
 	request.Header.Set("Host", request.Host)
@@ -23,6 +31,7 @@ func appendSignature(request *http.Request, body *[]byte, KeyID string, privateK
 	if err != nil {
 		return err
 	}
+	compatibilityForHTTPSignature11(request, httpsig.RSA_SHA256) // Compatibility for Misskey <12.111.0
 	return nil
 }
 
