@@ -5,23 +5,17 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
-	"strings"
-
-	httpdate "github.com/Songmu/go-httpdate"
+	"github.com/Songmu/go-httpdate"
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"time"
 )
-
-// See https://github.com/mastodon/mastodon/pull/14556
-const ONEHOUR = 60 * 60
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, privateKey *rsa.PrivateKey) error {
 	request.Header.Set("Host", request.Host)
-	request.Header.Set("(request-target)", fmt.Sprintf("%s %s", strings.ToLower(request.Method), request.URL.Path))
 
-	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, ONEHOUR)
+	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, 60*60)
 	if err != nil {
 		return err
 	}
