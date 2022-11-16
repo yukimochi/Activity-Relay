@@ -20,7 +20,7 @@ type PublicKey struct {
 	PublicKeyPem string `json:"publicKeyPem,omitempty"`
 }
 
-//Endpoints : Contains SharedInbox address.
+// Endpoints : Contains SharedInbox address.
 type Endpoints struct {
 	SharedInbox string `json:"sharedInbox,omitempty"`
 }

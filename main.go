@@ -1,18 +1,24 @@
 /*
 Yet another powerful customizable ActivityPub relay server written in Go.
 
-Run Activity-Relay
+# Run Activity-Relay
 
 API Server
+
 	./Activity-Relay --config /path/to/config.yml server
+
 Job Worker
+
 	./Activity-Relay --config /path/to/config.yml worker
+
 CLI Management Utility
+
 	./Activity-Relay --config /path/to/config.yml control
 
-Config
+# Config
 
 YAML Format
+
 	ACTOR_PEM: /var/lib/relay/actor.pem
 	REDIS_URL: redis://localhost:6379
 	RELAY_BIND: 0.0.0.0:8080
@@ -23,19 +29,19 @@ YAML Format
 		YUKIMOCHI Toot Relay Service is Running by Activity-Relay
 	RELAY_ICON: https://example.com/example_icon.png
 	RELAY_IMAGE: https://example.com/example_image.png
-Environment Variable
+
+# Environment Variable
 
 This is Optional : When config file not exist, use environment variables.
-	- ACTOR_PEM
-	- REDIS_URL
-	- RELAY_BIND
-	- RELAY_DOMAIN
-	- RELAY_SERVICENAME
-	- JOB_CONCURRENCY
-	- RELAY_SUMMARY
-	- RELAY_ICON
-	- RELAY_IMAGE
-
+  - ACTOR_PEM
+  - REDIS_URL
+  - RELAY_BIND
+  - RELAY_DOMAIN
+  - RELAY_SERVICENAME
+  - JOB_CONCURRENCY
+  - RELAY_SUMMARY
+  - RELAY_ICON
+  - RELAY_IMAGE
 */
 package main
 
