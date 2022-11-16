@@ -129,7 +129,6 @@ func buildCommand() *cobra.Command {
 func initConfig(cmd *cobra.Command) {
 	if verbose {
 		logrus.SetLevel(logrus.DebugLevel)
-		fmt.Println("DEBUG VIEW")
 	}
 
 	configPath := cmd.Flag("config").Value.String()
