@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 )
@@ -34,6 +35,13 @@ func TestAppendSignature(t *testing.T) {
 	req.Header.Set("Content-Type", "application/activity+json")
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
 	appendSignature(req, &body, "https://innocent.yukimochi.io/users/YUKIMOCHI#main-key", globalConfig.ActorKey())
+
+	// Activated compatibilityForHTTPSignature11
+	sign := req.Header.Get("Signature")
+	activated := regexp.MustCompile(string("algorithm=\"" + httpsig.RSA_SHA256 + "\"")).MatchString(sign)
+	if !activated {
+		t.Fatalf("Failed - " + "compatibilityForHTTPSignature11 is not activated")
+	}
 
 	// Verify HTTPSignature
 	verifier, err := httpsig.NewVerifier(req)
