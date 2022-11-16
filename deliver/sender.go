@@ -5,18 +5,17 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
-
-	httpdate "github.com/Songmu/go-httpdate"
+	"github.com/Songmu/go-httpdate"
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
+	"net/http"
+	"time"
 )
 
 func appendSignature(request *http.Request, body *[]byte, KeyID string, privateKey *rsa.PrivateKey) error {
 	request.Header.Set("Host", request.Host)
 
-	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature)
+	signer, _, err := httpsig.NewSigner([]httpsig.Algorithm{httpsig.RSA_SHA256}, httpsig.DigestSha256, []string{httpsig.RequestTarget, "Host", "Date", "Digest", "Content-Type"}, httpsig.Signature, 60*60)
 	if err != nil {
 		return err
 	}
