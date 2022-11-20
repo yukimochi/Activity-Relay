@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"net/url"
 
@@ -104,11 +105,21 @@ func contains(entries interface{}, finder string) bool {
 	return false
 }
 
-func pushRelayJob(sourceInbox string, body []byte) {
+func pushRelayActivityJob(sourceDomain string, body []byte) {
+	activityID := uuid.NewV4()
+	remainCount := len(relayState.Subscriptions) - 1
+
+	if remainCount < 1 {
+		return
+	}
+
+	evalScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
+	relayState.RedisClient.Eval(evalScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
+
 	for _, domain := range relayState.Subscriptions {
-		if sourceInbox != domain.Domain {
+		if sourceDomain != domain.Domain {
 			job := &tasks.Signature{
-				Name:       "relay",
+				Name:       "relay-v2",
 				RetryCount: 0,
 				Args: []tasks.Arg{
 					{
@@ -117,9 +128,9 @@ func pushRelayJob(sourceInbox string, body []byte) {
 						Value: domain.InboxURL,
 					},
 					{
-						Name:  "body",
+						Name:  "activityID",
 						Type:  "string",
-						Value: string(body),
+						Value: activityID,
 					},
 				},
 			}
@@ -275,7 +286,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.Write([]byte(err.Error()))
 					} else {
 						domain, _ := url.Parse(activity.Actor)
-						go pushRelayJob(domain.Host, body)
+						go pushRelayActivityJob(domain.Host, body)
 						logrus.Debug("Accept Relay Status : ", activity.Actor)
 
 						writer.WriteHeader(202)
@@ -298,13 +309,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 							case "Note":
 								resp := nestedObject.GenerateAnnounce(globalConfig.ServerHostname())
 								jsonData, _ := json.Marshal(&resp)
-								go pushRelayJob(domain.Host, jsonData)
+								go pushRelayActivityJob(domain.Host, jsonData)
 								logrus.Debug("Accept Announce Note : ", activity.Actor)
 							default:
 								logrus.Debug("Skipping Announce", nestedObject.Type, ": ", activity.Actor)
 							}
 						} else {
-							go pushRelayJob(domain.Host, body)
+							go pushRelayActivityJob(domain.Host, body)
 							logrus.Debug("Accept Relay Status : ", activity.Actor)
 						}
 					} else {

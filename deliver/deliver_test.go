@@ -2,6 +2,7 @@ package deliver
 
 import (
 	"fmt"
+	uuid "github.com/satori/go.uuid"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -44,7 +45,7 @@ func TestMain(m *testing.M) {
 func TestRelayActivity(t *testing.T) {
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := ioutil.ReadAll(r.Body)
-		if string(data) != "data" || r.Header.Get("Content-Type") != "application/activity+json" {
+		if string(data) != "ExampleData" || r.Header.Get("Content-Type") != "application/activity+json" {
 			w.WriteHeader(500)
 			w.Write(nil)
 		} else {
@@ -54,9 +55,16 @@ func TestRelayActivity(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := relayActivity(s.URL, "data")
+	activityID := uuid.NewV4()
+	remainCount := 1
+
+	evalScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
+	redisClient.Eval(evalScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
+
+	err := relayActivityV2(s.URL, activityID.String())
 	if err != nil {
-		t.Fatal("Failed - Data transfer not collect")
+		t.Fatal(err)
+		t.Fatal("Failed - Data transfer not correct.")
 	}
 }
 
@@ -66,7 +74,13 @@ func TestRelayActivityNoHost(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := relayActivity("http://nohost.example.jp", "data")
+	activityID := uuid.NewV4()
+	remainCount := 1
+
+	evalScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
+	redisClient.Eval(evalScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
+
+	err := relayActivityV2("http://nohost.example.jp", activityID.String())
 	if err == nil {
 		t.Fatal("Failed - Error not reported.")
 	}
@@ -84,7 +98,13 @@ func TestRelayActivityResp500(t *testing.T) {
 	}))
 	defer s.Close()
 
-	err := relayActivity(s.URL, "data")
+	activityID := uuid.NewV4()
+	remainCount := 1
+
+	evalScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
+	redisClient.Eval(evalScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
+
+	err := relayActivityV2(s.URL, activityID.String())
 	if err == nil {
 		t.Fatal("Failed - Error not reported.")
 	}

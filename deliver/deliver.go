@@ -1,6 +1,7 @@
 package deliver
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"time"
@@ -25,15 +26,22 @@ var (
 	httpClient      *http.Client
 )
 
-func relayActivity(args ...string) error {
+func relayActivityV2(args ...string) error {
 	inboxURL := args[0]
-	body := args[1]
-	err := sendActivity(inboxURL, Actor.ID, []byte(body), globalConfig.ActorKey())
+	activityID := args[1]
+	body, err := redisClient.HGet("relay:activity:"+activityID, "body").Result()
+	if err != nil {
+		return errors.New("this activity is expired")
+	}
+
+	err = sendActivity(inboxURL, Actor.ID, []byte(body), globalConfig.ActorKey())
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
-		evalScript := "local change = redis.call('HSETNX',KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
+		evalScript := "local change = redis.call('HSETNX', KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
 		redisClient.Eval(evalScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
 	}
+	evalScript := "local remain_count = redis.call('HINCRBY', KEYS[1], 'remain_count', -1); if remain_count < 1 then redis.call('DEL', KEYS[1]) end;"
+	redisClient.Eval(evalScript, []string{"relay:activity:" + activityID}).Result()
 	return err
 }
 
@@ -58,7 +66,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 	if err != nil {
 		return err
 	}
-	err = machineryServer.RegisterTask("relay", relayActivity)
+	err = machineryServer.RegisterTask("relay-v2", relayActivityV2)
 	if err != nil {
 		return err
 	}
