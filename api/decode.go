@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"strconv"
 
 	"github.com/go-fed/httpsig"
 	"github.com/yukimochi/Activity-Relay/models"
@@ -15,9 +15,7 @@ import (
 
 func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []byte, error) {
 	request.Header.Set("Host", request.Host)
-	dataLen, _ := strconv.Atoi(request.Header.Get("Content-Length"))
-	body := make([]byte, dataLen)
-	request.Body.Read(body)
+	body, err := io.ReadAll(request.Body)
 
 	// Verify HTTPSignature
 	verifier, err := httpsig.NewVerifier(request)
