@@ -9,13 +9,13 @@ func TestLoadEmpty(t *testing.T) {
 	relayState.Load()
 
 	if relayState.RelayConfig.BlockService != false {
-		t.Fatalf("Failed read config.")
+		t.Fatalf("fail - read config")
 	}
 	if relayState.RelayConfig.CreateAsAnnounce != false {
-		t.Fatalf("Failed read config.")
+		t.Fatalf("fail - read config")
 	}
 	if relayState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("Failed read config.")
+		t.Fatalf("fail - read config")
 	}
 }
 
@@ -25,33 +25,33 @@ func TestSetConfig(t *testing.T) {
 	relayState.SetConfig(BlockService, true)
 	<-ch
 	if relayState.RelayConfig.BlockService != true {
-		t.Fatalf("Failed enable config.")
+		t.Fatalf("fail - enable config")
 	}
 	relayState.SetConfig(CreateAsAnnounce, true)
 	<-ch
 	if relayState.RelayConfig.CreateAsAnnounce != true {
-		t.Fatalf("Failed enable config.")
+		t.Fatalf("fail - enable config")
 	}
 	relayState.SetConfig(ManuallyAccept, true)
 	<-ch
 	if relayState.RelayConfig.ManuallyAccept != true {
-		t.Fatalf("Failed enable config.")
+		t.Fatalf("fail - enable config")
 	}
 
 	relayState.SetConfig(BlockService, false)
 	<-ch
 	if relayState.RelayConfig.BlockService != false {
-		t.Fatalf("Failed disable config.")
+		t.Fatalf("fail - disable config")
 	}
 	relayState.SetConfig(CreateAsAnnounce, false)
 	<-ch
 	if relayState.RelayConfig.CreateAsAnnounce != false {
-		t.Fatalf("Failed disable config.")
+		t.Fatalf("fail - disable config")
 	}
 	relayState.SetConfig(ManuallyAccept, false)
 	<-ch
 	if relayState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("Failed disable config.")
+		t.Fatalf("fail - disable config")
 	}
 }
 
@@ -71,7 +71,7 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed write config.")
+		t.Fatalf("fail - write config")
 	}
 
 	relayState.DelSubscription("example.com")
@@ -83,7 +83,7 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed write config.")
+		t.Fatalf("fail - write config")
 	}
 }
 
@@ -100,12 +100,12 @@ func TestSelectDomain(t *testing.T) {
 
 	subscription := relayState.SelectSubscription("example.com")
 	if *subscription != exampleSubscription {
-		t.Fatalf("Failed select domain.")
+		t.Fatalf("fail - select domain")
 	}
 
 	subscription = relayState.SelectSubscription("example.org")
 	if subscription != nil {
-		t.Fatalf("Failed select domain.")
+		t.Fatalf("fail - select domain")
 	}
 }
 
@@ -122,7 +122,7 @@ func TestBlockedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed write config.")
+		t.Fatalf("fail - write config")
 	}
 
 	relayState.SetBlockedDomain("example.com", false)
@@ -134,7 +134,7 @@ func TestBlockedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed write config.")
+		t.Fatalf("fail - write config")
 	}
 }
 
@@ -151,7 +151,7 @@ func TestLimitedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed write config.")
+		t.Fatalf("fail - write config")
 	}
 
 	relayState.SetLimitedDomain("example.com", false)
@@ -163,7 +163,7 @@ func TestLimitedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed write config.")
+		t.Fatalf("fail - write config")
 	}
 }
 
@@ -185,6 +185,6 @@ func TestLoadCompatibleSubscription(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("Failed load compati config.")
+		t.Fatalf("fail - load compati config")
 	}
 }

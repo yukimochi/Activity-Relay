@@ -28,7 +28,7 @@ type RelayConfig struct {
 	jobConcurrency  int
 }
 
-// NewRelayConfig create valid RelayConfig from viper configuration. If invalid configuration detected, return error.
+// NewRelayConfig create valid RelayConfig from viper configuration.
 func NewRelayConfig() (*RelayConfig, error) {
 	domain, err := url.ParseRequestURI("https://" + viper.GetString("RELAY_DOMAIN"))
 	if err != nil {
@@ -49,7 +49,7 @@ func NewRelayConfig() (*RelayConfig, error) {
 
 	jobConcurrency := viper.GetInt("JOB_CONCURRENCY")
 	if jobConcurrency < 1 {
-		return nil, errors.New("JOB_CONCURRENCY IS 0 OR EMPTY. SHOULD BE MORE THAN 1")
+		return nil, errors.New("JOB_CONCURRENCY IS 0 OR EMPTY. SHOULD BE SET MORE THAN 1")
 	}
 
 	privateKey, err := readPrivateKeyRSA(viper.GetString("ACTOR_PEM"))
@@ -65,7 +65,7 @@ func NewRelayConfig() (*RelayConfig, error) {
 	redisClient := redis.NewClient(redisOption)
 	err = redisClient.Ping().Err()
 	if err != nil {
-		return nil, errors.New("Redis Connection Test: " + err.Error())
+		return nil, errors.New("REDIS_URL: " + err.Error())
 	}
 
 	serverBind := viper.GetString("RELAY_BIND")
@@ -116,7 +116,7 @@ func (relayConfig *RelayConfig) RedisClient() *redis.Client {
 
 // DumpWelcomeMessage provide build and config information string.
 func (relayConfig *RelayConfig) DumpWelcomeMessage(moduleName string, version string) string {
-	return fmt.Sprintf(`Welcome to YUKIMOCHI Activity-Relay %s - %s
+	return fmt.Sprintf(`Welcome to Activity-Relay %s - %s
  - Configuration
 RELAY NAME      : %s
 RELAY DOMAIN    : %s

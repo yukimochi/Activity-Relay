@@ -110,6 +110,6 @@ func TestDecodeActivityWithInvalidDigest(t *testing.T) {
 
 	_, _, _, err := decodeActivity(req)
 	if err.Error() != "crypto/rsa: verification error" {
-		t.Fatalf("fail - should not accept unvalid digest")
+		t.Fatalf("fail - should not accept invalid digest")
 	}
 }

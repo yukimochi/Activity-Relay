@@ -50,7 +50,7 @@ func (config *RelayState) ListenNotify(c chan<- bool) {
 	cNotify := c != nil
 	go func() {
 		for range ch {
-			logrus.Info("Config refreshed from state changed notify.")
+			logrus.Info("RelayState reloaded")
 			config.Load()
 			if cNotify {
 				c <- true
@@ -163,7 +163,7 @@ func (config *RelayState) SetLimitedDomain(domain string, value bool) {
 
 func (config *RelayState) refresh() {
 	if config.notifiable {
-		config.RedisClient.Publish("relay_refresh", "Config refreshing request.")
+		config.RedisClient.Publish("relay_refresh", nil)
 	} else {
 		config.Load()
 	}

@@ -15,22 +15,22 @@ func TestNewRelayConfig(t *testing.T) {
 		}
 
 		if relayConfig.serverBind != "0.0.0.0:8080" {
-			t.Error("Failed parse: RelayConfig.serverBind")
+			t.Error("fail - parse: RelayConfig.serverBind")
 		}
 		if relayConfig.domain.Host != "relay.toot.yukimochi.jp" {
-			t.Error("Failed parse: RelayConfig.domain")
+			t.Error("fail - parse: RelayConfig.domain")
 		}
 		if relayConfig.serviceName != "YUKIMOCHI Toot Relay Service" {
-			t.Error("Failed parse: RelayConfig.serviceName")
+			t.Error("fail - parse: RelayConfig.serviceName")
 		}
 		if relayConfig.serviceSummary != "YUKIMOCHI Toot Relay Service is Running by Activity-Relay" {
-			t.Error("Failed parse: RelayConfig.serviceSummary")
+			t.Error("fail - parse: RelayConfig.serviceSummary")
 		}
 		if relayConfig.serviceIconURL.String() != "https://example.com/example_icon.png" {
-			t.Error("Failed parse: RelayConfig.serviceIconURL")
+			t.Error("fail - parse: RelayConfig.serviceIconURL")
 		}
 		if relayConfig.serviceImageURL.String() != "https://example.com/example_image.png" {
-			t.Error("Failed parse: RelayConfig.serviceImageURL")
+			t.Error("fail - parse: RelayConfig.serviceImageURL")
 		}
 	})
 
@@ -49,7 +49,7 @@ func TestNewRelayConfig(t *testing.T) {
 			viper.Set(viperKey, value)
 			_, err := NewRelayConfig()
 			if err == nil {
-				t.Error("Failed catch error: " + key)
+				t.Error("fail - invalid key should be raise error : " + key)
 			}
 
 			viper.Set(viperKey, valid)
@@ -69,14 +69,14 @@ func createRelayConfig(t *testing.T) *RelayConfig {
 func TestRelayConfig_ServerBind(t *testing.T) {
 	relayConfig := createRelayConfig(t)
 	if relayConfig.ServerBind() != relayConfig.serverBind {
-		t.Error("Failed accessor: ServerBind()")
+		t.Error("fail - accessor: ServerBind()")
 	}
 }
 
 func TestRelayConfig_ServerHostname(t *testing.T) {
 	relayConfig := createRelayConfig(t)
 	if relayConfig.ServerHostname() != relayConfig.domain {
-		t.Error("Failed accessor: ServerHostname()")
+		t.Error("fail - accessor: ServerHostname()")
 	}
 }
 
@@ -94,7 +94,7 @@ func TestRelayConfig_DumpWelcomeMessage(t *testing.T) {
 
 	for key, information := range informations {
 		if !strings.Contains(w, information) {
-			t.Error("Missed welcome message information: ", key)
+			t.Error("fail - lack welcome message information : ", key)
 		}
 	}
 }
@@ -104,6 +104,6 @@ func TestNewMachineryServer(t *testing.T) {
 
 	_, err := NewMachineryServer(relayConfig)
 	if err != nil {
-		t.Error("Failed create machinery server: ", err)
+		t.Error("fail - machinery server can't create : ", err)
 	}
 }
