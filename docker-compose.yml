@@ -1,4 +1,4 @@
-version: "2.3"
+version: "3"
 services:
   redis:
     restart: always
@@ -13,11 +13,13 @@ services:
     image: yukimochi/activity-relay
     working_dir: /var/lib/relay
     restart: always
-    init: true
     command: relay worker
     volumes:
       - "./actor.pem:/var/lib/relay/actor.pem"
       - "./config.yml:/var/lib/relay/config.yml"
+    deploy:
+      mode: replicated
+      replicas: 2
     depends_on:
       - redis
 
@@ -26,7 +28,6 @@ services:
     image: yukimochi/activity-relay
     working_dir: /var/lib/relay
     restart: always
-    init: true
     command: relay server
     volumes:
       - "./actor.pem:/var/lib/relay/actor.pem"
