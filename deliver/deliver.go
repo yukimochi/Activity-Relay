@@ -18,7 +18,7 @@ var (
 	version      string
 	GlobalConfig *models.RelayConfig
 
-	// RelayActor : Relay's RelayActor
+	// RelayActor : Relay's Actor
 	RelayActor models.Actor
 
 	HttpClient      *http.Client
@@ -52,6 +52,10 @@ func registerActivity(args ...string) error {
 	return err
 }
 
+func nilTask(_ ...string) error {
+	return nil
+}
+
 func Entrypoint(g *models.RelayConfig, v string) error {
 	var err error
 
@@ -68,6 +72,12 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 		return err
 	}
 	err = MachineryServer.RegisterTask("relay-v2", relayActivityV2)
+	if err != nil {
+		return err
+	}
+
+	// From migration from <v1.2.0, remove remaining tasks
+	err = MachineryServer.RegisterTask("relay-v2", nilTask)
 	if err != nil {
 		return err
 	}
