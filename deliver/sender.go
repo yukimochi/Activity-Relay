@@ -15,8 +15,8 @@ import (
 
 func compatibilityForHTTPSignature11(request *http.Request, algorithm httpsig.Algorithm) {
 	signature := request.Header.Get("Signature")
-	regexp := regexp.MustCompile("algorithm=\"hs2019\"")
-	signature = regexp.ReplaceAllString(signature, string("algorithm=\""+algorithm+"\""))
+	targetString := regexp.MustCompile("algorithm=\"hs2019\"")
+	signature = targetString.ReplaceAllString(signature, string("algorithm=\""+algorithm+"\""))
 	request.Header.Set("Signature", signature)
 }
 
@@ -38,10 +38,10 @@ func appendSignature(request *http.Request, body *[]byte, KeyID string, privateK
 func sendActivity(inboxURL string, KeyID string, body []byte, privateKey *rsa.PrivateKey) error {
 	req, _ := http.NewRequest("POST", inboxURL, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json")
-	req.Header.Set("User-Agent", fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", globalConfig.ServerServiceName(), version, globalConfig.ServerHostname().Host))
+	req.Header.Set("User-Agent", fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host))
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
 	appendSignature(req, &body, KeyID, privateKey)
-	resp, err := httpClient.Do(req)
+	resp, err := HttpClient.Do(req)
 	if err != nil {
 		return err
 	}

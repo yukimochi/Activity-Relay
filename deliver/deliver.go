@@ -16,63 +16,64 @@ import (
 
 var (
 	version      string
-	globalConfig *models.RelayConfig
+	GlobalConfig *models.RelayConfig
 
-	// Actor : Relay's Actor
-	Actor models.Actor
+	// RelayActor : Relay's RelayActor
+	RelayActor models.Actor
 
-	redisClient     *redis.Client
-	machineryServer *machinery.Server
-	httpClient      *http.Client
+	HttpClient      *http.Client
+	MachineryServer *machinery.Server
+	RedisClient     *redis.Client
 )
 
 func relayActivityV2(args ...string) error {
 	inboxURL := args[0]
 	activityID := args[1]
-	body, err := redisClient.HGet("relay:activity:"+activityID, "body").Result()
+	body, err := RedisClient.HGet("relay:activity:"+activityID, "body").Result()
 	if err != nil {
-		return errors.New("this activity is expired")
+		return errors.New("activity ttl expired")
 	}
 
-	err = sendActivity(inboxURL, Actor.ID, []byte(body), globalConfig.ActorKey())
+	err = sendActivity(inboxURL, RelayActor.ID, []byte(body), GlobalConfig.ActorKey())
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
-		evalScript := "local change = redis.call('HSETNX', KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
-		redisClient.Eval(evalScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
+		pushErrorLogScript := "local change = redis.call('HSETNX', KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
+		RedisClient.Eval(pushErrorLogScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
 	}
-	evalScript := "local remain_count = redis.call('HINCRBY', KEYS[1], 'remain_count', -1); if remain_count < 1 then redis.call('DEL', KEYS[1]) end;"
-	redisClient.Eval(evalScript, []string{"relay:activity:" + activityID}).Result()
+	reductionRemainCountScript := "local remain_count = redis.call('HINCRBY', KEYS[1], 'remain_count', -1); if remain_count < 1 then redis.call('DEL', KEYS[1]) end;"
+	RedisClient.Eval(reductionRemainCountScript, []string{"relay:activity:" + activityID}).Result()
 	return err
 }
 
 func registerActivity(args ...string) error {
 	inboxURL := args[0]
 	body := args[1]
-	err := sendActivity(inboxURL, Actor.ID, []byte(body), globalConfig.ActorKey())
+	err := sendActivity(inboxURL, RelayActor.ID, []byte(body), GlobalConfig.ActorKey())
 	return err
 }
 
 func Entrypoint(g *models.RelayConfig, v string) error {
 	var err error
-	globalConfig = g
+
 	version = v
+	GlobalConfig = g
 
-	err = initialize(globalConfig)
+	err = initialize(GlobalConfig)
 	if err != nil {
 		return err
 	}
 
-	err = machineryServer.RegisterTask("register", registerActivity)
+	err = MachineryServer.RegisterTask("register", registerActivity)
 	if err != nil {
 		return err
 	}
-	err = machineryServer.RegisterTask("relay-v2", relayActivityV2)
+	err = MachineryServer.RegisterTask("relay-v2", relayActivityV2)
 	if err != nil {
 		return err
 	}
 
 	workerID := uuid.NewV4()
-	worker := machineryServer.NewWorker(workerID.String(), globalConfig.JobConcurrency())
+	worker := MachineryServer.NewWorker(workerID.String(), GlobalConfig.JobConcurrency())
 	err = worker.Launch()
 	if err != nil {
 		logrus.Error(err)
@@ -84,15 +85,15 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 func initialize(globalConfig *models.RelayConfig) error {
 	var err error
 
-	redisClient = globalConfig.RedisClient()
+	RedisClient = globalConfig.RedisClient()
 
-	machineryServer, err = models.NewMachineryServer(globalConfig)
+	MachineryServer, err = models.NewMachineryServer(globalConfig)
 	if err != nil {
 		return err
 	}
-	httpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
+	HttpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
 
-	Actor = models.NewActivityPubActorFromSelfKey(globalConfig)
+	RelayActor = models.NewActivityPubActorFromSelfKey(globalConfig)
 	newNullLogger := NewNullLogger()
 	log.DEBUG = newNullLogger
 
