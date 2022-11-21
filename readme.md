@@ -60,7 +60,7 @@ JOB_CONCURRENCY: 50
 
 ### Environment Variable
 
- This is **Optional** : When `config.yml` not exists, use environment variable.
+ **Optional** : When config file not exist, use environment variables.
 
  - ACTOR_PEM
  - REDIS_URL
@@ -74,7 +74,7 @@ JOB_CONCURRENCY: 50
 
 ## [Document](https://github.com/yukimochi/Activity-Relay/wiki)
 
-See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki) to build / install / manage relay.
+See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki) to build / install / control relay.
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fyukimochi%2FActivity-Relay?ref=badge_large)

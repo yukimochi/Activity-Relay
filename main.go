@@ -62,7 +62,7 @@ var (
 	version string
 	verbose bool
 
-	globalConfig *models.RelayConfig
+	GlobalConfig *models.RelayConfig
 )
 
 func main() {
@@ -71,8 +71,8 @@ func main() {
 	})
 
 	var app = buildCommand()
-	app.PersistentFlags().StringP("config", "c", "config.yml", "Path of config file.")
-	app.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Show debug log in stdout.")
+	app.PersistentFlags().StringP("config", "c", "config.yml", "Path of config")
+	app.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Show debug log")
 
 	app.Execute()
 }
@@ -84,8 +84,8 @@ func buildCommand() *cobra.Command {
 		Long:  "Activity-Relay API Server is providing WebFinger API, ActivityPub inbox",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			initConfig(cmd)
-			fmt.Println(globalConfig.DumpWelcomeMessage("API Server", version))
-			err := api.Entrypoint(globalConfig, version)
+			fmt.Println(GlobalConfig.DumpWelcomeMessage("API Server", version))
+			err := api.Entrypoint(GlobalConfig, version)
 			if err != nil {
 				logrus.Fatal(err.Error())
 			}
@@ -99,8 +99,8 @@ func buildCommand() *cobra.Command {
 		Long:  "Activity-Relay Job Worker is providing ActivityPub Activity deliverer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			initConfig(cmd)
-			fmt.Println(globalConfig.DumpWelcomeMessage("Job Worker", version))
-			err := deliver.Entrypoint(globalConfig, version)
+			fmt.Println(GlobalConfig.DumpWelcomeMessage("Job Worker", version))
+			err := deliver.Entrypoint(GlobalConfig, version)
 			if err != nil {
 				logrus.Fatal(err.Error())
 			}
@@ -152,7 +152,7 @@ func initConfig(cmd *cobra.Command) {
 		viper.BindEnv("RELAY_IMAGE")
 	}
 
-	globalConfig, err = models.NewRelayConfig()
+	GlobalConfig, err = models.NewRelayConfig()
 	if err != nil {
 		logrus.Fatal(err.Error())
 	}

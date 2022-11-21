@@ -2,13 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/yukimochi/Activity-Relay/models"
@@ -26,31 +25,31 @@ func TestHandleWebfingerGet(t *testing.T) {
 
 	req, _ := http.NewRequest("GET", s.URL, nil)
 	q := req.URL.Query()
-	q.Add("resource", "acct:relay@"+globalConfig.ServerHostname().Host)
+	q.Add("resource", "acct:relay@"+GlobalConfig.ServerHostname().Host)
 	req.URL.RawQuery = q.Encode()
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.Header.Get("Content-Type") != "application/json" {
-		t.Fatalf("Failed - Content-Type not match.")
+		t.Fatalf("fail - Content-Type is not match")
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("Failed - StatusCode is not 200.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 	defer r.Body.Close()
 
-	data, _ := ioutil.ReadAll(r.Body)
-	var webfingerResource models.WebfingerResource
-	err = json.Unmarshal(data, &webfingerResource)
+	data, _ := io.ReadAll(r.Body)
+	var webfinger models.WebfingerResource
+	err = json.Unmarshal(data, &webfinger)
 	if err != nil {
-		t.Fatalf("WebfingerResource response is not valid.")
+		t.Fatalf("fail - response is not valid")
 	}
 
-	domain, _ := url.Parse(webfingerResource.Links[0].Href)
-	if domain.Host != globalConfig.ServerHostname().Host {
-		t.Fatalf("WebfingerResource's Host not valid.")
+	domain, _ := url.Parse(webfinger.Links[0].Href)
+	if domain.Host != GlobalConfig.ServerHostname().Host {
+		t.Fatalf("fail - host is not match")
 	}
 }
 
@@ -65,10 +64,10 @@ func TestHandleWebfingerGetBadResource(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 404 {
-		t.Fatalf("Failed - StatusCode is not 404.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -80,21 +79,21 @@ func TestHandleNodeinfoLinkGet(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.Header.Get("Content-Type") != "application/json" {
-		t.Fatalf("Failed - Content-Type not match.")
+		t.Fatalf("fail - Content-Type not match")
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("Failed - StatusCode is not 200.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 	defer r.Body.Close()
 
-	data, _ := ioutil.ReadAll(r.Body)
+	data, _ := io.ReadAll(r.Body)
 	var nodeinfoLinks models.NodeinfoLinks
 	err = json.Unmarshal(data, &nodeinfoLinks)
 	if err != nil {
-		t.Fatalf("NodeinfoLinks response is not valid.")
+		t.Fatalf("fail - response is not valid")
 	}
 }
 
@@ -106,10 +105,10 @@ func TestHandleNodeinfoLinkInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -121,21 +120,21 @@ func TestHandleNodeinfoGet(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.Header.Get("Content-Type") != "application/json" {
-		t.Fatalf("Failed - Content-Type not match.")
+		t.Fatalf("fail - Content-Type is not match")
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("Failed - StatusCode is not 200.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 	defer r.Body.Close()
 
-	data, _ := ioutil.ReadAll(r.Body)
+	data, _ := io.ReadAll(r.Body)
 	var nodeinfo models.Nodeinfo
 	err = json.Unmarshal(data, &nodeinfo)
 	if err != nil {
-		t.Fatalf("Nodeinfo response is not valid.")
+		t.Fatalf("fail - response is not valid")
 	}
 }
 
@@ -147,10 +146,10 @@ func TestHandleNodeinfoInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -162,10 +161,10 @@ func TestHandleWebfingerInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -175,26 +174,26 @@ func TestHandleActorGet(t *testing.T) {
 
 	r, err := http.Get(s.URL)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.Header.Get("Content-Type") != "application/activity+json" {
-		t.Fatalf("Failed - Content-Type not match.")
+		t.Fatalf("fail - Content-Type not match")
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("Failed - StatusCode is not 200.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 	defer r.Body.Close()
 
-	data, _ := ioutil.ReadAll(r.Body)
+	data, _ := io.ReadAll(r.Body)
 	var actor models.Actor
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
-		t.Fatalf("Actor response is not valid.")
+		t.Fatalf("fail - response is not valid")
 	}
 
 	domain, _ := url.Parse(actor.ID)
-	if domain.Host != globalConfig.ServerHostname().Host {
-		t.Fatalf("Actor's Host not valid.")
+	if domain.Host != GlobalConfig.ServerHostname().Host {
+		t.Fatalf("fail - host is not match")
 	}
 }
 
@@ -204,10 +203,10 @@ func TestHandleActorInvalidMethod(t *testing.T) {
 
 	r, err := http.Post(s.URL, "text/plain", nil)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400.")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -217,32 +216,32 @@ func TestContains(t *testing.T) {
 		"no",
 		"nil",
 	}
-	badData := 0
+	invalidData := 0
 	result := contains(data, "true")
 	if result != false {
-		t.Fatalf("Failed - no contain but true.")
+		t.Fatalf("fail - not contain but return true")
 	}
 	result = contains(data, "nil")
 	if result != true {
-		t.Fatalf("Failed - contain but false.")
+		t.Fatalf("fail - contains but return false")
 	}
 	result = contains(sData, "true")
 	if result != false {
-		t.Fatalf("Failed - no contain but true. (slice)")
+		t.Fatalf("fail - not contain but return true (slice)")
 	}
 	result = contains(sData, "nil")
 	if result != true {
-		t.Fatalf("Failed - contain but false. (slice)")
+		t.Fatalf("fail - contains but return false (slice)")
 	}
-	result = contains(badData, "hoge")
+	result = contains(invalidData, "hoge")
 	if result != false {
-		t.Fatalf("Failed - input bad data but true. (slice)")
+		t.Fatalf("fail - given invalid data but return true (slice)")
 	}
 }
 
 func mockActivityDecoderProvider(activity *models.Activity, actor *models.Actor) func(r *http.Request) (*models.Activity, *models.Actor, []byte, error) {
 	return func(r *http.Request) (*models.Activity, *models.Actor, []byte, error) {
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -255,19 +254,19 @@ func mockActivity(req string) models.Activity {
 	switch req {
 	case "Follow":
 		file, _ := os.Open("../misc/test/follow.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Invalid-Follow":
 		file, _ := os.Open("../misc/test/followAsActor.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Unfollow":
 		file, _ := os.Open("../misc/test/unfollow.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
@@ -283,7 +282,7 @@ func mockActivity(req string) models.Activity {
 		return activity
 	case "Create":
 		file, _ := os.Open("../misc/test/create.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
@@ -294,18 +293,18 @@ func mockActivity(req string) models.Activity {
 		return activity
 	case "Announce":
 		file, _ := os.Open("../misc/test/announce.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	case "Undo":
 		file, _ := os.Open("../misc/test/undo.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
 	default:
-		panic("No assigned request.")
+		panic("fatal - request not registered")
 	}
 }
 
@@ -313,24 +312,24 @@ func mockActor(req string) models.Actor {
 	switch req {
 	case "Person":
 		file, _ := os.Open("../misc/test/person.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	case "Service":
 		file, _ := os.Open("../misc/test/service.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	case "Application":
 		file, _ := os.Open("../misc/test/application.json")
-		body, _ := ioutil.ReadAll(file)
+		body, _ := io.ReadAll(file)
 		var actor models.Actor
 		json.Unmarshal(body, &actor)
 		return actor
 	default:
-		panic("No assigned request.")
+		panic("fatal - request not registered")
 	}
 }
 
@@ -340,16 +339,16 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
-	relayState.SetConfig(BlockService, false)
+	RelayState.SetConfig(BlockService, false)
 
-	if suitableRelay(&activity, &personActor) != true {
-		t.Fatalf("Failed - Person status not relay")
+	if isRelayRetransmission(&activity, &personActor) != true {
+		t.Fatalf("fail - Person activity should relay")
 	}
-	if suitableRelay(&activity, &serviceActor) != true {
-		t.Fatalf("Failed - Service status not relay")
+	if isRelayRetransmission(&activity, &serviceActor) != true {
+		t.Fatalf("fail - Service activity should relay")
 	}
-	if suitableRelay(&activity, &applicationActor) != true {
-		t.Fatalf("Failed - Service status not relay")
+	if isRelayRetransmission(&activity, &applicationActor) != true {
+		t.Fatalf("fail - Service activity should relay")
 	}
 }
 
@@ -359,18 +358,18 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
-	relayState.SetConfig(BlockService, true)
+	RelayState.SetConfig(BlockService, true)
 
-	if suitableRelay(&activity, &personActor) != true {
-		t.Fatalf("Failed - Person status not relay")
+	if isRelayRetransmission(&activity, &personActor) != true {
+		t.Fatalf("fail - Person activity should relay")
 	}
-	if suitableRelay(&activity, &serviceActor) != false {
-		t.Fatalf("Failed - Service status may relay when blocking mode")
+	if isRelayRetransmission(&activity, &serviceActor) != false {
+		t.Fatalf("fail - Service activity should not relay when blocking mode")
 	}
-	if suitableRelay(&activity, &applicationActor) != false {
-		t.Fatalf("Failed - Application status may relay when blocking mode")
+	if isRelayRetransmission(&activity, &applicationActor) != false {
+		t.Fatalf("fail - Application activity should not relay when blocking mode")
 	}
-	relayState.SetConfig(BlockService, false)
+	RelayState.SetConfig(BlockService, false)
 }
 
 func TestHandleInboxNoSignature(t *testing.T) {
@@ -383,10 +382,10 @@ func TestHandleInboxNoSignature(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -400,10 +399,10 @@ func TestHandleInboxInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 404 {
-		t.Fatalf("Failed - StatusCode is not 404")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -420,16 +419,16 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("Failed - Subscription not works.")
+		t.Fatalf("fail - follow request not work")
 	}
-	relayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxValidManuallyFollow(t *testing.T) {
@@ -442,27 +441,27 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	defer s.Close()
 
 	// Switch Manually
-	relayState.SetConfig(ManuallyAccept, true)
+	RelayState.SetConfig(ManuallyAccept, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:pending:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:pending:" + domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("Failed - Pending not works.")
+		t.Fatalf("fail - manually follow not work")
 	}
-	res, _ = relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ = RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("Failed - Pending was skipped.")
+		t.Fatalf("fail - manually follow not work")
 	}
-	relayState.DelSubscription(domain.Host)
-	relayState.SetConfig(ManuallyAccept, false)
+	RelayState.DelSubscription(domain.Host)
+	RelayState.SetConfig(ManuallyAccept, false)
 }
 
 func TestHandleInboxInvalidFollow(t *testing.T) {
@@ -474,20 +473,20 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.SetConfig(ManuallyAccept, false)
+	RelayState.SetConfig(ManuallyAccept, false)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("Failed - Subscription not blocked.")
+		t.Fatalf("fail - follow request not blocked")
 	}
 }
 
@@ -500,23 +499,23 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.SetBlockedDomain(domain.Host, true)
+	RelayState.SetBlockedDomain(domain.Host, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("Failed - Subscription not blocked.")
+		t.Fatalf("fail - follow request not blocked")
 	}
-	relayState.DelSubscription(domain.Host)
-	relayState.SetBlockedDomain(domain.Host, false)
+	RelayState.DelSubscription(domain.Host)
+	RelayState.SetBlockedDomain(domain.Host, false)
 }
 
 func TestHandleInboxValidUnfollow(t *testing.T) {
@@ -528,7 +527,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -537,16 +536,16 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("Failed - Subscription not succeed.")
+		t.Fatalf("fail - unfollow request not works")
 	}
-	relayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxInvalidUnfollow(t *testing.T) {
@@ -558,7 +557,7 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -567,16 +566,16 @@ func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400")
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("Failed - Block hacked unfollow not succeed.")
+		t.Fatalf("fail - invalid unfollow request should be blocked")
 	}
-	relayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxUnfollowAsActor(t *testing.T) {
@@ -588,7 +587,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -597,16 +596,16 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400")
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("Failed - Block actor unfollow not succeed.")
+		t.Fatalf("fail - invalid unfollow request should be blocked")
 	}
-	relayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription(domain.Host)
 }
 
 func TestHandleInboxValidCreate(t *testing.T) {
@@ -618,11 +617,11 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -631,15 +630,15 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	relayState.DelSubscription(domain.Host)
-	relayState.DelSubscription("example.org")
-	relayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
-	relayState.RedisClient.Del("relay:subscription:example.org").Result()
+	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription("example.org")
+	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
+	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }
 
 func TestHandleInboxLimitedCreate(t *testing.T) {
@@ -651,23 +650,23 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.SetLimitedDomain(domain.Host, true)
+	RelayState.SetLimitedDomain(domain.Host, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	relayState.DelSubscription(domain.Host)
-	relayState.SetLimitedDomain(domain.Host, false)
+	RelayState.DelSubscription(domain.Host)
+	RelayState.SetLimitedDomain(domain.Host, false)
 }
 
 func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
@@ -679,28 +678,28 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
-	relayState.SetConfig(CreateAsAnnounce, true)
+	RelayState.SetConfig(CreateAsAnnounce, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	relayState.DelSubscription(domain.Host)
-	relayState.DelSubscription("example.org")
-	relayState.SetConfig(CreateAsAnnounce, false)
+	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription("example.org")
+	RelayState.SetConfig(CreateAsAnnounce, false)
 }
 
 func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
@@ -712,28 +711,28 @@ func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
-	relayState.SetConfig(CreateAsAnnounce, true)
+	RelayState.SetConfig(CreateAsAnnounce, true)
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	relayState.DelSubscription(domain.Host)
-	relayState.DelSubscription("example.org")
-	relayState.SetConfig(CreateAsAnnounce, false)
+	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription("example.org")
+	RelayState.SetConfig(CreateAsAnnounce, false)
 }
 
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
@@ -748,10 +747,10 @@ func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("Failed - StatusCode is not 400")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
@@ -764,7 +763,7 @@ func TestHandleInboxUndo(t *testing.T) {
 	}))
 	defer s.Close()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -773,14 +772,14 @@ func TestHandleInboxUndo(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("Failed - StatusCode is not 202 - " + strconv.Itoa(r.StatusCode))
+		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := relayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("Failed - Missing unsubscribed.")
+		t.Fatalf("fail - undo activity not works")
 	}
-	relayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription(domain.Host)
 }

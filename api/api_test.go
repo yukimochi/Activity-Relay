@@ -21,19 +21,19 @@ func TestMain(m *testing.M) {
 	viper.Set("ACTOR_PEM", "../misc/test/testKey.pem")
 	viper.BindEnv("REDIS_URL")
 
-	globalConfig, err = models.NewRelayConfig()
+	GlobalConfig, err = models.NewRelayConfig()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	err = initialize(globalConfig)
+	err = initialize(GlobalConfig)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	relayState = models.NewState(relayState.RedisClient, false)
-	relayState.RedisClient.FlushAll().Result()
+	RelayState = models.NewState(RelayState.RedisClient, false)
+	RelayState.RedisClient.FlushAll().Result()
 	code := m.Run()
 	os.Exit(code)
 }

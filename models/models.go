@@ -4,7 +4,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -123,7 +123,7 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 		return errors.New(resp.Status)
 	}
 
-	data, _ := ioutil.ReadAll(resp.Body)
+	data, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
 		return err
@@ -169,8 +169,8 @@ func (activity *Activity) GenerateAnnounce(host *url.URL) Activity {
 	}
 }
 
-// NestedActivity : Unwrap nested activity.
-func (activity *Activity) NestedActivity() (*Activity, error) {
+// InnerActivity : Unwrap inner activity.
+func (activity *Activity) InnerActivity() (*Activity, error) {
 	mappedObject := activity.Object.(map[string]interface{})
 	if id, ok := mappedObject["id"].(string); ok {
 		if nestedType, ok := mappedObject["type"].(string); ok {
@@ -301,7 +301,7 @@ type NodeinfoMetadata struct {
 }
 
 // GenerateFromActor : Generate Webfinger resource from Actor.
-func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, actor *Actor, serverVersion string) {
+func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, _ *Actor, serverVersion string) {
 	resource.NodeinfoLinks.Links = []NodeinfoLink{
 		{
 			"http://nodeinfo.diaspora.software/ns/schema/2.1",

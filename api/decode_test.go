@@ -2,8 +2,7 @@ package api
 
 import (
 	"bytes"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,15 +12,15 @@ import (
 )
 
 func TestDecodeActivity(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
 	file, _ := os.Open("../misc/test/create.json")
-	body, _ := ioutil.ReadAll(file)
+	body, _ := io.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
 	req.Host = "relay.01.cloudgarage.yukimochi.io"
@@ -33,25 +32,24 @@ func TestDecodeActivity(t *testing.T) {
 
 	activity, actor, _, err := decodeActivity(req)
 	if err != nil {
-		t.Fatalf("Failed - " + err.Error())
+		t.Fatalf("fail - " + err.Error())
 	}
 
 	if activity.Actor != actor.ID {
-		fmt.Println(actor.ID)
-		t.Fatalf("Failed - retrieved actor is invalid")
+		t.Fatalf("fail - actor is invalid")
 	}
 }
 
 func TestDecodeActivityWithNoSignature(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
 	file, _ := os.Open("../misc/test/create.json")
-	body, _ := ioutil.ReadAll(file)
+	body, _ := io.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
 	req.Host = "relay.01.cloudgarage.yukimochi.io"
@@ -62,20 +60,20 @@ func TestDecodeActivityWithNoSignature(t *testing.T) {
 
 	_, _, _, err := decodeActivity(req)
 	if err.Error() != "neither \"Signature\" nor \"Authorization\" have signature parameters" {
-		t.Fatalf("Failed - Accept request without signature")
+		t.Fatalf("fail - should not accept request without signature")
 	}
 }
 
 func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
 	file, _ := os.Open("../misc/test/create.json")
-	body, _ := ioutil.ReadAll(file)
+	body, _ := io.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
 	req.Host = "relay.01.cloudgarage.yukimochi.io"
@@ -87,20 +85,20 @@ func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 
 	_, _, _, err := decodeActivity(req)
 	if err.Error() != "404 Not Found" {
-		t.Fatalf("Failed - Accept notfound KeyId")
+		t.Fatalf("fail - should not accept notfound KeyId")
 	}
 }
 
 func TestDecodeActivityWithInvalidDigest(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscription(models.Subscription{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
 
 	file, _ := os.Open("../misc/test/create.json")
-	body, _ := ioutil.ReadAll(file)
+	body, _ := io.ReadAll(file)
 	length := strconv.Itoa(len(body))
 	req, _ := http.NewRequest("POST", "/inbox", bytes.NewReader(body))
 	req.Host = "relay.01.cloudgarage.yukimochi.io"
@@ -112,6 +110,6 @@ func TestDecodeActivityWithInvalidDigest(t *testing.T) {
 
 	_, _, _, err := decodeActivity(req)
 	if err.Error() != "crypto/rsa: verification error" {
-		t.Fatalf("Failed - Accept unvalid digest")
+		t.Fatalf("fail - should not accept unvalid digest")
 	}
 }
