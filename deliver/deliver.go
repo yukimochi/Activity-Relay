@@ -76,7 +76,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 		return err
 	}
 
-	// From migration from <v1.2.0, remove remaining tasks
+	// For migration from <v1.2.0, remove remaining tasks
 	err = MachineryServer.RegisterTask("relay-v2", nilTask)
 	if err != nil {
 		return err
