@@ -7,19 +7,19 @@ import (
 )
 
 func TestListFollows(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
 	app.SetOut(buffer)
 
-	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
 		"actor":       "https://example.com/user/example",
-		"object":      "https://" + globalConfig.ServerHostname().Host + "/actor",
+		"object":      "https://" + GlobalConfig.ServerHostname().Host + "/actor",
 	})
 
 	app.SetArgs([]string{"list"})
@@ -36,61 +36,61 @@ Total : 1
 }
 
 func TestAcceptFollow(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := followCmdInit()
 
-	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
 		"actor":       "https://example.com/user/example",
-		"object":      "https://" + globalConfig.ServerHostname().Host + "/actor",
+		"object":      "https://" + GlobalConfig.ServerHostname().Host + "/actor",
 	})
 
 	app.SetArgs([]string{"accept", "example.com"})
 	app.Execute()
 
-	valid, _ := relayState.RedisClient.Exists("relay:pending:example.com").Result()
+	valid, _ := RelayState.RedisClient.Exists("relay:pending:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("Not removed follow request.")
 	}
 
-	valid, _ = relayState.RedisClient.Exists("relay:subscription:example.com").Result()
+	valid, _ = RelayState.RedisClient.Exists("relay:subscription:example.com").Result()
 	if valid != 1 {
 		t.Fatalf("Not created subscription.")
 	}
 }
 
 func TestRejectFollow(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := followCmdInit()
 
-	relayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
 		"actor":       "https://example.com/user/example",
-		"object":      "https://" + globalConfig.ServerHostname().Host + "/actor",
+		"object":      "https://" + GlobalConfig.ServerHostname().Host + "/actor",
 	})
 
 	app.SetArgs([]string{"reject", "example.com"})
 	app.Execute()
 
-	valid, _ := relayState.RedisClient.Exists("relay:pending:example.com").Result()
+	valid, _ := RelayState.RedisClient.Exists("relay:pending:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("No response follow request.")
 	}
 
-	valid, _ = relayState.RedisClient.Exists("relay:subscription:example.com").Result()
+	valid, _ = RelayState.RedisClient.Exists("relay:subscription:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("Created subscription.")
 	}
 }
 
 func TestInvalidFollow(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := followCmdInit()
 
@@ -107,7 +107,7 @@ func TestInvalidFollow(t *testing.T) {
 }
 
 func TestInvalidRejectFollow(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := followCmdInit()
 

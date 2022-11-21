@@ -11,16 +11,16 @@ import (
 )
 
 var (
-	globalConfig *models.RelayConfig
+	GlobalConfig *models.RelayConfig
 
-	initProxy  = initializeProxy
-	initProxyE = initializeProxyE
+	InitProxy  = initializeProxy
+	InitProxyE = initializeProxyE
 
 	// Actor : Relay's Actor
 	Actor models.Actor
 
-	relayState      models.RelayState
-	machineryServer *machinery.Server
+	MachineryServer *machinery.Server
+	RelayState      models.RelayState
 )
 
 func BuildCommand(command *cobra.Command) {
@@ -63,29 +63,29 @@ func initConfig(cmd *cobra.Command) error {
 		viper.BindEnv("RELAY_IMAGE")
 	}
 
-	globalConfig, err = models.NewRelayConfig()
+	GlobalConfig, err = models.NewRelayConfig()
 	if err != nil {
 		logrus.Fatal(err)
 	}
 
-	initialize(globalConfig)
+	initialize()
 
 	return nil
 }
 
-func initialize(globalconfig *models.RelayConfig) error {
+func initialize() error {
 	var err error
 
-	redisClient := globalConfig.RedisClient()
-	relayState = models.NewState(redisClient, true)
-	relayState.ListenNotify(nil)
+	redisClient := GlobalConfig.RedisClient()
+	RelayState = models.NewState(redisClient, true)
+	RelayState.ListenNotify(nil)
 
-	machineryServer, err = models.NewMachineryServer(globalConfig)
+	MachineryServer, err = models.NewMachineryServer(GlobalConfig)
 	if err != nil {
 		return err
 	}
 
-	Actor = models.NewActivityPubActorFromSelfKey(globalConfig)
+	Actor = models.NewActivityPubActorFromSelfKey(GlobalConfig)
 
 	return nil
 }

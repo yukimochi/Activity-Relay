@@ -2,74 +2,74 @@ package control
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
 )
 
 func TestServiceBlock(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 
 	app.SetArgs([]string{"enable", "service-block"})
 	app.Execute()
-	relayState.Load()
-	if !relayState.RelayConfig.BlockService {
+	RelayState.Load()
+	if !RelayState.RelayConfig.BlockService {
 		t.Fatalf("Not Enabled Blocking feature for service-type actor")
 	}
 
 	app.SetArgs([]string{"enable", "-d", "service-block"})
 	app.Execute()
-	relayState.Load()
-	if relayState.RelayConfig.BlockService {
+	RelayState.Load()
+	if RelayState.RelayConfig.BlockService {
 		t.Fatalf("Not Disabled Blocking feature for service-type actor")
 	}
 }
 
 func TestManuallyAccept(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 
 	app.SetArgs([]string{"enable", "manually-accept"})
 	app.Execute()
-	relayState.Load()
-	if !relayState.RelayConfig.ManuallyAccept {
+	RelayState.Load()
+	if !RelayState.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Enabled Manually accept follow-request feature")
 	}
 
 	app.SetArgs([]string{"enable", "-d", "manually-accept"})
 	app.Execute()
-	relayState.Load()
-	if relayState.RelayConfig.ManuallyAccept {
+	RelayState.Load()
+	if RelayState.RelayConfig.ManuallyAccept {
 		t.Fatalf("Not Disabled Manually accept follow-request feature")
 	}
 }
 
 func TestCreateAsAnnounce(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 
 	app.SetArgs([]string{"enable", "create-as-announce"})
 	app.Execute()
-	relayState.Load()
-	if !relayState.RelayConfig.CreateAsAnnounce {
+	RelayState.Load()
+	if !RelayState.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Enable announce activity instead of relay create activity")
 	}
 
 	app.SetArgs([]string{"enable", "-d", "create-as-announce"})
 	app.Execute()
-	relayState.Load()
-	if relayState.RelayConfig.CreateAsAnnounce {
+	RelayState.Load()
+	if RelayState.RelayConfig.CreateAsAnnounce {
 		t.Fatalf("Enable announce activity instead of relay create activity")
 	}
 }
 
 func TestInvalidConfig(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
@@ -85,7 +85,7 @@ func TestInvalidConfig(t *testing.T) {
 }
 
 func TestListConfig(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
@@ -114,7 +114,7 @@ func TestListConfig(t *testing.T) {
 }
 
 func TestExportConfig(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
@@ -127,7 +127,7 @@ func TestExportConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test resource fetch error.")
 	}
-	jsonData, _ := ioutil.ReadAll(file)
+	jsonData, _ := io.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
 		t.Fatalf("Invalid Response.")
@@ -135,13 +135,13 @@ func TestExportConfig(t *testing.T) {
 }
 
 func TestImportConfig(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
 
 	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
 	app.Execute()
-	relayState.Load()
+	RelayState.Load()
 
 	buffer := new(bytes.Buffer)
 	app.SetOut(buffer)
@@ -153,7 +153,7 @@ func TestImportConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Test resource fetch error.")
 	}
-	jsonData, _ := ioutil.ReadAll(file)
+	jsonData, _ := io.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
 		t.Fatalf("Invalid Response.")

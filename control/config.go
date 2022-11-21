@@ -2,7 +2,7 @@ package control
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -28,7 +28,7 @@ func configCmdInit() *cobra.Command {
 		Short: "List all relay configuration",
 		Long:  "List all relay configuration.",
 		Run: func(cmd *cobra.Command, args []string) {
-			initProxy(listConfig, cmd, args)
+			InitProxy(listConfig, cmd, args)
 		},
 	}
 	config.AddCommand(configList)
@@ -38,7 +38,7 @@ func configCmdInit() *cobra.Command {
 		Short: "Export all relay information",
 		Long:  "Export all relay information by JSON format.",
 		Run: func(cmd *cobra.Command, args []string) {
-			initProxy(exportConfig, cmd, args)
+			InitProxy(exportConfig, cmd, args)
 		},
 	}
 	config.AddCommand(configExport)
@@ -48,7 +48,7 @@ func configCmdInit() *cobra.Command {
 		Short: "Import all relay information",
 		Long:  "Import all relay information from JSON file.",
 		Run: func(cmd *cobra.Command, args []string) {
-			initProxy(importConfig, cmd, args)
+			InitProxy(importConfig, cmd, args)
 		},
 	}
 	configImport.Flags().String("json", "", "JSON file-path")
@@ -67,7 +67,7 @@ func configCmdInit() *cobra.Command {
 	Enable announce activity instead of relay create activity (not recommend)`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return initProxyE(configEnable, cmd, args)
+			return InitProxyE(configEnable, cmd, args)
 		},
 	}
 	configEnable.Flags().BoolP("disable", "d", false, "Disable configuration instead of Enable")
@@ -82,26 +82,26 @@ func configEnable(cmd *cobra.Command, args []string) error {
 		switch config {
 		case "service-block":
 			if disable {
-				relayState.SetConfig(BlockService, false)
+				RelayState.SetConfig(BlockService, false)
 				cmd.Println("Blocking for service-type actor is Disabled.")
 			} else {
-				relayState.SetConfig(BlockService, true)
+				RelayState.SetConfig(BlockService, true)
 				cmd.Println("Blocking for service-type actor is Enabled.")
 			}
 		case "manually-accept":
 			if disable {
-				relayState.SetConfig(ManuallyAccept, false)
+				RelayState.SetConfig(ManuallyAccept, false)
 				cmd.Println("Manually accept follow-request is Disabled.")
 			} else {
-				relayState.SetConfig(ManuallyAccept, true)
+				RelayState.SetConfig(ManuallyAccept, true)
 				cmd.Println("Manually accept follow-request is Enabled.")
 			}
 		case "create-as-announce":
 			if disable {
-				relayState.SetConfig(CreateAsAnnounce, false)
+				RelayState.SetConfig(CreateAsAnnounce, false)
 				cmd.Println("Announce activity instead of relay create activity is Disabled.")
 			} else {
-				relayState.SetConfig(CreateAsAnnounce, true)
+				RelayState.SetConfig(CreateAsAnnounce, true)
 				cmd.Println("Announce activity instead of relay create activity is Enabled.")
 			}
 		default:
@@ -112,24 +112,24 @@ func configEnable(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func listConfig(cmd *cobra.Command, args []string) {
-	cmd.Println("Blocking for service-type actor : ", relayState.RelayConfig.BlockService)
-	cmd.Println("Manually accept follow-request : ", relayState.RelayConfig.ManuallyAccept)
-	cmd.Println("Announce activity instead of relay create activity : ", relayState.RelayConfig.CreateAsAnnounce)
+func listConfig(cmd *cobra.Command, _ []string) {
+	cmd.Println("Blocking for service-type actor : ", RelayState.RelayConfig.BlockService)
+	cmd.Println("Manually accept follow-request : ", RelayState.RelayConfig.ManuallyAccept)
+	cmd.Println("Announce activity instead of relay create activity : ", RelayState.RelayConfig.CreateAsAnnounce)
 }
 
-func exportConfig(cmd *cobra.Command, args []string) {
-	jsonData, _ := json.Marshal(&relayState)
+func exportConfig(cmd *cobra.Command, _ []string) {
+	jsonData, _ := json.Marshal(&RelayState)
 	cmd.Println(string(jsonData))
 }
 
-func importConfig(cmd *cobra.Command, args []string) {
+func importConfig(cmd *cobra.Command, _ []string) {
 	file, err := os.Open(cmd.Flag("json").Value.String())
 	if err != nil {
 		logrus.Error(err)
 		return
 	}
-	jsonData, err := ioutil.ReadAll(file)
+	jsonData, err := io.ReadAll(file)
 	if err != nil {
 		logrus.Error(err)
 		return
@@ -142,27 +142,27 @@ func importConfig(cmd *cobra.Command, args []string) {
 	}
 
 	if data.RelayConfig.BlockService {
-		relayState.SetConfig(BlockService, true)
+		RelayState.SetConfig(BlockService, true)
 		cmd.Println("Blocking for service-type actor is Enabled.")
 	}
 	if data.RelayConfig.ManuallyAccept {
-		relayState.SetConfig(ManuallyAccept, true)
+		RelayState.SetConfig(ManuallyAccept, true)
 		cmd.Println("Manually accept follow-request is Enabled.")
 	}
 	if data.RelayConfig.CreateAsAnnounce {
-		relayState.SetConfig(CreateAsAnnounce, true)
+		RelayState.SetConfig(CreateAsAnnounce, true)
 		cmd.Println("Announce activity instead of relay create activity is Enabled.")
 	}
 	for _, LimitedDomain := range data.LimitedDomains {
-		relayState.SetLimitedDomain(LimitedDomain, true)
+		RelayState.SetLimitedDomain(LimitedDomain, true)
 		cmd.Println("Set [" + LimitedDomain + "] as limited domain")
 	}
 	for _, BlockedDomain := range data.BlockedDomains {
-		relayState.SetBlockedDomain(BlockedDomain, true)
+		RelayState.SetBlockedDomain(BlockedDomain, true)
 		cmd.Println("Set [" + BlockedDomain + "] as blocked domain")
 	}
 	for _, Subscription := range data.Subscriptions {
-		relayState.AddSubscription(models.Subscription{
+		RelayState.AddSubscription(models.Subscription{
 			Domain:     Subscription.Domain,
 			InboxURL:   Subscription.InboxURL,
 			ActivityID: Subscription.ActivityID,

@@ -8,25 +8,25 @@ func TestContains(t *testing.T) {
 		"no",
 		"nil",
 	}
-	badData := 0
+	invalidData := 0
 	result := contains(data, "true")
 	if result != false {
-		t.Fatalf("Failed - no contain but true.")
+		t.Fatalf("fail - not contain but return true")
 	}
 	result = contains(data, "nil")
 	if result != true {
-		t.Fatalf("Failed - contain but false.")
+		t.Fatalf("fail - contains but return false")
 	}
 	result = contains(sData, "true")
 	if result != false {
-		t.Fatalf("Failed - no contain but true. (slice)")
+		t.Fatalf("fail - not contain but return true (slice)")
 	}
 	result = contains(sData, "nil")
 	if result != true {
-		t.Fatalf("Failed - contain but false. (slice)")
+		t.Fatalf("fail - contains but return false (slice)")
 	}
-	result = contains(badData, "hoge")
+	result = contains(invalidData, "hoge")
 	if result != false {
-		t.Fatalf("Failed - input bad data but true. (slice)")
+		t.Fatalf("fail - given invalid data but return true (slice)")
 	}
 }
