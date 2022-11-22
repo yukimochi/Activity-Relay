@@ -268,19 +268,10 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.WriteHeader(202)
 						writer.Write(nil)
 					}
-				} else {
-					err = isRelayAcceptable(activity, actor)
-					if err != nil {
-						writer.WriteHeader(400)
-						writer.Write([]byte(err.Error()))
-					} else {
-						go enqueueRelayActivity(domain.Host, body)
-						logrus.Debug("Accepted Relay Activity : ", activity.Actor)
 
-						writer.WriteHeader(202)
-						writer.Write(nil)
-					}
+					break
 				}
+				fallthrough
 			case "Create", "Update", "Delete", "Announce", "Move":
 				err = isRelayAcceptable(activity, actor)
 				if err != nil {
