@@ -1,0 +1,16 @@
+__HOSTNAME__ {
+  root * __WEBROOT__
+  file_server
+  encode gzip
+  # These paths are taken from api/api.go, and should be updated
+  # here if ever changed
+  reverse_proxy /.well-known/nodeinfo localhost:__APIPORT__
+  reverse_proxy /.well-known/webfinger localhost:__APIPORT__
+  reverse_proxy /nodeinfo/2.1 localhost:__APIPORT__
+  reverse_proxy /actor localhost:__APIPORT__
+  reverse_proxy /inbox localhost:__APIPORT__
+
+  php_fastcgi 127.0.0.1:9000
+
+}
+
