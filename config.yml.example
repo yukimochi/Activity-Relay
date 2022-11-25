@@ -5,7 +5,7 @@ RELAY_BIND: 127.0.0.1:8080
 RELAY_DOMAIN: relay.toot.yukimochi.jp
 RELAY_SERVICENAME: YUKIMOCHI Toot Relay Service
 JOB_CONCURRENCY: 50
-RELAY_SUMMARY: Taken from https://git.artemai.art/xrobau/Activity-Relay
+RELAY_SUMMARY: Taken from https://github.com/yukimochi/Activity-Relay
 
 # RELAY_ICON: https://
 # RELAY_IMAGE: https://
