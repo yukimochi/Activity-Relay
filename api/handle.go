@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
+	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
 
 func handleWebfinger(writer http.ResponseWriter, request *http.Request) {

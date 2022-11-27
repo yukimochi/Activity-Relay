@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/RichardKnop/machinery/v1"
-	"github.com/RichardKnop/machinery/v1/log"
 	"github.com/go-redis/redis"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
+	"github.com/yukimochi/machinery-v1/v1"
+	"github.com/yukimochi/machinery-v1/v1/log"
 )
 
 var (

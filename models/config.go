@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/RichardKnop/machinery/v1"
-	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/yukimochi/machinery-v1/v1"
+	"github.com/yukimochi/machinery-v1/v1/config"
 )
 
 // RelayConfig contains valid configuration.

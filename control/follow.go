@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/RichardKnop/machinery/v1/tasks"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"
+	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
 
 func followCmdInit() *cobra.Command {
