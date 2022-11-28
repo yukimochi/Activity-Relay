@@ -7,17 +7,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - uses: actions/setup-go@v1
+      - uses: actions/setup-go@v3
         with:
-          go-version: '1.19.x'
+          go-version: 1.19.x
       - name: Execute test and upload coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}
         run: |
           go version
           go test -coverprofile=coverage.txt -covermode=atomic -p 1 ./api ./deliver ./control ./models
           bash <(curl -s https://codecov.io/bash)
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          REDIS_URL: redis://localhost:${{ job.services.redis.ports['6379'] }}
     services:
       redis:
         image: redis
