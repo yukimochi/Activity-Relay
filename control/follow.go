@@ -191,14 +191,12 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, domain := range args {
-		for _, request := range domains {
-			if domain == request {
-				cmd.Println("Reject [" + domain + "] follow request")
-				createFollowRequestResponse(domain, "Reject")
-				break
-			}
+		if contains(domains, domain) {
+			cmd.Println("Reject [" + domain + "] follow request")
+			createFollowRequestResponse(domain, "Reject")
+		} else {
+			cmd.Println("Invalid domain [" + domain + "] given")
 		}
-		cmd.Println("Invalid domain [" + domain + "] given")
 	}
 
 	return nil
