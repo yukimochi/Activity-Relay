@@ -272,7 +272,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					break
 				}
 				fallthrough
-			case "Create", "Update", "Delete", "Announce", "Move":
+			case "Create", "Update", "Delete", "Move":
 				err = isRelayAcceptable(activity, actor)
 				if err != nil {
 					writer.WriteHeader(400)
