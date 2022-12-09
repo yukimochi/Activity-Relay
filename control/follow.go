@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/RichardKnop/machinery/v1/tasks"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"
+	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
 
 func followCmdInit() *cobra.Command {
@@ -191,14 +191,12 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, domain := range args {
-		for _, request := range domains {
-			if domain == request {
-				cmd.Println("Reject [" + domain + "] follow request")
-				createFollowRequestResponse(domain, "Reject")
-				break
-			}
+		if contains(domains, domain) {
+			cmd.Println("Reject [" + domain + "] follow request")
+			createFollowRequestResponse(domain, "Reject")
+		} else {
+			cmd.Println("Invalid domain [" + domain + "] given")
 		}
-		cmd.Println("Invalid domain [" + domain + "] given")
 	}
 
 	return nil

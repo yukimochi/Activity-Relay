@@ -129,7 +129,6 @@ func unfollowDomains(cmd *cobra.Command, args []string) error {
 			createUnfollowRequestResponse(subscription)
 			RelayState.DelSubscription(subscription.Domain)
 			cmd.Println("Unfollow [" + subscription.Domain + "]")
-			break
 		} else {
 			cmd.Println("Invalid domain [" + domain + "] given")
 		}

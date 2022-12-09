@@ -8,9 +8,9 @@ import (
 
 	uuid "github.com/satori/go.uuid"
 
-	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
+	"github.com/yukimochi/machinery-v1/v1/tasks"
 )
 
 func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
@@ -273,7 +273,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					break
 				}
 				fallthrough
-			case "Create", "Update", "Delete", "Announce", "Move":
+			case "Create", "Update", "Delete", "Move":
 				err = isRelayAcceptable(activity, actor)
 				if err != nil {
 					writer.WriteHeader(400)
