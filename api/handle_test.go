@@ -548,6 +548,43 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	RelayState.DelSubscription(domain.Host)
 }
 
+func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
+	activity := mockActivity("Unfollow")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	RelayState.RedisClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
+		"inbox_url":   actor.Endpoints.SharedInbox,
+		"activity_id": activity.ID,
+		"type":        "Follow",
+		"actor":       actor.ID,
+		"object":      mockActivity("Follow"),
+	})
+
+	// Switch Manually
+	RelayState.SetConfig(ManuallyAccept, true)
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:pending:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("fail - pending follow request not deleted")
+	}
+	RelayState.RedisClient.Del("relay:pending:" + domain.Host)
+	RelayState.SetConfig(ManuallyAccept, false)
+}
+
 func TestHandleInboxInvalidUnfollow(t *testing.T) {
 	activity := mockActivity("Invalid-Unfollow")
 	actor := mockActor("Person")
