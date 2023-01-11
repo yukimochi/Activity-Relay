@@ -1,6 +1,6 @@
 all: relay
 
-relay: api/* control/* deliver/* models/* main.go
+relay: api/* control/* deliver/* models/* api/templates/* main.go
 	go build -o relay -ldflags "-X main.version=$(git describe --tags HEAD)"
 
 install: relay

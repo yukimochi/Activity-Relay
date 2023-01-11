@@ -1,24 +1,54 @@
 <html>
   <head>
-    <title>Yukimochi Relay at {{ .RelayDomain }}</title>
+    <title>Yukimochi Relay at {{ .Domain }}</title>
+    <!-- Taken from https://stackoverflow.com/questions/26445755/html-add-icon-to-browser-tab/26446734#26446734 -->
+    <!-- Firefox/Chrome -->
+    <link rel="icon" type="image/png" href="{{ .ServiceIcon }}" sizes="16x16">
+    <link rel="icon" type="image/png" href="{{ .ServiceIcon }}" sizes="32x32">
+    
+    <!-- IE -->
+    <link rel="icon" type="image/x-icon" href="{{ .ServiceIcon }}" >
+    <link rel="shortcut icon" type="image/x-icon" href="{{ .ServiceIcon }}"/>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
     <style>
-    p { color: #FFFFFF; font-family: monospace, arial; font-size: 100%; }
-    body { background-color: #000000; }
-    a { color: #26F; }
-    a:visited { color: #46C; }
-    a:hover { color: #8AF; }
+      p { color: #EBDBB2; font-family: monospace, arial; font-size: 100%; }
+      li { color: #EBDBB2; font-family: monospace, arial; font-size: 100%; }
+      body { background-color: #282828; }
+      a { color: #458588; }
+      a:visited { color: #83a598; }
+      a:hover { color: #83a598; }
     </style>
   </head>
 
   <body>
-    <p>This is an Yukimochi Activity Relay for fediverse instances.</p>
-    <p>Make a note about your instance here.</p>
-    <p>You may subscribe to this relay with the address: <a href="https://{{ .RelayDomain }}/actor">https://{{ .RelayDomain }}/actor</a></p>
-    <p>To host your own relay, you may download the code at this address: <a href="https://github.com/yukimochi/Activity-Relay">https://github.com/yukimochi/Activity-Relay</a></p><br>
-    <p>List of {{ .NumDomains }} registered instances:<br>
-      {{ range .SubbedDomains }}
-        {{ . }}<br>
-      {{ end }}
-    </p>
+    <div class="container">
+      <div class="row">
+        <p>This is an Yukimochi Activity Relay for fediverse instances.</p>
+        <p>{{ .ServiceSummary }}</p>
+        <p>To subscribe to this relay use the following URLs:
+          <ul>
+            <li>Pleroma: <a href="{{ .Domain }}/actor">{{ .Domain }}/actor</a></li>
+            <li>Mastodon: <a href="{{ .Domain }}/inbox">{{ .Domain }}/inbox</a></li>
+          </ul>
+        </p>
+        <p>To host your own relay, you may download the code at this address: <a href="https://github.com/yukimochi/Activity-Relay">https://github.com/yukimochi/Activity-Relay</a></p><br>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-4">
+          <p>List of {{ .NumDomains }} registered instances (in no particular order):<br>
+            {{ range .SubbedDomains }}
+              {{ . }}<br>
+            {{ end }}
+          </p>
+        </div>
+        <div class="col-sm-8">
+          <img src="{{ .ServiceImage }}">
+        </div>
+      </div>
+    </div>
   </body>
 </html>
