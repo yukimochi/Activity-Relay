@@ -94,6 +94,21 @@ func (relayConfig *RelayConfig) ServerHostname() *url.URL {
 	return relayConfig.domain
 }
 
+// ServerServiceSummary is API Server's service summary.
+func (relayConfig *RelayConfig) ServerServiceSummary() string {
+	return relayConfig.serviceSummary
+}
+
+// ServerServiceIcon is API Server's icon URL.
+func (relayConfig *RelayConfig) ServerServiceIcon() *url.URL {
+	return relayConfig.serviceIconURL
+}
+
+// ServerServiceImage is API Server's image URL.
+func (relayConfig *RelayConfig) ServerServiceImage() *url.URL {
+	return relayConfig.serviceImageURL
+}
+
 // ServerServiceName is API Server's servername definition.
 func (relayConfig *RelayConfig) ServerServiceName() string {
 	return relayConfig.serviceName
