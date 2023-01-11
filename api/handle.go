@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"embed"
-	_ "embed"
 	"encoding/json"
 	"errors"
 	"html/template"
