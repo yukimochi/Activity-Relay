@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <title>Yukimochi Relay at {{ .RelayDomain }}</title>
+    <style>
+    p { color: #FFFFFF; font-family: monospace, arial; font-size: 100%; }
+    body { background-color: #000000; }
+    a { color: #26F; }
+    a:visited { color: #46C; }
+    a:hover { color: #8AF; }
+    </style>
+  </head>
+
+  <body>
+    <p>This is an Yukimochi Activity Relay for fediverse instances.</p>
+    <p>Make a note about your instance here.</p>
+    <p>You may subscribe to this relay with the address: <a href="https://{{ .RelayDomain }}/actor">https://{{ .RelayDomain }}/actor</a></p>
+    <p>To host your own relay, you may download the code at this address: <a href="https://github.com/yukimochi/Activity-Relay">https://github.com/yukimochi/Activity-Relay</a></p><br>
+    <p>List of {{ .NumDomains }} registered instances:<br>
+      {{ range .SubbedDomains }}
+        {{ . }}<br>
+      {{ end }}
+    </p>
+  </body>
+</html>

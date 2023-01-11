@@ -77,4 +77,5 @@ func handlersRegister() {
 	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		handleInbox(w, r, decodeActivity)
 	})
+	http.HandleFunc("/", handleLanding)
 }
