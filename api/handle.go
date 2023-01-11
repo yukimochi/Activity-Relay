@@ -87,14 +87,30 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 }
 
 func handleLanding(writer http.ResponseWriter, request *http.Request) {
+	var (
+		ServiceIcon  string
+		ServiceImage string
+	)
+
 	if request.Method != "GET" {
 		writer.WriteHeader(400)
 		writer.Write(nil)
 	} else {
-
 		t, err := template.ParseFS(fem, "templates/landing.html")
 		if err != nil {
 			panic(err)
+		}
+
+		if GlobalConfig.ServerServiceIcon() == nil {
+			ServiceIcon = ""
+		} else {
+			ServiceIcon = GlobalConfig.ServerServiceIcon().String()
+		}
+
+		if GlobalConfig.ServerServiceImage() == nil {
+			ServiceImage = ""
+		} else {
+			ServiceImage = GlobalConfig.ServerServiceImage().String()
 		}
 
 		data := struct {
@@ -109,8 +125,8 @@ func handleLanding(writer http.ResponseWriter, request *http.Request) {
 			NumDomains:     len(RelayState.Subscriptions),
 			SubbedDomains:  []string{},
 			ServiceSummary: GlobalConfig.ServerServiceSummary(),
-			ServiceIcon:    GlobalConfig.ServerServiceIcon().String(),
-			ServiceImage:   GlobalConfig.ServerServiceImage().String(),
+			ServiceIcon:    ServiceIcon,
+			ServiceImage:   ServiceImage,
 		}
 
 		for i := 0; i < len(RelayState.Subscriptions); i++ {
