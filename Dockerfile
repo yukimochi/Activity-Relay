@@ -1,4 +1,4 @@
-FROM golang:1.19-alpine AS build
+FROM golang:1.19.5-alpine AS build
 
 WORKDIR /Activity-Relay
 COPY . /Activity-Relay
