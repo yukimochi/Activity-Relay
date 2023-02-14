@@ -86,7 +86,7 @@ func TestRelayConfig_DumpWelcomeMessage(t *testing.T) {
 
 	informations := map[string]string{
 		"module NAME":  "Testing",
-		"RELAY NANE":   relayConfig.serviceName,
+		"RELAY NAME":   relayConfig.serviceName,
 		"RELAY DOMAIN": relayConfig.domain.Host,
 		"REDIS URL":    relayConfig.redisURL,
 		"BIND ADDRESS": relayConfig.serverBind,
