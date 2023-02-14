@@ -37,3 +37,9 @@
 .ionide
 
 # End of https://www.toptal.com/developers/gitignore/api/go,visualstudiocode
+
+actor.pem
+relay
+config.yml
+.conf_*
+Caddyfile

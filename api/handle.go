@@ -3,9 +3,10 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"net/url"
+
+	uuid "github.com/satori/go.uuid"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
@@ -308,7 +309,8 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			}
 		}
 	default:
+		writer.Header().Add("Content-Type", "text/plain")
 		writer.WriteHeader(404)
-		writer.Write(nil)
+		writer.Write([]byte("This interface is not for humans, please add this URL as a relay"))
 	}
 }
