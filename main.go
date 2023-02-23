@@ -59,7 +59,7 @@ import (
 )
 
 var (
-	version string
+	version = "devel"
 	verbose bool
 
 	GlobalConfig *models.RelayConfig
