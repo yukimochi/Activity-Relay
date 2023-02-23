@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -85,11 +86,12 @@ func TestRelayConfig_DumpWelcomeMessage(t *testing.T) {
 	w := relayConfig.DumpWelcomeMessage("Testing", "")
 
 	informations := map[string]string{
-		"module NAME":  "Testing",
-		"RELAY NAME":   relayConfig.serviceName,
-		"RELAY DOMAIN": relayConfig.domain.Host,
-		"REDIS URL":    relayConfig.redisURL,
-		"BIND ADDRESS": relayConfig.serverBind,
+		"module NAME":     "Testing",
+		"RELAY NAME":      relayConfig.serviceName,
+		"RELAY DOMAIN":    relayConfig.domain.Host,
+		"REDIS URL":       relayConfig.redisURL,
+		"BIND ADDRESS":    relayConfig.serverBind,
+		"JOB_CONCURRENCY": strconv.Itoa(relayConfig.jobConcurrency),
 	}
 
 	for key, information := range informations {
