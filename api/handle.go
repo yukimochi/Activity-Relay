@@ -19,18 +19,20 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 		writer.Write(nil)
 	} else {
 		queriedSubject := queriedResource[0]
-		if queriedSubject == Webfinger.Subject {
-			webfinger, err := json.Marshal(&Webfinger)
-			if err != nil {
-				panic(err)
+		for _, webfingerResource := range WebfingerResources {
+			if queriedSubject == webfingerResource.Subject {
+				webfinger, err := json.Marshal(&webfingerResource)
+				if err != nil {
+					panic(err)
+				}
+				writer.Header().Add("Content-Type", "application/json")
+				writer.WriteHeader(200)
+				writer.Write(webfinger)
+				return
 			}
-			writer.Header().Add("Content-Type", "application/json")
-			writer.WriteHeader(200)
-			writer.Write(webfinger)
-		} else {
-			writer.WriteHeader(404)
-			writer.Write(nil)
 		}
+		writer.WriteHeader(404)
+		writer.Write(nil)
 	}
 }
 
@@ -68,7 +70,7 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func handleActor(writer http.ResponseWriter, request *http.Request) {
+func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		relayActor, err := json.Marshal(&RelayActor)
 		if err != nil {

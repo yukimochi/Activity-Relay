@@ -16,8 +16,8 @@ var (
 	InitProxy  = initializeProxy
 	InitProxyE = initializeProxyE
 
-	// Actor : Relay's Actor
-	Actor models.Actor
+	// RelayActor : Relay's Actor
+	RelayActor models.Actor
 
 	MachineryServer *machinery.Server
 	RelayState      models.RelayState
@@ -85,7 +85,7 @@ func initialize() error {
 		return err
 	}
 
-	Actor = models.NewActivityPubActorFromSelfKey(GlobalConfig)
+	RelayActor = models.NewActivityPubActorFromSelfKey(GlobalConfig)
 
 	return nil
 }

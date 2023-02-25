@@ -14,12 +14,12 @@ var (
 	version      string
 	GlobalConfig *models.RelayConfig
 
-	// Nodeinfo : Relay's Nodeinfo
-	Nodeinfo models.NodeinfoResources
 	// RelayActor : Relay's Actor
 	RelayActor models.Actor
-	// Webfinger : Relay's Webfinger resource
-	Webfinger models.WebfingerResource
+	// Nodeinfo : Relay's Nodeinfo
+	Nodeinfo models.NodeinfoResources
+	// WebfingerResources : Relay's Webfinger Resources
+	WebfingerResources []models.WebfingerResource
 
 	ActorCache      *cache.Cache
 	MachineryServer *machinery.Server
@@ -63,8 +63,8 @@ func initialize(globalConfig *models.RelayConfig) error {
 	RelayActor = models.NewActivityPubActorFromSelfKey(globalConfig)
 	ActorCache = cache.New(5*time.Minute, 10*time.Minute)
 
-	Webfinger.GenerateFromActor(globalConfig.ServerHostname(), &RelayActor)
-	Nodeinfo.GenerateFromActor(globalConfig.ServerHostname(), &RelayActor, version)
+	Nodeinfo = models.GenerateNodeinfoResources(globalConfig.ServerHostname(), version)
+	WebfingerResources = append(WebfingerResources, RelayActor.GenerateWebfingerResource(globalConfig.ServerHostname()))
 
 	return nil
 }
@@ -73,7 +73,7 @@ func handlersRegister() {
 	http.HandleFunc("/.well-known/nodeinfo", handleNodeinfoLink)
 	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
 	http.HandleFunc("/nodeinfo/2.1", handleNodeinfo)
-	http.HandleFunc("/actor", handleActor)
+	http.HandleFunc("/actor", handleRelayActor)
 	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		handleInbox(w, r, decodeActivity)
 	})

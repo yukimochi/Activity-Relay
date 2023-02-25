@@ -169,7 +169,7 @@ func TestHandleWebfingerInvalidMethod(t *testing.T) {
 }
 
 func TestHandleActorGet(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(handleActor))
+	s := httptest.NewServer(http.HandlerFunc(handleRelayActor))
 	defer s.Close()
 
 	r, err := http.Get(s.URL)
@@ -198,7 +198,7 @@ func TestHandleActorGet(t *testing.T) {
 }
 
 func TestHandleActorInvalidMethod(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(handleActor))
+	s := httptest.NewServer(http.HandlerFunc(handleRelayActor))
 	defer s.Close()
 
 	r, err := http.Post(s.URL, "text/plain", nil)

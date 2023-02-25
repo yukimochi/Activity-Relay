@@ -1,7 +1,6 @@
 package models
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"io"
@@ -45,20 +44,6 @@ type Actor struct {
 	Image             *Image      `json:"image,omitempty"`
 }
 
-// GenerateSelfKey : Generate relay Actor from PublicKey.
-func (actor *Actor) GenerateSelfKey(hostname *url.URL, publicKey *rsa.PublicKey) {
-	actor.Context = []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"}
-	actor.ID = hostname.String() + "/actor"
-	actor.Type = "Service"
-	actor.PreferredUsername = "relay"
-	actor.Inbox = hostname.String() + "/inbox"
-	actor.PublicKey = PublicKey{
-		hostname.String() + "/actor#main-key",
-		hostname.String() + "/actor",
-		generatePublicKeyPEMString(publicKey),
-	}
-}
-
 func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
 	hostname := globalConfig.domain.String()
 	publicKey := &globalConfig.actorKey.PublicKey
@@ -97,8 +82,9 @@ func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
 	return newActor
 }
 
-// RetrieveRemoteActor : Retrieve Actor from remote instance.
-func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cache.Cache) error {
+// NewActivityPubActorFromRemoteActor : Retrieve Actor from remote instance.
+func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cache.Cache) (Actor, error) {
+	var actor = new(Actor)
 	var err error
 	cacheData, found := cache.Get(url)
 	if found {
@@ -106,7 +92,7 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 		if err != nil {
 			cache.Delete(url)
 		} else {
-			return nil
+			return *actor, nil
 		}
 	}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -115,21 +101,21 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return *actor, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return errors.New(resp.Status)
+		return *actor, errors.New(resp.Status)
 	}
 
 	data, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
-		return err
+		return *actor, err
 	}
 	cache.Set(url, data, 5*time.Minute)
-	return nil
+	return *actor, nil
 }
 
 // Activity : ActivityPub Activity.
@@ -231,8 +217,10 @@ type WebfingerResource struct {
 	Links   []WebfingerLink `json:"links,omitempty"`
 }
 
-// GenerateFromActor : Generate Webfinger resource from Actor.
-func (resource *WebfingerResource) GenerateFromActor(hostname *url.URL, actor *Actor) {
+// GenerateWebfingerResource : Generate Webfinger resource.
+func (actor *Actor) GenerateWebfingerResource(hostname *url.URL) WebfingerResource {
+	resource := new(WebfingerResource)
+
 	resource.Subject = "acct:" + actor.PreferredUsername + "@" + hostname.Host
 	resource.Links = []WebfingerLink{
 		{
@@ -241,6 +229,7 @@ func (resource *WebfingerResource) GenerateFromActor(hostname *url.URL, actor *A
 			actor.ID,
 		},
 	}
+	return *resource
 }
 
 // NodeinfoResources : Nodeinfo Resources.
@@ -300,15 +289,17 @@ type NodeinfoUsageUsers struct {
 type NodeinfoMetadata struct {
 }
 
-// GenerateFromActor : Generate Webfinger resource from Actor.
-func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, _ *Actor, serverVersion string) {
-	resource.NodeinfoLinks.Links = []NodeinfoLink{
+// GenerateNodeinfoResources : Generate Nodeinfo resources.
+func GenerateNodeinfoResources(hostname *url.URL, serverVersion string) NodeinfoResources {
+	resources := new(NodeinfoResources)
+
+	resources.NodeinfoLinks.Links = []NodeinfoLink{
 		{
 			"http://nodeinfo.diaspora.software/ns/schema/2.1",
 			"https://" + hostname.Host + "/nodeinfo/2.1",
 		},
 	}
-	resource.Nodeinfo = Nodeinfo{
+	resources.Nodeinfo = Nodeinfo{
 		"2.1",
 		NodeinfoSoftware{"activity-relay", serverVersion, "https://github.com/yukimochi/Activity-Relay"},
 		[]string{"activitypub"},
@@ -317,4 +308,6 @@ func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, _ *Actor
 		NodeinfoUsage{NodeinfoUsageUsers{0, 0, 0}},
 		NodeinfoMetadata{},
 	}
+
+	return *resources
 }
