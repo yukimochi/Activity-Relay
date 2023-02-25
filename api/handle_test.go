@@ -258,6 +258,12 @@ func mockActivity(req string) models.Activity {
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
+	case "Follow-LP":
+		file, _ := os.Open("../misc/test/follow-lp.json")
+		body, _ := io.ReadAll(file)
+		var activity models.Activity
+		json.Unmarshal(body, &activity)
+		return activity
 	case "Invalid-Follow":
 		file, _ := os.Open("../misc/test/followAsActor.json")
 		body, _ := io.ReadAll(file)
@@ -270,6 +276,12 @@ func mockActivity(req string) models.Activity {
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
+	case "Unfollow-LP":
+		file, _ := os.Open("../misc/test/unfollow-lp.json")
+		body, _ := io.ReadAll(file)
+		var activity models.Activity
+		json.Unmarshal(body, &activity)
+		return activity
 	case "UnfollowAsActor":
 		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://relay.yukimochi.example.org/actor\"}}"
 		var activity models.Activity
@@ -277,6 +289,12 @@ func mockActivity(req string) models.Activity {
 		return activity
 	case "Create":
 		file, _ := os.Open("../misc/test/create.json")
+		body, _ := io.ReadAll(file)
+		var activity models.Activity
+		json.Unmarshal(body, &activity)
+		return activity
+	case "Announce-LP":
+		file, _ := os.Open("../misc/test/announce-lp.json")
 		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
@@ -442,32 +460,6 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	RelayState.SetConfig(ManuallyAccept, false)
 }
 
-func TestHandleInboxInvalidFollow(t *testing.T) {
-	activity := mockActivity("Invalid-Follow")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.SetConfig(ManuallyAccept, false)
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
-	}
-	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
-	if res != 0 {
-		t.Fatalf("fail - follow request not blocked")
-	}
-}
-
 func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	activity := mockActivity("Follow")
 	actor := mockActor("Person")
@@ -494,6 +486,54 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	}
 	RelayState.DelSubscription(domain.Host)
 	RelayState.SetBlockedDomain(domain.Host, false)
+}
+
+func TestHandleInboxFollowLitePub(t *testing.T) {
+	activity := mockActivity("Follow-LP")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("fail - follow request not blocked")
+	}
+}
+
+func TestHandleInboxInvalidFollow(t *testing.T) {
+	activity := mockActivity("Invalid-Follow")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("fail - follow request not blocked")
+	}
 }
 
 func TestHandleInboxValidUnfollow(t *testing.T) {
@@ -565,6 +605,36 @@ func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
 
 func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	activity := mockActivity("UnfollowAsActor")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	RelayState.AddSubscription(models.Subscription{
+		Domain:   domain.Host,
+		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
+	})
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 1 {
+		t.Fatalf("fail - invalid unfollow request should be blocked")
+	}
+	RelayState.DelSubscription(domain.Host)
+}
+
+func TestHandleInboxUnfollowLitePub(t *testing.T) {
+	activity := mockActivity("Unfollow-LP")
 	actor := mockActor("Person")
 	domain, _ := url.Parse(activity.Actor)
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -704,4 +774,37 @@ func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
 	if r.StatusCode != 401 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
+}
+
+func TestHandleInboxAnnounceLitePub(t *testing.T) {
+	activity := mockActivity("Announce-LP")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	RelayState.AddSubscription(models.Subscription{
+		Domain:   domain.Host,
+		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
+	})
+	RelayState.AddSubscription(models.Subscription{
+		Domain:   "example.org",
+		InboxURL: "https://example.org/inbox",
+	})
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription("example.org")
+	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
+	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }

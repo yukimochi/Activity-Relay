@@ -309,11 +309,11 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					switch innerActivity.Type {
 					case "Follow":
 						switch {
-						case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
+						case contains(innerActivity.Object, "https://www.w3.org/ns/activitystreams#Public"):
 							executeUnfollowing(activity)
 							writer.WriteHeader(202)
 							writer.Write(nil)
-						case contains(activity.Object, RelayActor.ID):
+						case contains(innerActivity.Object, RelayActor.ID):
 							fallthrough
 						default:
 							err = errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
