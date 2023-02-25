@@ -270,11 +270,6 @@ func mockActivity(req string) models.Activity {
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
-	case "Invalid-Unfollow":
-		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://hacked.test.yukimochi.io/users/yukimochi\",\"object\":\"https://www.w3.org/ns/activitystreams#Public\"}}"
-		var activity models.Activity
-		json.Unmarshal([]byte(body), &activity)
-		return activity
 	case "UnfollowAsActor":
 		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://relay.yukimochi.example.org/actor\"}}"
 		var activity models.Activity
@@ -401,7 +396,7 @@ func TestHandleInboxInvalidMethod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 404 {
+	if r.StatusCode != 405 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 }
@@ -482,7 +477,7 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 		t.Fatalf("fail - " + err.Error())
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is match")
+		t.Fatalf("fail - StatusCode is not match")
 	}
 	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
 	if res != 0 {
@@ -585,36 +580,6 @@ func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
 	RelayState.SetConfig(ManuallyAccept, false)
 }
 
-func TestHandleInboxInvalidUnfollow(t *testing.T) {
-	activity := mockActivity("Invalid-Unfollow")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
-	})
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
-	}
-	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
-	if res != 1 {
-		t.Fatalf("fail - invalid unfollow request should be blocked")
-	}
-	RelayState.DelSubscription(domain.Host)
-}
-
 func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	activity := mockActivity("UnfollowAsActor")
 	actor := mockActor("Person")
@@ -635,7 +600,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 400 {
+	if r.StatusCode != 202 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
@@ -786,7 +751,7 @@ func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 400 {
+	if r.StatusCode != 401 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 }

@@ -44,10 +44,12 @@ type Actor struct {
 	Image             *Image      `json:"image,omitempty"`
 }
 
+// Followers : ActivityPub Terms for Actor's Followers.
 func (actor *Actor) Followers() string {
 	return actor.ID + "/followers"
 }
 
+// NewActivityPubActorFromRelayConfig : Create Actor from relay config.
 func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 	hostname := globalConfig.domain.String()
 	publicKey := &globalConfig.actorKey.PublicKey
