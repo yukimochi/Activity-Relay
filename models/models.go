@@ -44,7 +44,11 @@ type Actor struct {
 	Image             *Image      `json:"image,omitempty"`
 }
 
-func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
+func (actor *Actor) Followers() string {
+	return actor.ID + "/followers"
+}
+
+func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 	hostname := globalConfig.domain.String()
 	publicKey := &globalConfig.actorKey.PublicKey
 	publicKeyPemString := generatePublicKeyPEMString(publicKey)
@@ -57,11 +61,7 @@ func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
 		PreferredUsername: "relay",
 		Summary:           globalConfig.serviceSummary,
 		Inbox:             hostname + "/inbox",
-		PublicKey: struct {
-			ID           string `json:"id,omitempty"`
-			Owner        string `json:"owner,omitempty"`
-			PublicKeyPem string `json:"publicKeyPem,omitempty"`
-		}{
+		PublicKey: PublicKey{
 			ID:           hostname + "/actor#main-key",
 			Owner:        hostname + "/actor",
 			PublicKeyPem: publicKeyPemString,
@@ -129,34 +129,21 @@ type Activity struct {
 	Cc      []string    `json:"cc,omitempty"`
 }
 
-// GenerateResponse : Generate activity response.
-func (activity *Activity) GenerateResponse(host *url.URL, responseType string) Activity {
+// GenerateReply : Generate activity to activity's actor.
+func (activity *Activity) GenerateReply(actor Actor, object interface{}, activityType string) Activity {
 	return Activity{
 		[]string{"https://www.w3.org/ns/activitystreams"},
-		host.String() + "/activities/" + uuid.NewV4().String(),
-		host.String() + "/actor",
-		responseType,
-		&activity,
-		nil,
+		actor.ID + "/activities/" + uuid.NewV4().String(),
+		actor.ID,
+		activityType,
+		object,
+		[]string{activity.Actor},
 		nil,
 	}
 }
 
-// GenerateAnnounce : Generate Announce of activity.
-func (activity *Activity) GenerateAnnounce(host *url.URL) Activity {
-	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams"},
-		host.String() + "/activities/" + uuid.NewV4().String(),
-		host.String() + "/actor",
-		"Announce",
-		activity.ID,
-		[]string{host.String() + "/actor/followers"},
-		nil,
-	}
-}
-
-// InnerActivity : Unwrap inner activity.
-func (activity *Activity) InnerActivity() (*Activity, error) {
+// UnwrapInnerActivity : Unwrap inner activity.
+func (activity *Activity) UnwrapInnerActivity() (*Activity, error) {
 	mappedObject := activity.Object.(map[string]interface{})
 	if id, ok := mappedObject["id"].(string); ok {
 		if nestedType, ok := mappedObject["type"].(string); ok {
@@ -181,19 +168,22 @@ func (activity *Activity) InnerActivity() (*Activity, error) {
 				}, nil
 			}
 		}
-		return nil, errors.New("can't assert type")
+		return nil, errors.New("unwrap type failed")
 	}
-	return nil, errors.New("can't assert id")
+	return nil, errors.New("unwrap id failed")
 }
 
-// ActivityObject : ActivityPub Activity.
-type ActivityObject struct {
-	ID      string   `json:"id,omitempty"`
-	Type    string   `json:"type,omitempty"`
-	Name    string   `json:"name,omitempty"`
-	Content string   `json:"content,omitempty"`
-	To      []string `json:"to,omitempty"`
-	Cc      []string `json:"cc,omitempty"`
+// NewActivityPubActivity : Generate activity.
+func NewActivityPubActivity(actor Actor, to []string, object interface{}, activityType string) Activity {
+	return Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		actor.ID + "/activities/" + uuid.NewV4().String(),
+		actor.ID,
+		activityType,
+		object,
+		to,
+		nil,
+	}
 }
 
 // Signature : ActivityPub Header Signature.

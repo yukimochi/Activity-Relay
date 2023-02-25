@@ -224,7 +224,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			case "Follow":
 				err = isFollowAcceptable(activity, actor)
 				if err != nil {
-					resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), "Reject")
+					resp := activity.GenerateReply(RelayActor, activity, "Reject")
 					jsonData, _ := json.Marshal(&resp)
 					go enqueueRegisterActivity(actor.Inbox, jsonData)
 					logrus.Error("Rejected Follow Request : ", activity.Actor, err.Error())
@@ -239,7 +239,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						})
 						logrus.Info("Pending Follow Request : ", activity.Actor)
 					} else {
-						resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), "Accept")
+						resp := activity.GenerateReply(RelayActor, activity, "Accept")
 						jsonData, _ := json.Marshal(&resp)
 						go enqueueRegisterActivity(actor.Inbox, jsonData)
 						RelayState.AddSubscription(models.Subscription{
@@ -255,7 +255,7 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				writer.WriteHeader(202)
 				writer.Write(nil)
 			case "Undo":
-				innerActivity, _ := activity.InnerActivity()
+				innerActivity, _ := activity.UnwrapInnerActivity()
 				if innerActivity.Type == "Follow" && innerActivity.Actor == activity.Actor {
 					err = isUnFollowAcceptable(innerActivity, actor)
 					if err != nil {
@@ -284,13 +284,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				}
 				if isRelayRetransmission(activity, actor) {
 					if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
-						nestedObject, err := activity.InnerActivity()
+						nestedObject, err := activity.UnwrapInnerActivity()
 						if err != nil {
 							logrus.Error("Failed to decode inner activity : ", err.Error())
 						}
 						switch nestedObject.Type {
 						case "Note":
-							resp := nestedObject.GenerateAnnounce(GlobalConfig.ServerHostname())
+							resp := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, nestedObject.ID, "Announce")
 							jsonData, _ := json.Marshal(&resp)
 							go enqueueRelayActivity(domain.Host, jsonData)
 							logrus.Debug("Accepted Announce Note : ", activity.Actor)
@@ -305,6 +305,9 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					logrus.Debug("Skipped Relay Activity : ", activity.Actor)
 				}
 
+				writer.WriteHeader(202)
+				writer.Write(nil)
+			default:
 				writer.WriteHeader(202)
 				writer.Write(nil)
 			}

@@ -60,7 +60,7 @@ func initialize(globalConfig *models.RelayConfig) error {
 		return err
 	}
 
-	RelayActor = models.NewActivityPubActorFromSelfKey(globalConfig)
+	RelayActor = models.NewActivityPubActorFromRelayConfig(globalConfig)
 	ActorCache = cache.New(5*time.Minute, 10*time.Minute)
 
 	Nodeinfo = models.GenerateNodeinfoResources(globalConfig.ServerHostname(), version)

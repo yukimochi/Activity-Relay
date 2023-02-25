@@ -85,7 +85,7 @@ func initialize() error {
 		return err
 	}
 
-	RelayActor = models.NewActivityPubActorFromSelfKey(GlobalConfig)
+	RelayActor = models.NewActivityPubActorFromRelayConfig(GlobalConfig)
 
 	return nil
 }

@@ -100,7 +100,7 @@ func createFollowRequestResponse(domain string, response string) error {
 		Object:  data["object"],
 	}
 
-	resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), response)
+	resp := activity.GenerateReply(RelayActor, activity, response)
 	jsonData, err := json.Marshal(&resp)
 	if err != nil {
 		return err
