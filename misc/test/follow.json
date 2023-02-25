@@ -1,1 +1,7 @@
-{"@context":"https://www.w3.org/ns/activitystreams","id":"https://innocent.yukimochi.io/be0802b1-8648-4598-b794-2ed19532100d","type":"Follow","actor":"https://innocent.yukimochi.io/users/mayaeh","object":"https://www.w3.org/ns/activitystreams#Public"}
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://innocent.yukimochi.io/041bd3d9-d883-4454-8739-588cf7471ff3",
+  "type": "Follow",
+  "actor": "https://innocent.yukimochi.io/actor",
+  "object": "https://www.w3.org/ns/activitystreams#Public"
+}
