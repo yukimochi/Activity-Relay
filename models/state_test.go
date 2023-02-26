@@ -45,14 +45,14 @@ func TestSetConfig(t *testing.T) {
 func TestTreatSubscriptionNotify(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(Subscription{
+	relayState.AddSubscriber(Subscriber{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	})
 	<-ch
 
 	valid := false
-	for _, domain := range relayState.Subscriptions {
+	for _, domain := range relayState.Subscribers {
 		if domain.Domain == "example.com" && domain.InboxURL == "https://example.com/inbox" {
 			valid = true
 		}
@@ -61,10 +61,10 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 		t.Fatalf("fail - write config")
 	}
 
-	relayState.DelSubscription("example.com")
+	relayState.DelSubscriber("example.com")
 	<-ch
 
-	for _, domain := range relayState.Subscriptions {
+	for _, domain := range relayState.Subscribers {
 		if domain.Domain == "example.com" {
 			valid = false
 		}
@@ -77,20 +77,20 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 func TestSelectDomain(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	exampleSubscription := Subscription{
+	exampleSubscription := Subscriber{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	}
 
-	relayState.AddSubscription(exampleSubscription)
+	relayState.AddSubscriber(exampleSubscription)
 	<-ch
 
-	subscription := relayState.SelectSubscription("example.com")
+	subscription := relayState.SelectSubscriber("example.com")
 	if *subscription != exampleSubscription {
 		t.Fatalf("fail - select domain")
 	}
 
-	subscription = relayState.SelectSubscription("example.org")
+	subscription = relayState.SelectSubscriber("example.org")
 	if subscription != nil {
 		t.Fatalf("fail - select domain")
 	}
@@ -157,7 +157,7 @@ func TestLimitedDomain(t *testing.T) {
 func TestLoadCompatibleSubscription(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.AddSubscription(Subscription{
+	relayState.AddSubscriber(Subscriber{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	})
@@ -166,7 +166,7 @@ func TestLoadCompatibleSubscription(t *testing.T) {
 	relayState.Load()
 
 	valid := false
-	for _, domain := range relayState.Subscriptions {
+	for _, domain := range relayState.Subscribers {
 		if domain.Domain == "example.com" && domain.InboxURL == "https://example.com/inbox" {
 			valid = true
 		}

@@ -423,7 +423,7 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("fail - follow request not work")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxValidManuallyFollow(t *testing.T) {
@@ -455,7 +455,7 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("fail - manually follow not work")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetConfig(ManuallyAccept, false)
 }
 
@@ -483,7 +483,7 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("fail - follow request not blocked")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetBlockedDomain(domain.Host, false)
 }
 
@@ -544,7 +544,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -562,7 +562,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("fail - unfollow request not works")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
@@ -611,7 +611,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -629,7 +629,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("fail - invalid unfollow request should be blocked")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxUnfollowLitePub(t *testing.T) {
@@ -641,7 +641,7 @@ func TestHandleInboxUnfollowLitePub(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -659,7 +659,7 @@ func TestHandleInboxUnfollowLitePub(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("fail - invalid unfollow request should be blocked")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxValidCreate(t *testing.T) {
@@ -671,11 +671,11 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -689,8 +689,8 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
+	RelayState.DelSubscriber(domain.Host)
+	RelayState.DelSubscriber("example.org")
 	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
 	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }
@@ -704,7 +704,7 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -719,7 +719,7 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetLimitedDomain(domain.Host, false)
 }
 
@@ -751,11 +751,11 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "carol-sol-coffee-shareware.trycloudflare.com",
 		InboxURL: "https://carol-sol-coffee-shareware.trycloudflare.com/inbox",
 	})
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -769,8 +769,8 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	if r.StatusCode != 400 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
+	RelayState.DelSubscriber(domain.Host)
+	RelayState.DelSubscriber("example.org")
 	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
 	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }

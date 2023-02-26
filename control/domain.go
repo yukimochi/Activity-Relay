@@ -53,18 +53,18 @@ func domainCmdInit() *cobra.Command {
 	return domain
 }
 
-func createUnfollowRequestResponse(subscription models.Subscription) error {
+func createUnfollowRequestResponse(subscriber models.Subscriber) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-		ID:      subscription.ActivityID,
-		Actor:   subscription.ActorID,
+		ID:      subscriber.ActivityID,
+		Actor:   subscriber.ActorID,
 		Type:    "Follow",
 		Object:  "https://www.w3.org/ns/activitystreams#Public",
 	}
 
 	resp := activity.GenerateReply(RelayActor, activity, "Reject")
 	jsonData, _ := json.Marshal(&resp)
-	pushRegisterJob(subscription.InboxURL, jsonData)
+	pushRegisterJob(subscriber.InboxURL, jsonData)
 
 	return nil
 }
@@ -80,7 +80,7 @@ func listDomains(cmd *cobra.Command, _ []string) error {
 		domains = RelayState.BlockedDomains
 	default:
 		cmd.Println(" - Subscriber domain :")
-		temp := RelayState.Subscriptions
+		temp := RelayState.Subscribers
 		for _, domain := range temp {
 			domains = append(domains, domain.Domain)
 		}
@@ -122,12 +122,12 @@ func setDomainType(cmd *cobra.Command, args []string) error {
 }
 
 func unfollowDomains(cmd *cobra.Command, args []string) error {
-	subscriptions := RelayState.Subscriptions
+	subscriptions := RelayState.Subscribers
 	for _, domain := range args {
 		if contains(subscriptions, domain) {
-			subscription := *RelayState.SelectSubscription(domain)
+			subscription := *RelayState.SelectSubscriber(domain)
 			createUnfollowRequestResponse(subscription)
-			RelayState.DelSubscription(subscription.Domain)
+			RelayState.DelSubscriber(subscription.Domain)
 			cmd.Println("Unfollow [" + subscription.Domain + "]")
 		} else {
 			cmd.Println("Invalid domain [" + domain + "] given")

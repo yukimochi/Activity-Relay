@@ -153,8 +153,8 @@ func importConfig(cmd *cobra.Command, _ []string) {
 		RelayState.SetBlockedDomain(BlockedDomain, true)
 		cmd.Println("Set [" + BlockedDomain + "] as blocked domain")
 	}
-	for _, Subscription := range data.Subscriptions {
-		RelayState.AddSubscription(models.Subscription{
+	for _, Subscription := range data.Subscribers {
+		RelayState.AddSubscriber(models.Subscriber{
 			Domain:     Subscription.Domain,
 			InboxURL:   Subscription.InboxURL,
 			ActivityID: Subscription.ActivityID,

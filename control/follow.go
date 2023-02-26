@@ -108,7 +108,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	pushRegisterJob(data["inbox_url"], jsonData)
 	RelayState.RedisClient.Del("relay:pending:" + domain)
 	if response == "Accept" {
-		RelayState.AddSubscription(models.Subscription{
+		RelayState.AddSubscriber(models.Subscriber{
 			Domain:     domain,
 			InboxURL:   data["inbox_url"],
 			ActivityID: data["activity_id"],
@@ -119,7 +119,7 @@ func createFollowRequestResponse(domain string, response string) error {
 	return nil
 }
 
-func createUpdateActorActivity(subscription models.Subscription) error {
+func createUpdateActorActivity(subscription models.Subscriber) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams"},
 		ID:      GlobalConfig.ServerHostname().String() + "/activities/" + uuid.NewV4().String(),
@@ -203,7 +203,7 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 }
 
 func updateActor(cmd *cobra.Command, _ []string) error {
-	for _, subscription := range RelayState.Subscriptions {
+	for _, subscription := range RelayState.Subscribers {
 		err := createUpdateActorActivity(subscription)
 		if err != nil {
 			cmd.Println("Failed Update RelayActor for " + subscription.Domain)

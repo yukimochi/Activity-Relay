@@ -12,7 +12,7 @@ func contains(entries interface{}, key string) bool {
 				return true
 			}
 		}
-	case []models.Subscription:
+	case []models.Subscriber:
 		for i := 0; i < len(entry); i++ {
 			if entry[i].Domain == key {
 				return true

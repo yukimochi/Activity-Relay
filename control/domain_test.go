@@ -249,7 +249,7 @@ func TestUnfollowDomain(t *testing.T) {
 	RelayState.Load()
 
 	valid := true
-	for _, domain := range RelayState.Subscriptions {
+	for _, domain := range RelayState.Subscribers {
 		if domain.Domain == "subscription.example.jp" {
 			valid = false
 		}

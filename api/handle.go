@@ -62,7 +62,7 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write(nil)
 	} else {
-		userTotal := len(RelayState.Subscriptions)
+		userTotal := len(RelayState.Subscribers)
 		Nodeinfo.Nodeinfo.Usage.Users.Total = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
@@ -108,7 +108,7 @@ func contains(entries interface{}, key string) bool {
 			}
 		}
 		return false
-	case []models.Subscription:
+	case []models.Subscriber:
 		for i := 0; i < len(entry); i++ {
 			if entry[i].Domain == key {
 				return true
@@ -121,7 +121,7 @@ func contains(entries interface{}, key string) bool {
 
 func enqueueRelayActivity(sourceDomain string, body []byte) {
 	activityID := uuid.NewV4()
-	remainCount := len(RelayState.Subscriptions) - 1
+	remainCount := len(RelayState.Subscribers) - 1
 
 	if remainCount < 1 {
 		return
@@ -130,7 +130,7 @@ func enqueueRelayActivity(sourceDomain string, body []byte) {
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 	RelayState.RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
-	for _, subscription := range RelayState.Subscriptions {
+	for _, subscription := range RelayState.Subscribers {
 		if sourceDomain == subscription.Domain {
 			continue
 		}
@@ -189,7 +189,7 @@ func isActorBlocked(actorID *url.URL) bool {
 }
 
 func isActorSubscribed(actorID *url.URL) bool {
-	if contains(RelayState.Subscriptions, actorID.Host) {
+	if contains(RelayState.Subscribers, actorID.Host) {
 		return true
 	}
 	return false
@@ -226,7 +226,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 			resp := activity.GenerateReply(RelayActor, activity, "Accept")
 			jsonData, _ := json.Marshal(&resp)
 			go enqueueRegisterActivity(actor.Inbox, jsonData)
-			RelayState.AddSubscription(models.Subscription{
+			RelayState.AddSubscriber(models.Subscriber{
 				Domain:     actorID.Host,
 				InboxURL:   actor.Endpoints.SharedInbox,
 				ActivityID: activity.ID,
@@ -247,7 +247,7 @@ func executeUnfollowing(activity *models.Activity, actor *models.Actor) error {
 	actorID, _ := url.Parse(actor.ID)
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
-		RelayState.DelSubscription(actorID.Host)
+		RelayState.DelSubscriber(actorID.Host)
 		logrus.Info("Accepted Unfollow Request : ", activity.Actor)
 		return nil
 	case contains(activity.Object, RelayActor.ID):
