@@ -200,7 +200,7 @@ func isActivityAbleToRelay(activity *models.Activity, actor *models.Actor) bool 
 	if contains(RelayState.LimitedDomains, domain.Host) {
 		return false
 	}
-	if RelayState.RelayConfig.BlockService && actor.Type != "Person" {
+	if RelayState.RelayConfig.PersonOnly && actor.Type != "Person" {
 		return false
 	}
 	return true
@@ -272,20 +272,19 @@ func executeRelayActivity(activity *models.Activity, actor *models.Actor, body [
 		return err
 	}
 	if isActivityAbleToRelay(activity, actor) {
-		if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
-			nestedObject, err := activity.UnwrapInnerActivity()
-			if err != nil {
-				logrus.Error("Failed to decode inner activity : ", err.Error())
-			} else {
-				announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, nestedObject.ID, "Announce")
-				jsonData, _ := json.Marshal(&announce)
-				go enqueueRelayActivity(actorID.Host, jsonData)
-				logrus.Debug("Accepted Announce ", nestedObject.Type, " : ", activity.Actor)
-			}
-		} else {
-			go enqueueRelayActivity(actorID.Host, body)
-			logrus.Debug("Accepted Relay Activity : ", activity.Actor)
-		}
+		go enqueueRelayActivity(actorID.Host, body)
+		logrus.Debug("Accepted Relay Activity : ", activity.Actor)
+		//if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
+		//	nestedObject, err := activity.UnwrapInnerActivity()
+		//	if err != nil {
+		//		logrus.Error("Failed to decode inner activity : ", err.Error())
+		//	} else {
+		//		announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, nestedObject.ID, "Announce")
+		//		jsonData, _ := json.Marshal(&announce)
+		//		go enqueueRelayActivity(actorID.Host, jsonData)
+		//		logrus.Debug("Accepted Announce ", nestedObject.Type, " : ", activity.Actor)
+		//	}
+		//}
 	} else {
 		logrus.Debug("Skipped Relay Activity : ", activity.Actor)
 	}

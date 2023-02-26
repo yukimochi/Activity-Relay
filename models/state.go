@@ -11,17 +11,15 @@ import (
 type Config int
 
 const (
-	// BlockService : Blocking for service-type actor
-	BlockService Config = iota
-	// ManuallyAccept : Manually accept follow-request
+	// PersonOnly : Limited for Person-Type Actor
+	PersonOnly Config = iota
+	// ManuallyAccept : Manually Accept Follow-Request
 	ManuallyAccept
-	// CreateAsAnnounce : Announce activity instead of relay create activity
-	CreateAsAnnounce
 )
 
 // RelayState : Store subscriptions and relay configurations
 type RelayState struct {
-	RedisClient *redis.Client
+	RedisClient *redis.Client `json:"-"`
 	notifiable  bool
 
 	RelayConfig    relayConfig    `json:"relayConfig,omitempty"`
@@ -99,12 +97,10 @@ func (config *RelayState) SetConfig(key Config, value bool) {
 		strValue = 1
 	}
 	switch key {
-	case BlockService:
+	case PersonOnly:
 		config.RedisClient.HSet("relay:config", "block_service", strValue).Result()
 	case ManuallyAccept:
 		config.RedisClient.HSet("relay:config", "manually_accept", strValue).Result()
-	case CreateAsAnnounce:
-		config.RedisClient.HSet("relay:config", "create_as_announce", strValue).Result()
 	}
 
 	config.refresh()
@@ -178,25 +174,19 @@ type Subscription struct {
 }
 
 type relayConfig struct {
-	BlockService     bool `json:"blockService,omitempty"`
-	ManuallyAccept   bool `json:"manuallyAccept,omitempty"`
-	CreateAsAnnounce bool `json:"createAsAnnounce,omitempty"`
+	PersonOnly     bool `json:"blockService,omitempty"`
+	ManuallyAccept bool `json:"manuallyAccept,omitempty"`
 }
 
 func (config *relayConfig) load(redisClient *redis.Client) {
-	blockService, err := redisClient.HGet("relay:config", "block_service").Result()
+	personOnly, err := redisClient.HGet("relay:config", "block_service").Result()
 	if err != nil {
-		blockService = "0"
+		personOnly = "0"
 	}
 	manuallyAccept, err := redisClient.HGet("relay:config", "manually_accept").Result()
 	if err != nil {
 		manuallyAccept = "0"
 	}
-	createAsAnnounce, err := redisClient.HGet("relay:config", "create_as_announce").Result()
-	if err != nil {
-		createAsAnnounce = "0"
-	}
-	config.BlockService = blockService == "1"
+	config.PersonOnly = personOnly == "1"
 	config.ManuallyAccept = manuallyAccept == "1"
-	config.CreateAsAnnounce = createAsAnnounce == "1"
 }

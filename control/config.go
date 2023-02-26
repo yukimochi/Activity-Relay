@@ -11,9 +11,8 @@ import (
 )
 
 const (
-	BlockService models.Config = iota
+	PersonOnly models.Config = iota
 	ManuallyAccept
-	CreateAsAnnounce
 )
 
 func configCmdInit() *cobra.Command {
@@ -57,65 +56,74 @@ func configCmdInit() *cobra.Command {
 
 	var configEnable = &cobra.Command{
 		Use:   "enable",
-		Short: "Enable/disable relay configuration",
-		Long: `Enable or disable relay configuration.
- - service-block
+		Short: "Enable relay configuration",
+		Long: `Enable relay configuration.
+ - person-only
 	Blocking feature for service-type actor.
  - manually-accept
-	Enable manually accept follow request.
- - create-as-announce
-	Enable announce activity instead of relay create activity (not recommend)`,
+	Enable manually accept follow request.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(configEnable, cmd, args)
 		},
 	}
-	configEnable.Flags().BoolP("disable", "d", false, "Disable configuration instead of Enable")
 	config.AddCommand(configEnable)
+
+	var configDisable = &cobra.Command{
+		Use:   "disable",
+		Short: "Disable relay configuration",
+		Long: `Disable relay configuration.
+ - person-only
+	Blocking feature for service-type actor.
+ - manually-accept
+	Enable manually accept follow request.`,
+		Args: cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return InitProxyE(configDisable, cmd, args)
+		},
+	}
+	config.AddCommand(configDisable)
 
 	return config
 }
 
-func configEnable(cmd *cobra.Command, args []string) error {
-	disable := cmd.Flag("disable").Value.String() == "true"
-	for _, config := range args {
-		switch config {
-		case "service-block":
-			if disable {
-				RelayState.SetConfig(BlockService, false)
-				cmd.Println("Blocking for service-type actor is Disabled.")
-			} else {
-				RelayState.SetConfig(BlockService, true)
-				cmd.Println("Blocking for service-type actor is Enabled.")
-			}
-		case "manually-accept":
-			if disable {
-				RelayState.SetConfig(ManuallyAccept, false)
-				cmd.Println("Manually accept follow-request is Disabled.")
-			} else {
-				RelayState.SetConfig(ManuallyAccept, true)
-				cmd.Println("Manually accept follow-request is Enabled.")
-			}
-		case "create-as-announce":
-			if disable {
-				RelayState.SetConfig(CreateAsAnnounce, false)
-				cmd.Println("Announce activity instead of relay create activity is Disabled.")
-			} else {
-				RelayState.SetConfig(CreateAsAnnounce, true)
-				cmd.Println("Announce activity instead of relay create activity is Enabled.")
-			}
-		default:
-			cmd.Println("Invalid config given")
-		}
+func editConfig(key string, value bool) string {
+	var statement string
+	if value {
+		statement = "Enabled"
+	} else {
+		statement = "Disabled"
 	}
+	switch key {
+	case "person-only":
+		RelayState.SetConfig(PersonOnly, value)
+		return "Limited for Person-Type Actor is " + statement + "."
+	case "manually-accept":
+		RelayState.SetConfig(ManuallyAccept, value)
+		return "Manually Accept Follow-Request is " + statement + "."
+	}
+	return "Invalid Config Provided."
+}
 
+func configEnable(cmd *cobra.Command, args []string) error {
+	for _, config := range args {
+		message := editConfig(config, true)
+		cmd.Println(message)
+	}
+	return nil
+}
+
+func configDisable(cmd *cobra.Command, args []string) error {
+	for _, config := range args {
+		message := editConfig(config, false)
+		cmd.Println(message)
+	}
 	return nil
 }
 
 func listConfig(cmd *cobra.Command, _ []string) {
-	cmd.Println("Blocking for service-type actor : ", RelayState.RelayConfig.BlockService)
-	cmd.Println("Manually accept follow-request : ", RelayState.RelayConfig.ManuallyAccept)
-	cmd.Println("Announce activity instead of relay create activity : ", RelayState.RelayConfig.CreateAsAnnounce)
+	cmd.Println("Limited for Person-Type Actor : ", RelayState.RelayConfig.PersonOnly)
+	cmd.Println("Manually Accept Follow-Request : ", RelayState.RelayConfig.ManuallyAccept)
 }
 
 func exportConfig(cmd *cobra.Command, _ []string) {
@@ -141,17 +149,13 @@ func importConfig(cmd *cobra.Command, _ []string) {
 		return
 	}
 
-	if data.RelayConfig.BlockService {
-		RelayState.SetConfig(BlockService, true)
+	if data.RelayConfig.PersonOnly {
+		RelayState.SetConfig(PersonOnly, true)
 		cmd.Println("Blocking for service-type actor is Enabled.")
 	}
 	if data.RelayConfig.ManuallyAccept {
 		RelayState.SetConfig(ManuallyAccept, true)
 		cmd.Println("Manually accept follow-request is Enabled.")
-	}
-	if data.RelayConfig.CreateAsAnnounce {
-		RelayState.SetConfig(CreateAsAnnounce, true)
-		cmd.Println("Announce activity instead of relay create activity is Enabled.")
 	}
 	for _, LimitedDomain := range data.LimitedDomains {
 		RelayState.SetLimitedDomain(LimitedDomain, true)

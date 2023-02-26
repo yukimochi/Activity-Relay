@@ -8,10 +8,7 @@ func TestLoadEmpty(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 	relayState.Load()
 
-	if relayState.RelayConfig.BlockService != false {
-		t.Fatalf("fail - read config")
-	}
-	if relayState.RelayConfig.CreateAsAnnounce != false {
+	if relayState.RelayConfig.PersonOnly != false {
 		t.Fatalf("fail - read config")
 	}
 	if relayState.RelayConfig.ManuallyAccept != false {
@@ -22,14 +19,9 @@ func TestLoadEmpty(t *testing.T) {
 func TestSetConfig(t *testing.T) {
 	relayState.RedisClient.FlushAll().Result()
 
-	relayState.SetConfig(BlockService, true)
+	relayState.SetConfig(PersonOnly, true)
 	<-ch
-	if relayState.RelayConfig.BlockService != true {
-		t.Fatalf("fail - enable config")
-	}
-	relayState.SetConfig(CreateAsAnnounce, true)
-	<-ch
-	if relayState.RelayConfig.CreateAsAnnounce != true {
+	if relayState.RelayConfig.PersonOnly != true {
 		t.Fatalf("fail - enable config")
 	}
 	relayState.SetConfig(ManuallyAccept, true)
@@ -38,14 +30,9 @@ func TestSetConfig(t *testing.T) {
 		t.Fatalf("fail - enable config")
 	}
 
-	relayState.SetConfig(BlockService, false)
+	relayState.SetConfig(PersonOnly, false)
 	<-ch
-	if relayState.RelayConfig.BlockService != false {
-		t.Fatalf("fail - disable config")
-	}
-	relayState.SetConfig(CreateAsAnnounce, false)
-	<-ch
-	if relayState.RelayConfig.CreateAsAnnounce != false {
+	if relayState.RelayConfig.PersonOnly != false {
 		t.Fatalf("fail - disable config")
 	}
 	relayState.SetConfig(ManuallyAccept, false)

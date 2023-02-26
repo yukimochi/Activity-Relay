@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	BlockService models.Config = iota
+	PersonOnly models.Config = iota
 	ManuallyAccept
-	CreateAsAnnounce
 )
 
 func TestHandleWebfingerGet(t *testing.T) {
@@ -335,7 +334,7 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
-	RelayState.SetConfig(BlockService, false)
+	RelayState.SetConfig(PersonOnly, false)
 
 	if isActivityAbleToRelay(&activity, &personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
@@ -354,7 +353,7 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
-	RelayState.SetConfig(BlockService, true)
+	RelayState.SetConfig(PersonOnly, true)
 
 	if isActivityAbleToRelay(&activity, &personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
@@ -365,7 +364,7 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	if isActivityAbleToRelay(&activity, &applicationActor) != false {
 		t.Fatalf("fail - Application activity should not relay when blocking mode")
 	}
-	RelayState.SetConfig(BlockService, false)
+	RelayState.SetConfig(PersonOnly, false)
 }
 
 func TestHandleInboxNoSignature(t *testing.T) {
@@ -722,39 +721,6 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	}
 	RelayState.DelSubscription(domain.Host)
 	RelayState.SetLimitedDomain(domain.Host, false)
-}
-
-func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
-	activity := mockActivity("Create")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
-	})
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   "example.org",
-		InboxURL: "https://example.org/inbox",
-	})
-	RelayState.SetConfig(CreateAsAnnounce, true)
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
-	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
-	RelayState.SetConfig(CreateAsAnnounce, false)
 }
 
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
