@@ -14,9 +14,8 @@ import (
 )
 
 const (
-	BlockService models.Config = iota
+	PersonOnly models.Config = iota
 	ManuallyAccept
-	CreateAsAnnounce
 )
 
 func TestHandleWebfingerGet(t *testing.T) {
@@ -330,42 +329,40 @@ func mockActor(req string) models.Actor {
 }
 
 func TestSuitableRelayNoBlockService(t *testing.T) {
-	activity := mockActivity("Create")
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
-	RelayState.SetConfig(BlockService, false)
+	RelayState.SetConfig(PersonOnly, false)
 
-	if isActivityAbleToRelay(&activity, &personActor) != true {
+	if isActorAbleToRelay(&personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isActivityAbleToRelay(&activity, &serviceActor) != true {
+	if isActorAbleToRelay(&serviceActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
-	if isActivityAbleToRelay(&activity, &applicationActor) != true {
+	if isActorAbleToRelay(&applicationActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
 }
 
 func TestSuitableRelayBlockService(t *testing.T) {
-	activity := mockActivity("Create")
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
-	RelayState.SetConfig(BlockService, true)
+	RelayState.SetConfig(PersonOnly, true)
 
-	if isActivityAbleToRelay(&activity, &personActor) != true {
+	if isActorAbleToRelay(&personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isActivityAbleToRelay(&activity, &serviceActor) != false {
+	if isActorAbleToRelay(&serviceActor) != false {
 		t.Fatalf("fail - Service activity should not relay when blocking mode")
 	}
-	if isActivityAbleToRelay(&activity, &applicationActor) != false {
+	if isActorAbleToRelay(&applicationActor) != false {
 		t.Fatalf("fail - Application activity should not relay when blocking mode")
 	}
-	RelayState.SetConfig(BlockService, false)
+	RelayState.SetConfig(PersonOnly, false)
 }
 
 func TestHandleInboxNoSignature(t *testing.T) {
@@ -424,7 +421,7 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("fail - follow request not work")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxValidManuallyFollow(t *testing.T) {
@@ -456,7 +453,7 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("fail - manually follow not work")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetConfig(ManuallyAccept, false)
 }
 
@@ -484,7 +481,7 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("fail - follow request not blocked")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetBlockedDomain(domain.Host, false)
 }
 
@@ -545,7 +542,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -563,7 +560,7 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	if res != 0 {
 		t.Fatalf("fail - unfollow request not works")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
@@ -612,7 +609,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -630,7 +627,7 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("fail - invalid unfollow request should be blocked")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxUnfollowLitePub(t *testing.T) {
@@ -642,7 +639,7 @@ func TestHandleInboxUnfollowLitePub(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -660,7 +657,7 @@ func TestHandleInboxUnfollowLitePub(t *testing.T) {
 	if res != 1 {
 		t.Fatalf("fail - invalid unfollow request should be blocked")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 }
 
 func TestHandleInboxValidCreate(t *testing.T) {
@@ -672,11 +669,11 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -690,8 +687,8 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
+	RelayState.DelSubscriber(domain.Host)
+	RelayState.DelSubscriber("example.org")
 	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
 	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }
@@ -705,7 +702,7 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   domain.Host,
 		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
 	})
@@ -720,41 +717,8 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	if r.StatusCode != 202 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetLimitedDomain(domain.Host, false)
-}
-
-func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
-	activity := mockActivity("Create")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
-	})
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   "example.org",
-		InboxURL: "https://example.org/inbox",
-	})
-	RelayState.SetConfig(CreateAsAnnounce, true)
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
-	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
-	RelayState.SetConfig(CreateAsAnnounce, false)
 }
 
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
@@ -785,11 +749,11 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	}))
 	defer s.Close()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "carol-sol-coffee-shareware.trycloudflare.com",
 		InboxURL: "https://carol-sol-coffee-shareware.trycloudflare.com/inbox",
 	})
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "example.org",
 		InboxURL: "https://example.org/inbox",
 	})
@@ -803,8 +767,8 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	if r.StatusCode != 400 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
+	RelayState.DelSubscriber(domain.Host)
+	RelayState.DelSubscriber("example.org")
 	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
 	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }

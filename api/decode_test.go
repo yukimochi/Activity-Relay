@@ -14,7 +14,7 @@ import (
 func TestDecodeActivity(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
@@ -43,7 +43,7 @@ func TestDecodeActivity(t *testing.T) {
 func TestDecodeActivityWithNoSignature(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
@@ -67,7 +67,7 @@ func TestDecodeActivityWithNoSignature(t *testing.T) {
 func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})
@@ -92,7 +92,7 @@ func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 func TestDecodeActivityWithInvalidDigest(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
-	RelayState.AddSubscription(models.Subscription{
+	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
 		InboxURL: "https://innocent.yukimochi.io/inbox",
 	})

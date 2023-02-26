@@ -2,6 +2,8 @@ package control
 
 import (
 	"bytes"
+	"io"
+	"os"
 	"strings"
 	"testing"
 )
@@ -10,7 +12,13 @@ func TestListDomainSubscriber(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
+
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 	RelayState.Load()
 
@@ -22,8 +30,9 @@ func TestListDomainSubscriber(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Subscriber domain :
-subscription.example.jp
+	valid := ` - Subscriber list :
+[*] subscription.example.jp
+ - Follower list :
 Total : 1
 `
 	if output != valid {
@@ -35,8 +44,13 @@ func TestListDomainLimited(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 	RelayState.Load()
 
@@ -48,7 +62,7 @@ func TestListDomainLimited(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Limited domain :
+	valid := ` - Limited domains :
 limitedDomain.example.jp
 Total : 1
 `
@@ -61,8 +75,13 @@ func TestListDomainBlocked(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 	RelayState.Load()
 
@@ -74,7 +93,7 @@ func TestListDomainBlocked(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Blocked domain :
+	valid := ` - Blocked domains :
 blockedDomain.example.jp
 Total : 1
 `
@@ -129,8 +148,13 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 
 	app = domainCmdInit()
@@ -154,8 +178,13 @@ func TestUnsetDomainLimited(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 
 	app = domainCmdInit()
@@ -179,8 +208,13 @@ func TestSetDomainInvalid(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 	RelayState.Load()
 
@@ -192,7 +226,7 @@ func TestSetDomainInvalid(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid type given" {
+	if strings.Split(output, "\n")[0] != "Invalid type provided" {
 		t.Fatalf("Invalid Response.")
 	}
 }
@@ -201,8 +235,13 @@ func TestUnfollowDomain(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 
 	app = domainCmdInit()
@@ -211,7 +250,7 @@ func TestUnfollowDomain(t *testing.T) {
 	RelayState.Load()
 
 	valid := true
-	for _, domain := range RelayState.Subscriptions {
+	for _, domain := range RelayState.Subscribers {
 		if domain.Domain == "subscription.example.jp" {
 			valid = false
 		}
@@ -226,8 +265,13 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 	RelayState.Load()
 
@@ -239,7 +283,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
+	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] provided" {
 		t.Fatalf("Invalid Response.")
 	}
 }

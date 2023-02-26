@@ -11,23 +11,23 @@ import (
 type Config int
 
 const (
-	// BlockService : Blocking for service-type actor
-	BlockService Config = iota
-	// ManuallyAccept : Manually accept follow-request
+	// PersonOnly : Limited for Person-Type Actor
+	PersonOnly Config = iota
+	// ManuallyAccept : Manually Accept Follow-Request
 	ManuallyAccept
-	// CreateAsAnnounce : Announce activity instead of relay create activity
-	CreateAsAnnounce
 )
 
-// RelayState : Store subscriptions and relay configurations
+// RelayState : Store Subscribers, Followers And Relay Configurations
 type RelayState struct {
-	RedisClient *redis.Client
+	RedisClient *redis.Client `json:"-"`
 	notifiable  bool
 
-	RelayConfig    relayConfig    `json:"relayConfig,omitempty"`
-	LimitedDomains []string       `json:"limitedDomains,omitempty"`
-	BlockedDomains []string       `json:"blockedDomains,omitempty"`
-	Subscriptions  []Subscription `json:"subscriptions,omitempty"`
+	RelayConfig             relayConfig  `json:"relayConfig,omitempty"`
+	LimitedDomains          []string     `json:"limitedDomains,omitempty"`
+	BlockedDomains          []string     `json:"blockedDomains,omitempty"`
+	Subscribers             []Subscriber `json:"subscriptions,omitempty"`
+	Followers               []Follower   `json:"followers,omitempty"`
+	SubscribersAndFollowers []Subscriber `json:"-"`
 }
 
 // NewState : Create new RelayState instance with redis client
@@ -64,7 +64,10 @@ func (config *RelayState) Load() {
 	config.RelayConfig.load(config.RedisClient)
 	var limitedDomains []string
 	var blockedDomains []string
-	var subscriptions []Subscription
+	var subscribers []Subscriber
+	var followers []Follower
+	var subscribersAndFollowers []Subscriber
+
 	domains, _ := config.RedisClient.HKeys("relay:config:limitedDomain").Result()
 	for _, domain := range domains {
 		limitedDomains = append(limitedDomains, domain)
@@ -73,6 +76,7 @@ func (config *RelayState) Load() {
 	for _, domain := range domains {
 		blockedDomains = append(blockedDomains, domain)
 	}
+
 	domains, _ = config.RedisClient.Keys("relay:subscription:*").Result()
 	for _, domain := range domains {
 		domainName := strings.Replace(domain, "relay:subscription:", "", 1)
@@ -85,11 +89,35 @@ func (config *RelayState) Load() {
 		if err != nil {
 			actorID = ""
 		}
-		subscriptions = append(subscriptions, Subscription{domainName, inboxURL, activityID, actorID})
+		subscribers = append(subscribers, Subscriber{domainName, inboxURL, activityID, actorID})
+		subscribersAndFollowers = append(subscribersAndFollowers, Subscriber{domainName, inboxURL, activityID, actorID})
 	}
+
+	domains, _ = config.RedisClient.Keys("relay:follower:*").Result()
+	for _, domain := range domains {
+		domainName := strings.Replace(domain, "relay:follower:", "", 1)
+		inboxURL, _ := config.RedisClient.HGet(domain, "inbox_url").Result()
+		activityID, err := config.RedisClient.HGet(domain, "activity_id").Result()
+		if err != nil {
+			activityID = ""
+		}
+		actorID, err := config.RedisClient.HGet(domain, "actor_id").Result()
+		if err != nil {
+			actorID = ""
+		}
+		mutuallyFollow, err := config.RedisClient.HGet(domain, "mutually_follow").Result()
+		if err != nil {
+			mutuallyFollow = "0"
+		}
+		followers = append(followers, Follower{domainName, inboxURL, activityID, actorID, mutuallyFollow == "1"})
+		subscribersAndFollowers = append(subscribersAndFollowers, Subscriber{domainName, inboxURL, activityID, actorID})
+	}
+
 	config.LimitedDomains = limitedDomains
 	config.BlockedDomains = blockedDomains
-	config.Subscriptions = subscriptions
+	config.Subscribers = subscribers
+	config.Followers = followers
+	config.SubscribersAndFollowers = subscribersAndFollowers
 }
 
 // SetConfig : Set relay configuration
@@ -99,19 +127,17 @@ func (config *RelayState) SetConfig(key Config, value bool) {
 		strValue = 1
 	}
 	switch key {
-	case BlockService:
+	case PersonOnly:
 		config.RedisClient.HSet("relay:config", "block_service", strValue).Result()
 	case ManuallyAccept:
 		config.RedisClient.HSet("relay:config", "manually_accept", strValue).Result()
-	case CreateAsAnnounce:
-		config.RedisClient.HSet("relay:config", "create_as_announce", strValue).Result()
 	}
 
 	config.refresh()
 }
 
-// AddSubscription : Add new instance for subscription list
-func (config *RelayState) AddSubscription(domain Subscription) {
+// AddSubscriber : Add new instance for subscriber list
+func (config *RelayState) AddSubscriber(domain Subscriber) {
 	config.RedisClient.HMSet("relay:subscription:"+domain.Domain, map[string]interface{}{
 		"inbox_url":   domain.InboxURL,
 		"activity_id": domain.ActivityID,
@@ -121,19 +147,60 @@ func (config *RelayState) AddSubscription(domain Subscription) {
 	config.refresh()
 }
 
-// DelSubscription : Delete instance from subscription list
-func (config *RelayState) DelSubscription(domain string) {
+// DelSubscriber : Delete instance from subscriber list
+func (config *RelayState) DelSubscriber(domain string) {
 	config.RedisClient.Del("relay:subscription:" + domain).Result()
 	config.RedisClient.Del("relay:pending:" + domain).Result()
 
 	config.refresh()
 }
 
-// SelectSubscription : Select instance from string
-func (config *RelayState) SelectSubscription(domain string) *Subscription {
-	for _, subscription := range config.Subscriptions {
-		if domain == subscription.Domain {
-			return &subscription
+// SelectSubscriber : Select instance from subscriber list
+func (config *RelayState) SelectSubscriber(domain string) *Subscriber {
+	for _, subscriber := range config.Subscribers {
+		if domain == subscriber.Domain {
+			return &subscriber
+		}
+	}
+	return nil
+}
+
+// AddFollower : Add new instance for follower list
+func (config *RelayState) AddFollower(domain Follower) {
+	config.RedisClient.HMSet("relay:follower:"+domain.Domain, map[string]interface{}{
+		"inbox_url":       domain.InboxURL,
+		"activity_id":     domain.ActivityID,
+		"actor_id":        domain.ActorID,
+		"mutually_follow": domain.MutuallyFollow,
+	})
+
+	config.refresh()
+}
+
+// UpdateFollowerStatus : Update MutuallyFollow Status
+func (config *RelayState) UpdateFollowerStatus(domain string, mutuallyFollow bool) {
+	if mutuallyFollow {
+		config.RedisClient.HSet("relay:follower:"+domain, "mutually_follow", "1")
+	} else {
+		config.RedisClient.HSet("relay:follower:"+domain, "mutually_follow", "0")
+	}
+
+	config.refresh()
+}
+
+// DelFollower : Delete instance from follower list
+func (config *RelayState) DelFollower(domain string) {
+	config.RedisClient.Del("relay:follower:" + domain).Result()
+	config.RedisClient.Del("relay:pending:" + domain).Result()
+
+	config.refresh()
+}
+
+// SelectFollower : Select instance from follower list
+func (config *RelayState) SelectFollower(domain string) *Follower {
+	for _, follower := range config.Followers {
+		if domain == follower.Domain {
+			return &follower
 		}
 	}
 	return nil
@@ -169,34 +236,37 @@ func (config *RelayState) refresh() {
 	}
 }
 
-// Subscription : Instance subscription information
-type Subscription struct {
+// Subscriber : Manage for Mastodon Traditional Style Relay Subscriber
+type Subscriber struct {
 	Domain     string `json:"domain,omitempty"`
 	InboxURL   string `json:"inbox_url,omitempty"`
 	ActivityID string `json:"activity_id,omitempty"`
 	ActorID    string `json:"actor_id,omitempty"`
 }
 
+// Follower : Manage for LitePub Style Relay Follower
+type Follower struct {
+	Domain         string `json:"domain,omitempty"`
+	InboxURL       string `json:"inbox_url,omitempty"`
+	ActivityID     string `json:"activity_id,omitempty"`
+	ActorID        string `json:"actor_id,omitempty"`
+	MutuallyFollow bool   `json:"mutually_follow,omitempty"`
+}
+
 type relayConfig struct {
-	BlockService     bool `json:"blockService,omitempty"`
-	ManuallyAccept   bool `json:"manuallyAccept,omitempty"`
-	CreateAsAnnounce bool `json:"createAsAnnounce,omitempty"`
+	PersonOnly     bool `json:"blockService,omitempty"`
+	ManuallyAccept bool `json:"manuallyAccept,omitempty"`
 }
 
 func (config *relayConfig) load(redisClient *redis.Client) {
-	blockService, err := redisClient.HGet("relay:config", "block_service").Result()
+	personOnly, err := redisClient.HGet("relay:config", "block_service").Result()
 	if err != nil {
-		blockService = "0"
+		personOnly = "0"
 	}
 	manuallyAccept, err := redisClient.HGet("relay:config", "manually_accept").Result()
 	if err != nil {
 		manuallyAccept = "0"
 	}
-	createAsAnnounce, err := redisClient.HGet("relay:config", "create_as_announce").Result()
-	if err != nil {
-		createAsAnnounce = "0"
-	}
-	config.BlockService = blockService == "1"
+	config.PersonOnly = personOnly == "1"
 	config.ManuallyAccept = manuallyAccept == "1"
-	config.CreateAsAnnounce = createAsAnnounce == "1"
 }

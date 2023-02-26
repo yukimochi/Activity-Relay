@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	cache "github.com/patrickmn/go-cache"
+	"github.com/patrickmn/go-cache"
 	uuid "github.com/satori/go.uuid"
 )
 
@@ -186,6 +186,32 @@ func NewActivityPubActivity(actor Actor, to []string, object interface{}, activi
 		to,
 		nil,
 	}
+}
+
+// NewActivityPubActivityFromRemoteActivity : Retrieve Activity from remote instance.
+func NewActivityPubActivityFromRemoteActivity(url string, uaString string) (Activity, error) {
+	var activity = new(Activity)
+	var err error
+	req, _ := http.NewRequest("GET", url, nil)
+	req.Header.Set("Accept", "application/activity+json")
+	req.Header.Set("User-Agent", uaString)
+	client := new(http.Client)
+	resp, err := client.Do(req)
+	if err != nil {
+		return *activity, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return *activity, errors.New(resp.Status)
+	}
+
+	data, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(data, &activity)
+	if err != nil {
+		return *activity, err
+	}
+	return *activity, nil
 }
 
 // Signature : ActivityPub Header Signature.
