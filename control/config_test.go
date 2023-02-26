@@ -118,8 +118,13 @@ func TestImportConfig(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 	RelayState.Load()
 
@@ -129,11 +134,6 @@ func TestImportConfig(t *testing.T) {
 	app.SetArgs([]string{"export"})
 	app.Execute()
 
-	file, err := os.Open("../misc/test/exampleConfig.json")
-	if err != nil {
-		t.Fatalf("Test resource fetch error.")
-	}
-	jsonData, _ := io.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
 		t.Fatalf("Invalid Response.")

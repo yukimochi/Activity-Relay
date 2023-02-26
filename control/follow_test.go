@@ -2,6 +2,8 @@ package control
 
 import (
 	"bytes"
+	"io"
+	"os"
 	"strings"
 	"testing"
 )
@@ -125,8 +127,13 @@ func TestInvalidRejectFollow(t *testing.T) {
 
 func TestCreateUpdateActorActivity(t *testing.T) {
 	app := configCmdInit()
+	file, err := os.Open("../misc/test/exampleConfig.json")
+	if err != nil {
+		t.Fatalf("Test resource fetch error.")
+	}
+	jsonData, _ := io.ReadAll(file)
 
-	app.SetArgs([]string{"import", "--json", "../misc/test/exampleConfig.json"})
+	app.SetArgs([]string{"import", "--data", string(jsonData)})
 	app.Execute()
 
 	app = followCmdInit()

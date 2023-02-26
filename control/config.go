@@ -2,9 +2,6 @@ package control
 
 import (
 	"encoding/json"
-	"io"
-	"os"
-
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"
@@ -50,8 +47,8 @@ func configCmdInit() *cobra.Command {
 			InitProxy(importConfig, cmd, args)
 		},
 	}
-	configImport.Flags().String("json", "", "JSON file-path")
-	configImport.MarkFlagRequired("json")
+	configImport.Flags().String("data", "", "JSON String")
+	configImport.MarkFlagRequired("data")
 	config.AddCommand(configImport)
 
 	var configEnable = &cobra.Command{
@@ -132,18 +129,9 @@ func exportConfig(cmd *cobra.Command, _ []string) {
 }
 
 func importConfig(cmd *cobra.Command, _ []string) {
-	file, err := os.Open(cmd.Flag("json").Value.String())
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
-	jsonData, err := io.ReadAll(file)
-	if err != nil {
-		logrus.Error(err)
-		return
-	}
+	jsonData := cmd.Flag("data").Value.String()
 	var data models.RelayState
-	err = json.Unmarshal(jsonData, &data)
+	err := json.Unmarshal([]byte(jsonData), &data)
 	if err != nil {
 		logrus.Error(err)
 		return
