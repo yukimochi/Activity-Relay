@@ -3,6 +3,7 @@ package control
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	uuid "github.com/satori/go.uuid"
@@ -64,7 +65,7 @@ func followCmdInit() *cobra.Command {
 	return follow
 }
 
-func pushRegisterJob(inboxURL string, body []byte) {
+func enqueueRegisterActivity(inboxURL string, body []byte) {
 	job := &tasks.Signature{
 		Name:       "register",
 		RetryCount: 25,
@@ -105,17 +106,35 @@ func createFollowRequestResponse(domain string, response string) error {
 	if err != nil {
 		return err
 	}
-	pushRegisterJob(data["inbox_url"], jsonData)
+	enqueueRegisterActivity(data["inbox_url"], jsonData)
 	RelayState.RedisClient.Del("relay:pending:" + domain)
-	if response == "Accept" {
-		RelayState.AddSubscriber(models.Subscriber{
-			Domain:     domain,
-			InboxURL:   data["inbox_url"],
-			ActivityID: data["activity_id"],
-			ActorID:    data["actor"],
-		})
-	}
 
+	switch {
+	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
+		if response == "Accept" {
+			RelayState.AddSubscriber(models.Subscriber{
+				Domain:     domain,
+				InboxURL:   data["inbox_url"],
+				ActivityID: data["activity_id"],
+				ActorID:    data["actor"],
+			})
+		}
+	case contains(activity.Object, RelayActor.ID):
+		if response == "Accept" {
+			RelayState.AddFollower(models.Follower{
+				Domain:     domain,
+				InboxURL:   data["inbox_url"],
+				ActivityID: data["activity_id"],
+				ActorID:    data["actor"],
+			})
+			actorID, _ := url.Parse(data["actor"])
+			if !contains(RelayState.LimitedDomains, actorID.Host) {
+				followRequest := models.NewActivityPubActivity(RelayActor, []string{data["actor"]}, data["actor"], "Follow")
+				jsonData, _ := json.Marshal(&followRequest)
+				enqueueRegisterActivity(data["inbox_url"], jsonData)
+			}
+		}
+	}
 	return nil
 }
 
@@ -133,7 +152,7 @@ func createUpdateActorActivity(subscription models.Subscriber) error {
 	if err != nil {
 		return err
 	}
-	pushRegisterJob(subscription.InboxURL, jsonData)
+	enqueueRegisterActivity(subscription.InboxURL, jsonData)
 
 	return nil
 }

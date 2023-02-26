@@ -136,7 +136,7 @@ func (config *RelayState) SetConfig(key Config, value bool) {
 	config.refresh()
 }
 
-// AddSubscriber : Add new instance for subscription list
+// AddSubscriber : Add new instance for subscriber list
 func (config *RelayState) AddSubscriber(domain Subscriber) {
 	config.RedisClient.HMSet("relay:subscription:"+domain.Domain, map[string]interface{}{
 		"inbox_url":   domain.InboxURL,
@@ -147,7 +147,7 @@ func (config *RelayState) AddSubscriber(domain Subscriber) {
 	config.refresh()
 }
 
-// DelSubscriber : Delete instance from subscription list
+// DelSubscriber : Delete instance from subscriber list
 func (config *RelayState) DelSubscriber(domain string) {
 	config.RedisClient.Del("relay:subscription:" + domain).Result()
 	config.RedisClient.Del("relay:pending:" + domain).Result()
@@ -155,11 +155,52 @@ func (config *RelayState) DelSubscriber(domain string) {
 	config.refresh()
 }
 
-// SelectSubscriber : Select instance from string
+// SelectSubscriber : Select instance from subscriber list
 func (config *RelayState) SelectSubscriber(domain string) *Subscriber {
-	for _, destination := range config.Subscribers {
-		if domain == destination.Domain {
-			return &destination
+	for _, subscriber := range config.Subscribers {
+		if domain == subscriber.Domain {
+			return &subscriber
+		}
+	}
+	return nil
+}
+
+// AddFollower : Add new instance for follower list
+func (config *RelayState) AddFollower(domain Follower) {
+	config.RedisClient.HMSet("relay:follower:"+domain.Domain, map[string]interface{}{
+		"inbox_url":       domain.InboxURL,
+		"activity_id":     domain.ActivityID,
+		"actor_id":        domain.ActorID,
+		"mutually_follow": domain.MutuallyFollow,
+	})
+
+	config.refresh()
+}
+
+// UpdateFollowerStatus : Update MutuallyFollow Status
+func (config *RelayState) UpdateFollowerStatus(domain string, mutuallyFollow bool) {
+	if mutuallyFollow {
+		config.RedisClient.HSet("relay:follower:"+domain, "mutually_follow", "1")
+	} else {
+		config.RedisClient.HSet("relay:follower:"+domain, "mutually_follow", "0")
+	}
+
+	config.refresh()
+}
+
+// DelFollower : Delete instance from follower list
+func (config *RelayState) DelFollower(domain string) {
+	config.RedisClient.Del("relay:follower:" + domain).Result()
+	config.RedisClient.Del("relay:pending:" + domain).Result()
+
+	config.refresh()
+}
+
+// SelectFollower : Select instance from follower list
+func (config *RelayState) SelectFollower(domain string) *Follower {
+	for _, follower := range config.Followers {
+		if domain == follower.Domain {
+			return &follower
 		}
 	}
 	return nil

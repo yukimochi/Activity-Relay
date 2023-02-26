@@ -18,7 +18,7 @@ func domainCmdInit() *cobra.Command {
 	var domainList = &cobra.Command{
 		Use:   "list [flags]",
 		Short: "List domain",
-		Long:  "List domain which filtered given type.",
+		Long:  "List domain which filtered provided type.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(listDomains, cmd, args)
 		},
@@ -42,8 +42,8 @@ func domainCmdInit() *cobra.Command {
 
 	var domainUnfollow = &cobra.Command{
 		Use:   "unfollow [flags]",
-		Short: "Send Unfollow request for given domains",
-		Long:  "Send unfollow request for given domains.",
+		Short: "Send Unfollow request for provided domains",
+		Long:  "Send unfollow request for provided domains.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(unfollowDomains, cmd, args)
 		},
@@ -53,7 +53,7 @@ func domainCmdInit() *cobra.Command {
 	return domain
 }
 
-func createUnfollowRequestResponse(subscriber models.Subscriber) error {
+func createUnfollowToSubscriberRequest(subscriber models.Subscriber) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
 		ID:      subscriber.ActivityID,
@@ -64,31 +64,61 @@ func createUnfollowRequestResponse(subscriber models.Subscriber) error {
 
 	resp := activity.GenerateReply(RelayActor, activity, "Reject")
 	jsonData, _ := json.Marshal(&resp)
-	pushRegisterJob(subscriber.InboxURL, jsonData)
+	enqueueRegisterActivity(subscriber.InboxURL, jsonData)
+
+	return nil
+}
+
+func createUnfollowToFollowerRequest(follower models.Follower) error {
+	activity := models.Activity{
+		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		ID:      follower.ActivityID,
+		Actor:   follower.ActorID,
+		Type:    "Follow",
+		Object:  RelayActor.ID,
+	}
+
+	resp := activity.GenerateReply(RelayActor, activity, "Reject")
+	jsonData, _ := json.Marshal(&resp)
+	enqueueRegisterActivity(follower.InboxURL, jsonData)
 
 	return nil
 }
 
 func listDomains(cmd *cobra.Command, _ []string) error {
-	var domains []string
+	var count int
 	switch cmd.Flag("type").Value.String() {
 	case "limited":
-		cmd.Println(" - Limited domain :")
-		domains = RelayState.LimitedDomains
+		cmd.Println(" - Limited domains :")
+		for _, domain := range RelayState.LimitedDomains {
+			count = count + 1
+			cmd.Println(domain)
+		}
 	case "blocked":
-		cmd.Println(" - Blocked domain :")
-		domains = RelayState.BlockedDomains
+		cmd.Println(" - Blocked domains :")
+		for _, domain := range RelayState.BlockedDomains {
+			count = count + 1
+			cmd.Println(domain)
+		}
 	default:
-		cmd.Println(" - Subscriber domain :")
-		temp := RelayState.Subscribers
-		for _, domain := range temp {
-			domains = append(domains, domain.Domain)
+		cmd.Println(" - Subscriber list :")
+		subscribers := RelayState.Subscribers
+		for _, subscriber := range subscribers {
+			count = count + 1
+			cmd.Println("[*] " + subscriber.Domain)
+		}
+		cmd.Println(" - Follower list :")
+		followers := RelayState.Followers
+		for _, follower := range followers {
+			count = count + 1
+			if follower.MutuallyFollow {
+				cmd.Println("[*] " + follower.Domain)
+			} else {
+				cmd.Println("[-] " + follower.Domain)
+			}
 		}
 	}
-	for _, domain := range domains {
-		cmd.Println(domain)
-	}
-	cmd.Println(fmt.Sprintf("Total : %d", len(domains)))
+	cmd.Println(fmt.Sprintf("Total : %d", count))
 
 	return nil
 }
@@ -115,7 +145,7 @@ func setDomainType(cmd *cobra.Command, args []string) error {
 			}
 		}
 	default:
-		cmd.Println("Invalid type given")
+		cmd.Println("Invalid type provided")
 	}
 
 	return nil
@@ -123,16 +153,22 @@ func setDomainType(cmd *cobra.Command, args []string) error {
 
 func unfollowDomains(cmd *cobra.Command, args []string) error {
 	subscriptions := RelayState.Subscribers
+	followers := RelayState.Followers
 	for _, domain := range args {
-		if contains(subscriptions, domain) {
+		switch {
+		case contains(subscriptions, domain):
 			subscription := *RelayState.SelectSubscriber(domain)
-			createUnfollowRequestResponse(subscription)
+			createUnfollowToSubscriberRequest(subscription)
 			RelayState.DelSubscriber(subscription.Domain)
 			cmd.Println("Unfollow [" + subscription.Domain + "]")
-		} else {
-			cmd.Println("Invalid domain [" + domain + "] given")
+		case contains(followers, domain):
+			follower := *RelayState.SelectFollower(domain)
+			createUnfollowToFollowerRequest(follower)
+			RelayState.DelFollower(follower.Domain)
+			cmd.Println("Unfollow [" + follower.Domain + "]")
+		default:
+			cmd.Println("Invalid domain [" + domain + "] provided")
 		}
 	}
-
 	return nil
 }

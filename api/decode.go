@@ -63,3 +63,15 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 
 	return &activity, &remoteActor, body, nil
 }
+
+func fetchOriginalActivityFromURL(url string) (*models.Activity, *models.Actor, error) {
+	remoteActivity, err := models.NewActivityPubActivityFromRemoteActivity(url, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host))
+	if err != nil {
+		return nil, nil, err
+	}
+	remoteActor, err := models.NewActivityPubActorFromRemoteActor(remoteActivity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host), ActorCache)
+	if err != nil {
+		return &remoteActivity, nil, err
+	}
+	return &remoteActivity, &remoteActor, err
+}

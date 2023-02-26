@@ -37,6 +37,33 @@ Total : 1
 	}
 }
 
+func TestAcceptSubscribe(t *testing.T) {
+	RelayState.RedisClient.FlushAll().Result()
+
+	app := followCmdInit()
+
+	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+		"inbox_url":   "https://example.com/inbox",
+		"activity_id": "https://example.com/UUID",
+		"type":        "Follow",
+		"actor":       "https://example.com/user/example",
+		"object":      "https://www.w3.org/ns/activitystreams#Public",
+	})
+
+	app.SetArgs([]string{"accept", "example.com"})
+	app.Execute()
+
+	valid, _ := RelayState.RedisClient.Exists("relay:pending:example.com").Result()
+	if valid != 0 {
+		t.Fatalf("Not removed follow request.")
+	}
+
+	valid, _ = RelayState.RedisClient.Exists("relay:subscription:example.com").Result()
+	if valid != 1 {
+		t.Fatalf("Not created subscriber.")
+	}
+}
+
 func TestAcceptFollow(t *testing.T) {
 	RelayState.RedisClient.FlushAll().Result()
 
@@ -58,9 +85,9 @@ func TestAcceptFollow(t *testing.T) {
 		t.Fatalf("Not removed follow request.")
 	}
 
-	valid, _ = RelayState.RedisClient.Exists("relay:subscription:example.com").Result()
+	valid, _ = RelayState.RedisClient.Exists("relay:follower:example.com").Result()
 	if valid != 1 {
-		t.Fatalf("Not created subscription.")
+		t.Fatalf("Not created follower.")
 	}
 }
 

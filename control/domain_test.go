@@ -30,8 +30,9 @@ func TestListDomainSubscriber(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Subscriber domain :
-subscription.example.jp
+	valid := ` - Subscriber list :
+[*] subscription.example.jp
+ - Follower list :
 Total : 1
 `
 	if output != valid {
@@ -61,7 +62,7 @@ func TestListDomainLimited(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Limited domain :
+	valid := ` - Limited domains :
 limitedDomain.example.jp
 Total : 1
 `
@@ -92,7 +93,7 @@ func TestListDomainBlocked(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Blocked domain :
+	valid := ` - Blocked domains :
 blockedDomain.example.jp
 Total : 1
 `
@@ -225,7 +226,7 @@ func TestSetDomainInvalid(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid type given" {
+	if strings.Split(output, "\n")[0] != "Invalid type provided" {
 		t.Fatalf("Invalid Response.")
 	}
 }
@@ -282,7 +283,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
+	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] provided" {
 		t.Fatalf("Invalid Response.")
 	}
 }

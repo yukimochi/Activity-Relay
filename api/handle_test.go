@@ -329,39 +329,37 @@ func mockActor(req string) models.Actor {
 }
 
 func TestSuitableRelayNoBlockService(t *testing.T) {
-	activity := mockActivity("Create")
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
 	RelayState.SetConfig(PersonOnly, false)
 
-	if isActivityAbleToRelay(&activity, &personActor) != true {
+	if isActorAbleToRelay(&personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isActivityAbleToRelay(&activity, &serviceActor) != true {
+	if isActorAbleToRelay(&serviceActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
-	if isActivityAbleToRelay(&activity, &applicationActor) != true {
+	if isActorAbleToRelay(&applicationActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
 }
 
 func TestSuitableRelayBlockService(t *testing.T) {
-	activity := mockActivity("Create")
 	personActor := mockActor("Person")
 	serviceActor := mockActor("Service")
 	applicationActor := mockActor("Application")
 
 	RelayState.SetConfig(PersonOnly, true)
 
-	if isActivityAbleToRelay(&activity, &personActor) != true {
+	if isActorAbleToRelay(&personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isActivityAbleToRelay(&activity, &serviceActor) != false {
+	if isActorAbleToRelay(&serviceActor) != false {
 		t.Fatalf("fail - Service activity should not relay when blocking mode")
 	}
-	if isActivityAbleToRelay(&activity, &applicationActor) != false {
+	if isActorAbleToRelay(&applicationActor) != false {
 		t.Fatalf("fail - Application activity should not relay when blocking mode")
 	}
 	RelayState.SetConfig(PersonOnly, false)
