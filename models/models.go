@@ -1,7 +1,6 @@
 package models
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"io"
@@ -45,21 +44,13 @@ type Actor struct {
 	Image             *Image      `json:"image,omitempty"`
 }
 
-// GenerateSelfKey : Generate relay Actor from PublicKey.
-func (actor *Actor) GenerateSelfKey(hostname *url.URL, publicKey *rsa.PublicKey) {
-	actor.Context = []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"}
-	actor.ID = hostname.String() + "/actor"
-	actor.Type = "Service"
-	actor.PreferredUsername = "relay"
-	actor.Inbox = hostname.String() + "/inbox"
-	actor.PublicKey = PublicKey{
-		hostname.String() + "/actor#main-key",
-		hostname.String() + "/actor",
-		generatePublicKeyPEMString(publicKey),
-	}
+// Followers : ActivityPub Terms for Actor's Followers.
+func (actor *Actor) Followers() string {
+	return actor.ID + "/followers"
 }
 
-func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
+// NewActivityPubActorFromRelayConfig : Create Actor from relay config.
+func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 	hostname := globalConfig.domain.String()
 	publicKey := &globalConfig.actorKey.PublicKey
 	publicKeyPemString := generatePublicKeyPEMString(publicKey)
@@ -72,11 +63,7 @@ func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
 		PreferredUsername: "relay",
 		Summary:           globalConfig.serviceSummary,
 		Inbox:             hostname + "/inbox",
-		PublicKey: struct {
-			ID           string `json:"id,omitempty"`
-			Owner        string `json:"owner,omitempty"`
-			PublicKeyPem string `json:"publicKeyPem,omitempty"`
-		}{
+		PublicKey: PublicKey{
 			ID:           hostname + "/actor#main-key",
 			Owner:        hostname + "/actor",
 			PublicKeyPem: publicKeyPemString,
@@ -97,8 +84,9 @@ func NewActivityPubActorFromSelfKey(globalConfig *RelayConfig) Actor {
 	return newActor
 }
 
-// RetrieveRemoteActor : Retrieve Actor from remote instance.
-func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cache.Cache) error {
+// NewActivityPubActorFromRemoteActor : Retrieve Actor from remote instance.
+func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cache.Cache) (Actor, error) {
+	var actor = new(Actor)
 	var err error
 	cacheData, found := cache.Get(url)
 	if found {
@@ -106,7 +94,7 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 		if err != nil {
 			cache.Delete(url)
 		} else {
-			return nil
+			return *actor, nil
 		}
 	}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -115,21 +103,21 @@ func (actor *Actor) RetrieveRemoteActor(url string, uaString string, cache *cach
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return *actor, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		return errors.New(resp.Status)
+		return *actor, errors.New(resp.Status)
 	}
 
 	data, _ := io.ReadAll(resp.Body)
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
-		return err
+		return *actor, err
 	}
 	cache.Set(url, data, 5*time.Minute)
-	return nil
+	return *actor, nil
 }
 
 // Activity : ActivityPub Activity.
@@ -143,34 +131,21 @@ type Activity struct {
 	Cc      []string    `json:"cc,omitempty"`
 }
 
-// GenerateResponse : Generate activity response.
-func (activity *Activity) GenerateResponse(host *url.URL, responseType string) Activity {
+// GenerateReply : Generate activity to activity's actor.
+func (activity *Activity) GenerateReply(actor Actor, object interface{}, activityType string) Activity {
 	return Activity{
 		[]string{"https://www.w3.org/ns/activitystreams"},
-		host.String() + "/activities/" + uuid.NewV4().String(),
-		host.String() + "/actor",
-		responseType,
-		&activity,
-		nil,
+		actor.ID + "/activities/" + uuid.NewV4().String(),
+		actor.ID,
+		activityType,
+		object,
+		[]string{activity.Actor},
 		nil,
 	}
 }
 
-// GenerateAnnounce : Generate Announce of activity.
-func (activity *Activity) GenerateAnnounce(host *url.URL) Activity {
-	return Activity{
-		[]string{"https://www.w3.org/ns/activitystreams"},
-		host.String() + "/activities/" + uuid.NewV4().String(),
-		host.String() + "/actor",
-		"Announce",
-		activity.ID,
-		[]string{host.String() + "/actor/followers"},
-		nil,
-	}
-}
-
-// InnerActivity : Unwrap inner activity.
-func (activity *Activity) InnerActivity() (*Activity, error) {
+// UnwrapInnerActivity : Unwrap inner activity.
+func (activity *Activity) UnwrapInnerActivity() (*Activity, error) {
 	mappedObject := activity.Object.(map[string]interface{})
 	if id, ok := mappedObject["id"].(string); ok {
 		if nestedType, ok := mappedObject["type"].(string); ok {
@@ -195,19 +170,22 @@ func (activity *Activity) InnerActivity() (*Activity, error) {
 				}, nil
 			}
 		}
-		return nil, errors.New("can't assert type")
+		return nil, errors.New("unwrap type failed")
 	}
-	return nil, errors.New("can't assert id")
+	return nil, errors.New("unwrap id failed")
 }
 
-// ActivityObject : ActivityPub Activity.
-type ActivityObject struct {
-	ID      string   `json:"id,omitempty"`
-	Type    string   `json:"type,omitempty"`
-	Name    string   `json:"name,omitempty"`
-	Content string   `json:"content,omitempty"`
-	To      []string `json:"to,omitempty"`
-	Cc      []string `json:"cc,omitempty"`
+// NewActivityPubActivity : Generate activity.
+func NewActivityPubActivity(actor Actor, to []string, object interface{}, activityType string) Activity {
+	return Activity{
+		[]string{"https://www.w3.org/ns/activitystreams"},
+		actor.ID + "/activities/" + uuid.NewV4().String(),
+		actor.ID,
+		activityType,
+		object,
+		to,
+		nil,
+	}
 }
 
 // Signature : ActivityPub Header Signature.
@@ -231,8 +209,10 @@ type WebfingerResource struct {
 	Links   []WebfingerLink `json:"links,omitempty"`
 }
 
-// GenerateFromActor : Generate Webfinger resource from Actor.
-func (resource *WebfingerResource) GenerateFromActor(hostname *url.URL, actor *Actor) {
+// GenerateWebfingerResource : Generate Webfinger resource.
+func (actor *Actor) GenerateWebfingerResource(hostname *url.URL) WebfingerResource {
+	resource := new(WebfingerResource)
+
 	resource.Subject = "acct:" + actor.PreferredUsername + "@" + hostname.Host
 	resource.Links = []WebfingerLink{
 		{
@@ -241,6 +221,7 @@ func (resource *WebfingerResource) GenerateFromActor(hostname *url.URL, actor *A
 			actor.ID,
 		},
 	}
+	return *resource
 }
 
 // NodeinfoResources : Nodeinfo Resources.
@@ -300,15 +281,17 @@ type NodeinfoUsageUsers struct {
 type NodeinfoMetadata struct {
 }
 
-// GenerateFromActor : Generate Webfinger resource from Actor.
-func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, _ *Actor, serverVersion string) {
-	resource.NodeinfoLinks.Links = []NodeinfoLink{
+// GenerateNodeinfoResources : Generate Nodeinfo resources.
+func GenerateNodeinfoResources(hostname *url.URL, serverVersion string) NodeinfoResources {
+	resources := new(NodeinfoResources)
+
+	resources.NodeinfoLinks.Links = []NodeinfoLink{
 		{
 			"http://nodeinfo.diaspora.software/ns/schema/2.1",
 			"https://" + hostname.Host + "/nodeinfo/2.1",
 		},
 	}
-	resource.Nodeinfo = Nodeinfo{
+	resources.Nodeinfo = Nodeinfo{
 		"2.1",
 		NodeinfoSoftware{"activity-relay", serverVersion, "https://github.com/yukimochi/Activity-Relay"},
 		[]string{"activitypub"},
@@ -317,4 +300,6 @@ func (resource *NodeinfoResources) GenerateFromActor(hostname *url.URL, _ *Actor
 		NodeinfoUsage{NodeinfoUsageUsers{0, 0, 0}},
 		NodeinfoMetadata{},
 	}
+
+	return *resources
 }

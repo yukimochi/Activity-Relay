@@ -62,7 +62,7 @@ func createUnfollowRequestResponse(subscription models.Subscription) error {
 		Object:  "https://www.w3.org/ns/activitystreams#Public",
 	}
 
-	resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), "Reject")
+	resp := activity.GenerateReply(RelayActor, activity, "Reject")
 	jsonData, _ := json.Marshal(&resp)
 	pushRegisterJob(subscription.InboxURL, jsonData)
 

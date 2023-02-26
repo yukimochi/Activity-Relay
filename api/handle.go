@@ -19,18 +19,23 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 		writer.Write(nil)
 	} else {
 		queriedSubject := queriedResource[0]
-		if queriedSubject == Webfinger.Subject {
-			webfinger, err := json.Marshal(&Webfinger)
-			if err != nil {
-				panic(err)
+		for _, webfingerResource := range WebfingerResources {
+			if queriedSubject == webfingerResource.Subject {
+				webfinger, err := json.Marshal(&webfingerResource)
+				if err != nil {
+					logrus.Fatal("Failed to marshal webfinger resource : ", err.Error())
+					writer.WriteHeader(500)
+					writer.Write(nil)
+					return
+				}
+				writer.Header().Add("Content-Type", "application/json")
+				writer.WriteHeader(200)
+				writer.Write(webfinger)
+				return
 			}
-			writer.Header().Add("Content-Type", "application/json")
-			writer.WriteHeader(200)
-			writer.Write(webfinger)
-		} else {
-			writer.WriteHeader(404)
-			writer.Write(nil)
 		}
+		writer.WriteHeader(404)
+		writer.Write(nil)
 	}
 }
 
@@ -41,7 +46,10 @@ func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		nodeinfoLinks, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
 		if err != nil {
-			panic(err)
+			logrus.Fatal("Failed to marshal nodeinfo links : ", err.Error())
+			writer.WriteHeader(500)
+			writer.Write(nil)
+			return
 		}
 		writer.Header().Add("Content-Type", "application/json")
 		writer.WriteHeader(200)
@@ -60,7 +68,10 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
 		nodeinfo, err := json.Marshal(&Nodeinfo.Nodeinfo)
 		if err != nil {
-			panic(err)
+			logrus.Fatal("Failed to marshal nodeinfo : ", err.Error())
+			writer.WriteHeader(500)
+			writer.Write(nil)
+			return
 		}
 		writer.Header().Add("Content-Type", "application/json")
 		writer.WriteHeader(200)
@@ -68,11 +79,14 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func handleActor(writer http.ResponseWriter, request *http.Request) {
+func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		relayActor, err := json.Marshal(&RelayActor)
 		if err != nil {
-			panic(err)
+			logrus.Fatal("Failed to marshal relay actor : ", err.Error())
+			writer.WriteHeader(500)
+			writer.Write(nil)
+			return
 		}
 		writer.Header().Add("Content-Type", "application/activity+json")
 		writer.WriteHeader(200)
@@ -105,7 +119,7 @@ func contains(entries interface{}, key string) bool {
 	return false
 }
 
-func enqueueRelayActivity(fromDomain string, body []byte) {
+func enqueueRelayActivity(sourceDomain string, body []byte) {
 	activityID := uuid.NewV4()
 	remainCount := len(RelayState.Subscriptions) - 1
 
@@ -117,7 +131,7 @@ func enqueueRelayActivity(fromDomain string, body []byte) {
 	RelayState.RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
 	for _, subscription := range RelayState.Subscriptions {
-		if fromDomain == subscription.Domain {
+		if sourceDomain == subscription.Domain {
 			continue
 		}
 
@@ -167,38 +181,21 @@ func enqueueRegisterActivity(inboxURL string, body []byte) {
 	}
 }
 
-func isFollowAcceptable(activity *models.Activity, _ *models.Actor) error {
-	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
-		domain, _ := url.Parse(activity.Actor)
-		if contains(RelayState.BlockedDomains, domain.Host) {
-			return errors.New("this domain is blacklisted")
-		}
-		return nil
-	} else {
-		return errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to follow")
+func isActorBlocked(actorID *url.URL) bool {
+	if contains(RelayState.BlockedDomains, actorID.Host) {
+		return true
 	}
+	return false
 }
 
-func isUnFollowAcceptable(activity *models.Activity, _ *models.Actor) error {
-	if contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public") {
-		return nil
-	} else {
-		return errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
+func isActorSubscribed(actorID *url.URL) bool {
+	if contains(RelayState.Subscriptions, actorID.Host) {
+		return true
 	}
+	return false
 }
 
-func isRelayAcceptable(activity *models.Activity, _ *models.Actor) error {
-	if !contains(activity.To, "https://www.w3.org/ns/activitystreams#Public") && !contains(activity.Cc, "https://www.w3.org/ns/activitystreams#Public") {
-		return errors.New("recipient must include https://www.w3.org/ns/activitystreams#Public")
-	}
-	domain, _ := url.Parse(activity.Actor)
-	if contains(RelayState.Subscriptions, domain.Host) {
-		return nil
-	}
-	return errors.New("to use the relay service, please follow in advance")
-}
-
-func isRelayRetransmission(activity *models.Activity, actor *models.Actor) bool {
+func isActivityAbleToRelay(activity *models.Activity, actor *models.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
 	if contains(RelayState.LimitedDomains, domain.Host) {
 		return false
@@ -209,6 +206,92 @@ func isRelayRetransmission(activity *models.Activity, actor *models.Actor) bool 
 	return true
 }
 
+func executeFollowing(activity *models.Activity, actor *models.Actor) error {
+	actorID, _ := url.Parse(actor.ID)
+	if isActorBlocked(actorID) {
+		return errors.New(actorID.Host + " is blocked")
+	}
+	switch {
+	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
+		if RelayState.RelayConfig.ManuallyAccept {
+			RelayState.RedisClient.HMSet("relay:pending:"+actorID.Host, map[string]interface{}{
+				"inbox_url":   actor.Endpoints.SharedInbox,
+				"activity_id": activity.ID,
+				"type":        "Follow",
+				"actor":       actor.ID,
+				"object":      activity.Object.(string),
+			})
+			logrus.Info("Pending Follow Request : ", activity.Actor)
+		} else {
+			resp := activity.GenerateReply(RelayActor, activity, "Accept")
+			jsonData, _ := json.Marshal(&resp)
+			go enqueueRegisterActivity(actor.Inbox, jsonData)
+			RelayState.AddSubscription(models.Subscription{
+				Domain:     actorID.Host,
+				InboxURL:   actor.Endpoints.SharedInbox,
+				ActivityID: activity.ID,
+				ActorID:    actor.ID,
+			})
+			logrus.Info("Accepted Follow Request : ", activity.Actor)
+		}
+	case contains(activity.Object, RelayActor.ID):
+		fallthrough
+	default:
+		err := errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to follow")
+		return err
+	}
+	return nil
+}
+
+func executeUnfollowing(activity *models.Activity, actor *models.Actor) error {
+	actorID, _ := url.Parse(actor.ID)
+	switch {
+	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
+		RelayState.DelSubscription(actorID.Host)
+		logrus.Info("Accepted Unfollow Request : ", activity.Actor)
+		return nil
+	case contains(activity.Object, RelayActor.ID):
+		fallthrough
+	default:
+		err := errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
+		return err
+	}
+}
+
+func executeRejectRequest(activity *models.Activity, actor *models.Actor, err error) {
+	reject := activity.GenerateReply(RelayActor, activity, "Reject")
+	jsonData, _ := json.Marshal(&reject)
+	go enqueueRegisterActivity(actor.Inbox, jsonData)
+	logrus.Error("Rejected Follow, Unfollow Request : ", activity.Actor, " ", err.Error())
+}
+
+func executeRelayActivity(activity *models.Activity, actor *models.Actor, body []byte) error {
+	actorID, _ := url.Parse(actor.ID)
+	if !isActorSubscribed(actorID) {
+		err := errors.New("to use the relay service, please follow in advance")
+		return err
+	}
+	if isActivityAbleToRelay(activity, actor) {
+		if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
+			nestedObject, err := activity.UnwrapInnerActivity()
+			if err != nil {
+				logrus.Error("Failed to decode inner activity : ", err.Error())
+			} else {
+				announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, nestedObject.ID, "Announce")
+				jsonData, _ := json.Marshal(&announce)
+				go enqueueRelayActivity(actorID.Host, jsonData)
+				logrus.Debug("Accepted Announce ", nestedObject.Type, " : ", activity.Actor)
+			}
+		} else {
+			go enqueueRelayActivity(actorID.Host, body)
+			logrus.Debug("Accepted Relay Activity : ", activity.Actor)
+		}
+	} else {
+		logrus.Debug("Skipped Relay Activity : ", activity.Actor)
+	}
+	return nil
+}
+
 func handleInbox(writer http.ResponseWriter, request *http.Request, activityDecoder func(*http.Request) (*models.Activity, *models.Actor, []byte, error)) {
 	switch request.Method {
 	case "POST":
@@ -217,98 +300,96 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 			writer.WriteHeader(400)
 			writer.Write(nil)
 		} else {
-			domain, _ := url.Parse(activity.Actor)
-			switch activity.Type {
-			case "Follow":
-				err = isFollowAcceptable(activity, actor)
-				if err != nil {
-					resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), "Reject")
-					jsonData, _ := json.Marshal(&resp)
-					go enqueueRegisterActivity(actor.Inbox, jsonData)
-					logrus.Error("Rejected Follow Request : ", activity.Actor, err.Error())
-				} else {
-					if RelayState.RelayConfig.ManuallyAccept {
-						RelayState.RedisClient.HMSet("relay:pending:"+domain.Host, map[string]interface{}{
-							"inbox_url":   actor.Endpoints.SharedInbox,
-							"activity_id": activity.ID,
-							"type":        "Follow",
-							"actor":       actor.ID,
-							"object":      activity.Object.(string),
-						})
-						logrus.Info("Pending Follow Request : ", activity.Actor)
-					} else {
-						resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), "Accept")
-						jsonData, _ := json.Marshal(&resp)
-						go enqueueRegisterActivity(actor.Inbox, jsonData)
-						RelayState.AddSubscription(models.Subscription{
-							Domain:     domain.Host,
-							InboxURL:   actor.Endpoints.SharedInbox,
-							ActivityID: activity.ID,
-							ActorID:    actor.ID,
-						})
-						logrus.Info("Accepted Follow Request : ", activity.Actor)
-					}
-				}
-
-				writer.WriteHeader(202)
-				writer.Write(nil)
-			case "Undo":
-				innerActivity, _ := activity.InnerActivity()
-				if innerActivity.Type == "Follow" && innerActivity.Actor == activity.Actor {
-					err = isUnFollowAcceptable(innerActivity, actor)
+			actorID, _ := url.Parse(activity.Actor)
+			switch {
+			case contains(activity.To, "https://www.w3.org/ns/activitystreams#Public"), contains(activity.Cc, "https://www.w3.org/ns/activitystreams#Public"):
+				// Mastodon Traditional Style (Activity Transfer)
+				switch activity.Type {
+				case "Create", "Update", "Delete", "Move":
+					err = executeRelayActivity(activity, actor, body)
 					if err != nil {
-						logrus.Error("Rejected Unfollow Request : ", activity.Actor, err.Error())
-
-						writer.WriteHeader(400)
+						writer.WriteHeader(401)
 						writer.Write([]byte(err.Error()))
-					} else {
-						RelayState.DelSubscription(domain.Host)
-						logrus.Info("Accepted Unfollow Request : ", activity.Actor)
 
+						return
+					}
+					writer.WriteHeader(202)
+					writer.Write(nil)
+				default:
+					writer.WriteHeader(202)
+					writer.Write(nil)
+				}
+			case contains(activity.To, RelayActor.ID), contains(activity.Cc, RelayActor.ID):
+				// LitePub Relay Style
+				switch activity.Type {
+				case "Follow":
+					err = executeFollowing(activity, actor)
+					if err != nil {
+						executeRejectRequest(activity, actor, err)
+					}
+					writer.WriteHeader(202)
+					writer.Write(nil)
+				case "Undo":
+					innerActivity, _ := activity.UnwrapInnerActivity()
+					switch innerActivity.Type {
+					case "Follow":
+						err = executeUnfollowing(activity, actor)
+						if err != nil {
+							executeRejectRequest(activity, actor, err)
+						}
+						writer.WriteHeader(202)
+						writer.Write(nil)
+					default:
 						writer.WriteHeader(202)
 						writer.Write(nil)
 					}
+				case "Announce":
+					if !isActorSubscribed(actorID) {
+						err = errors.New("to use the relay service, please follow in advance")
+						writer.WriteHeader(401)
+						writer.Write([]byte(err.Error()))
 
-					break
-				}
-				fallthrough
-			case "Create", "Update", "Delete", "Move":
-				err = isRelayAcceptable(activity, actor)
-				if err != nil {
+						return
+					}
+					err = errors.New("recipient must include https://www.w3.org/ns/activitystreams#Public")
 					writer.WriteHeader(400)
 					writer.Write([]byte(err.Error()))
-
-					return
+				default:
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				}
-				if isRelayRetransmission(activity, actor) {
-					if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
-						nestedObject, err := activity.InnerActivity()
-						if err != nil {
-							logrus.Error("Failed to decode inner activity : ", err.Error())
-						}
-						switch nestedObject.Type {
-						case "Note":
-							resp := nestedObject.GenerateAnnounce(GlobalConfig.ServerHostname())
-							jsonData, _ := json.Marshal(&resp)
-							go enqueueRelayActivity(domain.Host, jsonData)
-							logrus.Debug("Accepted Announce Note : ", activity.Actor)
-						default:
-							logrus.Debug("Skipped Announce ", nestedObject.Type, " : ", activity.Actor)
-						}
-					} else {
-						go enqueueRelayActivity(domain.Host, body)
-						logrus.Debug("Accepted Relay Activity : ", activity.Actor)
+			default:
+				// Follow, Unfollow Only
+				switch activity.Type {
+				case "Follow":
+					err = executeFollowing(activity, actor)
+					if err != nil {
+						executeRejectRequest(activity, actor, err)
 					}
-				} else {
-					logrus.Debug("Skipped Relay Activity : ", activity.Actor)
+					writer.WriteHeader(202)
+					writer.Write(nil)
+				case "Undo":
+					innerActivity, _ := activity.UnwrapInnerActivity()
+					switch innerActivity.Type {
+					case "Follow":
+						err = executeUnfollowing(innerActivity, actor)
+						if err != nil {
+							executeRejectRequest(activity, actor, err)
+						}
+						writer.WriteHeader(202)
+						writer.Write(nil)
+					default:
+						writer.WriteHeader(202)
+						writer.Write(nil)
+					}
+				default:
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				}
-
-				writer.WriteHeader(202)
-				writer.Write(nil)
 			}
 		}
 	default:
-		writer.WriteHeader(404)
+		writer.WriteHeader(405)
 		writer.Write(nil)
 	}
 }

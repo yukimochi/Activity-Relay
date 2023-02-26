@@ -100,7 +100,7 @@ func createFollowRequestResponse(domain string, response string) error {
 		Object:  data["object"],
 	}
 
-	resp := activity.GenerateResponse(GlobalConfig.ServerHostname(), response)
+	resp := activity.GenerateReply(RelayActor, activity, response)
 	jsonData, err := json.Marshal(&resp)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func createUpdateActorActivity(subscription models.Subscription) error {
 		Actor:   GlobalConfig.ServerHostname().String() + "/actor",
 		Type:    "Update",
 		To:      []string{"https://www.w3.org/ns/activitystreams#Public"},
-		Object:  Actor,
+		Object:  RelayActor,
 	}
 
 	jsonData, err := json.Marshal(&activity)
@@ -206,7 +206,7 @@ func updateActor(cmd *cobra.Command, _ []string) error {
 	for _, subscription := range RelayState.Subscriptions {
 		err := createUpdateActorActivity(subscription)
 		if err != nil {
-			cmd.Println("Failed Update Actor for " + subscription.Domain)
+			cmd.Println("Failed Update RelayActor for " + subscription.Domain)
 		}
 	}
 	return nil

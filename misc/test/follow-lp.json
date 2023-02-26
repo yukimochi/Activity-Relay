@@ -1,0 +1,20 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://carol-sol-coffee-shareware.trycloudflare.com/schemas/litepub-0.1.jsonld",
+    {
+      "@language": "und"
+    }
+  ],
+  "actor": "https://carol-sol-coffee-shareware.trycloudflare.com/relay",
+  "bcc": [],
+  "bto": [],
+  "cc": [],
+  "id": "https://carol-sol-coffee-shareware.trycloudflare.com/activities/378e0448-1a45-45c1-9185-48b651cde184",
+  "object": "https://relay.toot.yukimochi.jp/actor",
+  "state": "pending",
+  "to": [
+    "https://relay.toot.yukimochi.jp/actor"
+  ],
+  "type": "Follow"
+}

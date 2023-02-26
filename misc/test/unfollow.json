@@ -1,1 +1,12 @@
-{"@context":"https://www.w3.org/ns/activitystreams","id":"https://innocent.yukimochi.io/d4028c5c-a794-4dcf-b2a8-0eaa41a086a1","type":"Undo","actor":"https://innocent.yukimochi.io/users/mayaeh","object":{"id":"https://innocent.yukimochi.io/102e3bf7-8a15-42d1-9e99-590e8e436f8e","type":"Follow","actor":"https://innocent.yukimochi.io/users/mayaeh","object":"https://www.w3.org/ns/activitystreams#Public"}}
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://innocent.yukimochi.io/9bb8b7bd-2e28-428d-a4dc-ba0001512b07",
+  "type": "Undo",
+  "actor": "https://innocent.yukimochi.io/actor",
+  "object": {
+    "id": "https://innocent.yukimochi.io/041bd3d9-d883-4454-8739-588cf7471ff3",
+    "type": "Follow",
+    "actor": "https://innocent.yukimochi.io/actor",
+    "object": "https://www.w3.org/ns/activitystreams#Public"
+  }
+}

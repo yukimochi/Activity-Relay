@@ -1,1 +1,72 @@
-{"@context":["https://www.w3.org/ns/activitystreams","https://w3id.org/security/v1",{"manuallyApprovesFollowers":"as:manuallyApprovesFollowers","sensitive":"as:sensitive","movedTo":{"@id":"as:movedTo","@type":"@id"},"Hashtag":"as:Hashtag","ostatus":"http://ostatus.org#","atomUri":"ostatus:atomUri","inReplyToAtomUri":"ostatus:inReplyToAtomUri","conversation":"ostatus:conversation","toot":"http://joinmastodon.org/ns#","Emoji":"toot:Emoji","focalPoint":{"@container":"@list","@id":"toot:focalPoint"},"featured":{"@id":"toot:featured","@type":"@id"},"schema":"http://schema.org#","PropertyValue":"schema:PropertyValue","value":"schema:value"}],"id":"https://innocent.yukimochi.io/users/YUKIMOCHI","type":"Application","following":"https://innocent.yukimochi.io/users/YUKIMOCHI/following","followers":"https://innocent.yukimochi.io/users/YUKIMOCHI/followers","inbox":"https://innocent.yukimochi.io/users/YUKIMOCHI/inbox","outbox":"https://innocent.yukimochi.io/users/YUKIMOCHI/outbox","featured":"https://innocent.yukimochi.io/users/YUKIMOCHI/collections/featured","preferredUsername":"YUKIMOCHI","name":"雪餅🌟","summary":"\u003cp\u003e実験鯖です。連合して痛い目に合っても自己責任です・・・？（COM3D2の無垢ちゃん、かわいいかわいい！！）\u003c/p\u003e","url":"https://innocent.yukimochi.io/@YUKIMOCHI","manuallyApprovesFollowers":false,"publicKey":{"id":"https://innocent.yukimochi.io/users/YUKIMOCHI#main-key","owner":"https://innocent.yukimochi.io/users/YUKIMOCHI","publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzNxXtpYOLYtpTUCxJDTq\nokV++p35C8lV+UlA8XIj8i1t64fWCqT1ULmlDEyiL1gWHEOVlV45z9PsCtJ2b2lV\nRFVBdQ1AeNKmaaTuX7CYM3wtli2cQQUlGEwWh1sgAv/LeoKRP90sA6O9M8M9H6T4\nF2cVHAaEnDFwjBQKtk/Bt70+esSkbe1qsc7vmrkaONAZrNVy6JY70r2Tg2uv7I3K\ndBpau6Igt1g87odVTPIhIVec8vnBzJvrHM1zorzRK+kPGjjAQ5XvZhkZzvjSfkkg\nqN5jDQrjfoW53vCfIJlbinEdWkJtGrDAnN1PjYIvH1bkOVJLDGUAtRtkTuCqJHPf\nMQIDAQAB\n-----END PUBLIC KEY-----\n"},"tag":[],"attachment":[],"endpoints":{"sharedInbox":"https://innocent.yukimochi.io/inbox"},"icon":{"type":"Image","mediaType":"image/png","url":"https://media.innocent.yukimochi.io/innocent/accounts/avatars/000/000/001/original/9f015d132fa2ef58.png"},"image":{"type":"Image","mediaType":"image/png","url":"https://media.innocent.yukimochi.io/innocent/accounts/headers/000/000/001/original/81300f90185e4d38.png"}}
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1",
+    {
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "toot": "http://joinmastodon.org/ns#",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "featuredTags": {
+        "@id": "toot:featuredTags",
+        "@type": "@id"
+      },
+      "alsoKnownAs": {
+        "@id": "as:alsoKnownAs",
+        "@type": "@id"
+      },
+      "movedTo": {
+        "@id": "as:movedTo",
+        "@type": "@id"
+      },
+      "schema": "http://schema.org#",
+      "PropertyValue": "schema:PropertyValue",
+      "value": "schema:value",
+      "discoverable": "toot:discoverable",
+      "Device": "toot:Device",
+      "Ed25519Signature": "toot:Ed25519Signature",
+      "Ed25519Key": "toot:Ed25519Key",
+      "Curve25519Key": "toot:Curve25519Key",
+      "EncryptedMessage": "toot:EncryptedMessage",
+      "publicKeyBase64": "toot:publicKeyBase64",
+      "deviceId": "toot:deviceId",
+      "claim": {
+        "@type": "@id",
+        "@id": "toot:claim"
+      },
+      "fingerprintKey": {
+        "@type": "@id",
+        "@id": "toot:fingerprintKey"
+      },
+      "identityKey": {
+        "@type": "@id",
+        "@id": "toot:identityKey"
+      },
+      "devices": {
+        "@type": "@id",
+        "@id": "toot:devices"
+      },
+      "messageFranking": "toot:messageFranking",
+      "messageType": "toot:messageType",
+      "cipherText": "toot:cipherText",
+      "suspended": "toot:suspended"
+    }
+  ],
+  "id": "https://innocent.yukimochi.io/actor",
+  "type": "Application",
+  "inbox": "https://innocent.yukimochi.io/actor/inbox",
+  "outbox": "https://innocent.yukimochi.io/actor/outbox",
+  "preferredUsername": "innocent.yukimochi.io",
+  "url": "https://innocent.yukimochi.io/about/more?instance_actor=true",
+  "manuallyApprovesFollowers": true,
+  "publicKey": {
+    "id": "https://innocent.yukimochi.io/actor#main-key",
+    "owner": "https://innocent.yukimochi.io/actor",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAp1uGudgNrR9HQBEnBHg1\nEco7l4nnL+KyCRbfxM+wWKSJm6z1RvXvUJOs64Mv+P6VNg0NrMe4fYay22IeOp4R\nDPh/AMluNP6+P3GrMzjO13Wlihhg/HRxv9UpL0EUxVzacQhKp111VKWYROJ0ptFX\nqEB7e6oPGT/yvJiNddS+fN9fChHx6DBpu78sevmdlkBNmkqpcebh6gkDUfplIovQ\nVEqGPqXjE84yKqr9Z1LUFCz3Y/brt/zCKT0QkRpx3biqj3SxgnzRcSjqJl4fccoj\nRC9nhhmh0DcTDtofc3ixObUDEXzmDOGaqLtIHWujcu9HxOC789jvoDXhikkojdNj\nAQIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "endpoints": {
+    "sharedInbox": "https://innocent.yukimochi.io/inbox"
+  }
+}

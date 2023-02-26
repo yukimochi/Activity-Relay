@@ -169,7 +169,7 @@ func TestHandleWebfingerInvalidMethod(t *testing.T) {
 }
 
 func TestHandleActorGet(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(handleActor))
+	s := httptest.NewServer(http.HandlerFunc(handleRelayActor))
 	defer s.Close()
 
 	r, err := http.Get(s.URL)
@@ -198,7 +198,7 @@ func TestHandleActorGet(t *testing.T) {
 }
 
 func TestHandleActorInvalidMethod(t *testing.T) {
-	s := httptest.NewServer(http.HandlerFunc(handleActor))
+	s := httptest.NewServer(http.HandlerFunc(handleRelayActor))
 	defer s.Close()
 
 	r, err := http.Post(s.URL, "text/plain", nil)
@@ -258,6 +258,12 @@ func mockActivity(req string) models.Activity {
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
+	case "Follow-LP":
+		file, _ := os.Open("../misc/test/follow-lp.json")
+		body, _ := io.ReadAll(file)
+		var activity models.Activity
+		json.Unmarshal(body, &activity)
+		return activity
 	case "Invalid-Follow":
 		file, _ := os.Open("../misc/test/followAsActor.json")
 		body, _ := io.ReadAll(file)
@@ -270,10 +276,11 @@ func mockActivity(req string) models.Activity {
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
-	case "Invalid-Unfollow":
-		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://hacked.test.yukimochi.io/users/yukimochi\",\"object\":\"https://www.w3.org/ns/activitystreams#Public\"}}"
+	case "Unfollow-LP":
+		file, _ := os.Open("../misc/test/unfollow-lp.json")
+		body, _ := io.ReadAll(file)
 		var activity models.Activity
-		json.Unmarshal([]byte(body), &activity)
+		json.Unmarshal(body, &activity)
 		return activity
 	case "UnfollowAsActor":
 		body := "{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://mastodon.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Undo\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":{\"@context\":\"https://www.w3.org/ns/activitystreams\",\"id\":\"https://hacked.test.yukimochi.io/c125e836-e622-478e-a22d-2d9fbf2f496f\",\"type\":\"Follow\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"object\":\"https://relay.yukimochi.example.org/actor\"}}"
@@ -286,19 +293,8 @@ func mockActivity(req string) models.Activity {
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
 		return activity
-	case "Create-Article":
-		body := "{\"@context\":[\"https://www.w3.org/ns/activitystreams\",\"https://w3id.org/security/v1\",{\"manuallyApprovesFollowers\":\"as:manuallyApprovesFollowers\",\"sensitive\":\"as:sensitive\",\"movedTo\":{\"@id\":\"as:movedTo\",\"@type\":\"@id\"},\"Hashtag\":\"as:Hashtag\",\"ostatus\":\"http://ostatus.org#\",\"atomUri\":\"ostatus:atomUri\",\"inReplyToAtomUri\":\"ostatus:inReplyToAtomUri\",\"conversation\":\"ostatus:conversation\",\"toot\":\"http://joinmastodon.org/ns#\",\"Emoji\":\"toot:Emoji\",\"focalPoint\":{\"@container\":\"@list\",\"@id\":\"toot:focalPoint\"},\"featured\":{\"@id\":\"toot:featured\",\"@type\":\"@id\"},\"schema\":\"http://schema.org#\",\"PropertyValue\":\"schema:PropertyValue\",\"value\":\"schema:value\"}],\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857/activity\",\"type\":\"Create\",\"actor\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"published\":\"2018-11-15T11:07:26Z\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"object\":{\"id\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"type\":\"Article\",\"summary\":null,\"inReplyTo\":null,\"published\":\"2018-11-15T11:07:26Z\",\"url\":\"https://mastodon.test.yukimochi.io/@yukimochi/101075045564444857\",\"attributedTo\":\"https://mastodon.test.yukimochi.io/users/yukimochi\",\"to\":[\"https://www.w3.org/ns/activitystreams#Public\"],\"cc\":[\"https://mastodon.test.yukimochi.io/users/yukimochi/followers\"],\"sensitive\":false,\"atomUri\":\"https://mastodon.test.yukimochi.io/users/yukimochi/statuses/101075045564444857\",\"inReplyToAtomUri\":null,\"conversation\":\"tag:mastodon.test.yukimochi.io,2018-11-15:objectId=68:objectType=Conversation\",\"content\":\"<p>Actvity-Relay</p>\",\"contentMap\":{\"en\":\"<p>Actvity-Relay</p>\"},\"attachment\":[],\"tag\":[]},\"signature\":{\"type\":\"RsaSignature2017\",\"creator\":\"https://mastodon.test.yukimochi.io/users/yukimochi#main-key\",\"created\":\"2018-11-15T11:07:26Z\",\"signatureValue\":\"mMgl2GgVPgb1Kw6a2iDIZc7r0j3ob+Cl9y+QkCxIe6KmnUzb15e60UuhkE5j3rJnoTwRKqOFy1PMkSxlYW6fPG/5DBxW9I4kX+8sw8iH/zpwKKUOnXUJEqfwRrNH2ix33xcs/GkKPdedY6iAPV9vGZ10MSMOdypfYgU9r+UI0sTaaC2iMXH0WPnHQuYAI+Q1JDHIbDX5FH1WlDL6+8fKAicf3spBMxDwPHGPK8W2jmDLWdN2Vz4ffsCtWs5BCuqOKZrtTW0Rdd4HWzo40MnRXvBjv7yNlnnKzokANBqiOLWT7kNfK0+Vtnt6c/bNX64KBro53KR7wL3ZBvPVuv5rdQ==\"}}"
-		var activity models.Activity
-		json.Unmarshal([]byte(body), &activity)
-		return activity
-	case "Announce":
-		file, _ := os.Open("../misc/test/announce.json")
-		body, _ := io.ReadAll(file)
-		var activity models.Activity
-		json.Unmarshal(body, &activity)
-		return activity
-	case "Undo":
-		file, _ := os.Open("../misc/test/undo.json")
+	case "Announce-LP":
+		file, _ := os.Open("../misc/test/announce-lp.json")
 		body, _ := io.ReadAll(file)
 		var activity models.Activity
 		json.Unmarshal(body, &activity)
@@ -341,13 +337,13 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 
 	RelayState.SetConfig(BlockService, false)
 
-	if isRelayRetransmission(&activity, &personActor) != true {
+	if isActivityAbleToRelay(&activity, &personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isRelayRetransmission(&activity, &serviceActor) != true {
+	if isActivityAbleToRelay(&activity, &serviceActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
-	if isRelayRetransmission(&activity, &applicationActor) != true {
+	if isActivityAbleToRelay(&activity, &applicationActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
 }
@@ -360,13 +356,13 @@ func TestSuitableRelayBlockService(t *testing.T) {
 
 	RelayState.SetConfig(BlockService, true)
 
-	if isRelayRetransmission(&activity, &personActor) != true {
+	if isActivityAbleToRelay(&activity, &personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isRelayRetransmission(&activity, &serviceActor) != false {
+	if isActivityAbleToRelay(&activity, &serviceActor) != false {
 		t.Fatalf("fail - Service activity should not relay when blocking mode")
 	}
-	if isRelayRetransmission(&activity, &applicationActor) != false {
+	if isActivityAbleToRelay(&activity, &applicationActor) != false {
 		t.Fatalf("fail - Application activity should not relay when blocking mode")
 	}
 	RelayState.SetConfig(BlockService, false)
@@ -401,7 +397,7 @@ func TestHandleInboxInvalidMethod(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 404 {
+	if r.StatusCode != 405 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 }
@@ -464,32 +460,6 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	RelayState.SetConfig(ManuallyAccept, false)
 }
 
-func TestHandleInboxInvalidFollow(t *testing.T) {
-	activity := mockActivity("Invalid-Follow")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.SetConfig(ManuallyAccept, false)
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is match")
-	}
-	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
-	if res != 0 {
-		t.Fatalf("fail - follow request not blocked")
-	}
-}
-
 func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	activity := mockActivity("Follow")
 	actor := mockActor("Person")
@@ -516,6 +486,54 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	}
 	RelayState.DelSubscription(domain.Host)
 	RelayState.SetBlockedDomain(domain.Host, false)
+}
+
+func TestHandleInboxFollowLitePub(t *testing.T) {
+	activity := mockActivity("Follow-LP")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("fail - follow request not blocked")
+	}
+}
+
+func TestHandleInboxInvalidFollow(t *testing.T) {
+	activity := mockActivity("Invalid-Follow")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 0 {
+		t.Fatalf("fail - follow request not blocked")
+	}
 }
 
 func TestHandleInboxValidUnfollow(t *testing.T) {
@@ -585,36 +603,6 @@ func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
 	RelayState.SetConfig(ManuallyAccept, false)
 }
 
-func TestHandleInboxInvalidUnfollow(t *testing.T) {
-	activity := mockActivity("Invalid-Unfollow")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
-	})
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
-	}
-	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
-	if res != 1 {
-		t.Fatalf("fail - invalid unfollow request should be blocked")
-	}
-	RelayState.DelSubscription(domain.Host)
-}
-
 func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	activity := mockActivity("UnfollowAsActor")
 	actor := mockActor("Person")
@@ -635,7 +623,37 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 400 {
+	if r.StatusCode != 202 {
+		t.Fatalf("fail - StatusCode is not match")
+	}
+	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
+	if res != 1 {
+		t.Fatalf("fail - invalid unfollow request should be blocked")
+	}
+	RelayState.DelSubscription(domain.Host)
+}
+
+func TestHandleInboxUnfollowLitePub(t *testing.T) {
+	activity := mockActivity("Unfollow-LP")
+	actor := mockActor("Person")
+	domain, _ := url.Parse(activity.Actor)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
+	}))
+	defer s.Close()
+
+	RelayState.AddSubscription(models.Subscription{
+		Domain:   domain.Host,
+		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
+	})
+
+	req, _ := http.NewRequest("POST", s.URL, nil)
+	client := new(http.Client)
+	r, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("fail - " + err.Error())
+	}
+	if r.StatusCode != 202 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
@@ -739,39 +757,6 @@ func TestHandleInboxValidCreateAsAnnounceNote(t *testing.T) {
 	RelayState.SetConfig(CreateAsAnnounce, false)
 }
 
-func TestHandleInboxValidCreateAsAnnounceNoNote(t *testing.T) {
-	activity := mockActivity("Create-Article")
-	actor := mockActor("Person")
-	domain, _ := url.Parse(activity.Actor)
-	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handleInbox(w, r, mockActivityDecoderProvider(&activity, &actor))
-	}))
-	defer s.Close()
-
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
-	})
-	RelayState.AddSubscription(models.Subscription{
-		Domain:   "example.org",
-		InboxURL: "https://example.org/inbox",
-	})
-	RelayState.SetConfig(CreateAsAnnounce, true)
-
-	req, _ := http.NewRequest("POST", s.URL, nil)
-	client := new(http.Client)
-	r, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("fail - " + err.Error())
-	}
-	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
-	}
-	RelayState.DelSubscription(domain.Host)
-	RelayState.DelSubscription("example.org")
-	RelayState.SetConfig(CreateAsAnnounce, false)
-}
-
 func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
 	activity := mockActivity("Create")
 	actor := mockActor("Person")
@@ -786,13 +771,13 @@ func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 400 {
+	if r.StatusCode != 401 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 }
 
-func TestHandleInboxUndo(t *testing.T) {
-	activity := mockActivity("Undo")
+func TestHandleInboxAnnounceLitePub(t *testing.T) {
+	activity := mockActivity("Announce-LP")
 	actor := mockActor("Person")
 	domain, _ := url.Parse(activity.Actor)
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -801,8 +786,12 @@ func TestHandleInboxUndo(t *testing.T) {
 	defer s.Close()
 
 	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
+		Domain:   "carol-sol-coffee-shareware.trycloudflare.com",
+		InboxURL: "https://carol-sol-coffee-shareware.trycloudflare.com/inbox",
+	})
+	RelayState.AddSubscription(models.Subscription{
+		Domain:   "example.org",
+		InboxURL: "https://example.org/inbox",
 	})
 
 	req, _ := http.NewRequest("POST", s.URL, nil)
@@ -811,12 +800,11 @@ func TestHandleInboxUndo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 202 {
+	if r.StatusCode != 400 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
-	res, _ := RelayState.RedisClient.Exists("relay:subscription:" + domain.Host).Result()
-	if res != 1 {
-		t.Fatalf("fail - undo activity not works")
-	}
 	RelayState.DelSubscription(domain.Host)
+	RelayState.DelSubscription("example.org")
+	RelayState.RedisClient.Del("relay:subscription:" + domain.Host).Result()
+	RelayState.RedisClient.Del("relay:subscription:example.org").Result()
 }

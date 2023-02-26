@@ -1,0 +1,21 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://carol-sol-coffee-shareware.trycloudflare.com/schemas/litepub-0.1.jsonld",
+    {
+      "@language": "und"
+    }
+  ],
+  "actor": "https://carol-sol-coffee-shareware.trycloudflare.com/relay",
+  "bto": [],
+  "cc": [],
+  "context": "https://carol-sol-coffee-shareware.trycloudflare.com/contexts/3977c07c-f18c-4de4-ac53-d6fc1fee5ce7",
+  "id": "https://carol-sol-coffee-shareware.trycloudflare.com/activities/23b18559-fd4d-4526-a73e-9c203fa35022",
+  "object": "https://carol-sol-coffee-shareware.trycloudflare.com/objects/b22bb689-3333-4390-9089-5a2597ee38ee",
+  "published": "2023-02-25T17:37:46.363511Z",
+  "to": [
+    "https://carol-sol-coffee-shareware.trycloudflare.com/relay/followers",
+    "https://relay.toot.yukimochi.jp/actor"
+  ],
+  "type": "Announce"
+}

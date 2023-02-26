@@ -1,0 +1,32 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://carol-sol-coffee-shareware.trycloudflare.com/schemas/litepub-0.1.jsonld",
+    {
+      "@language": "und"
+    }
+  ],
+  "actor": "https://carol-sol-coffee-shareware.trycloudflare.com/relay",
+  "context": "https://carol-sol-coffee-shareware.trycloudflare.com/contexts/0ea02ea0-4eed-4b82-93df-3535ecf252aa",
+  "id": "https://carol-sol-coffee-shareware.trycloudflare.com/activities/b5ccddca-26f1-42bb-a9d5-c1e46805fbed",
+  "object": {
+    "actor": "https://carol-sol-coffee-shareware.trycloudflare.com/relay",
+    "bcc": [],
+    "bto": [],
+    "cc": [],
+    "context": "https://carol-sol-coffee-shareware.trycloudflare.com/contexts/0ea02ea0-4eed-4b82-93df-3535ecf252aa",
+    "id": "https://carol-sol-coffee-shareware.trycloudflare.com/activities/378e0448-1a45-45c1-9185-48b651cde184",
+    "object": "https://relay.toot.yukimochi.jp/actor",
+    "published": "2023-02-25T17:34:38.908349Z",
+    "state": "cancelled",
+    "to": [
+      "https://relay.toot.yukimochi.jp/actor"
+    ],
+    "type": "Follow"
+  },
+  "published": "2023-02-25T17:34:38.908340Z",
+  "to": [
+    "https://relay.toot.yukimochi.jp/actor"
+  ],
+  "type": "Undo"
+}
