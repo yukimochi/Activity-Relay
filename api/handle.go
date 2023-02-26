@@ -23,7 +23,10 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 			if queriedSubject == webfingerResource.Subject {
 				webfinger, err := json.Marshal(&webfingerResource)
 				if err != nil {
-					panic(err)
+					logrus.Fatal("Failed to marshal webfinger resource : ", err.Error())
+					writer.WriteHeader(500)
+					writer.Write(nil)
+					return
 				}
 				writer.Header().Add("Content-Type", "application/json")
 				writer.WriteHeader(200)
@@ -43,7 +46,10 @@ func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		nodeinfoLinks, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
 		if err != nil {
-			panic(err)
+			logrus.Fatal("Failed to marshal nodeinfo links : ", err.Error())
+			writer.WriteHeader(500)
+			writer.Write(nil)
+			return
 		}
 		writer.Header().Add("Content-Type", "application/json")
 		writer.WriteHeader(200)
@@ -62,7 +68,10 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
 		nodeinfo, err := json.Marshal(&Nodeinfo.Nodeinfo)
 		if err != nil {
-			panic(err)
+			logrus.Fatal("Failed to marshal nodeinfo : ", err.Error())
+			writer.WriteHeader(500)
+			writer.Write(nil)
+			return
 		}
 		writer.Header().Add("Content-Type", "application/json")
 		writer.WriteHeader(200)
@@ -74,7 +83,10 @@ func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		relayActor, err := json.Marshal(&RelayActor)
 		if err != nil {
-			panic(err)
+			logrus.Fatal("Failed to marshal relay actor : ", err.Error())
+			writer.WriteHeader(500)
+			writer.Write(nil)
+			return
 		}
 		writer.Header().Add("Content-Type", "application/activity+json")
 		writer.WriteHeader(200)
@@ -107,7 +119,7 @@ func contains(entries interface{}, key string) bool {
 	return false
 }
 
-func enqueueRelayActivity(fromDomain string, body []byte) {
+func enqueueRelayActivity(sourceDomain string, body []byte) {
 	activityID := uuid.NewV4()
 	remainCount := len(RelayState.Subscriptions) - 1
 
@@ -119,7 +131,7 @@ func enqueueRelayActivity(fromDomain string, body []byte) {
 	RelayState.RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
 	for _, subscription := range RelayState.Subscriptions {
-		if fromDomain == subscription.Domain {
+		if sourceDomain == subscription.Domain {
 			continue
 		}
 
@@ -169,23 +181,21 @@ func enqueueRegisterActivity(inboxURL string, body []byte) {
 	}
 }
 
-func isFollowAcceptable(activity *models.Activity) error {
-	domain, _ := url.Parse(activity.Actor)
-	if contains(RelayState.BlockedDomains, domain.Host) {
-		return errors.New("this domain is blacklisted")
+func isActorBlocked(actorID *url.URL) bool {
+	if contains(RelayState.BlockedDomains, actorID.Host) {
+		return true
 	}
-	return nil
+	return false
 }
 
-func isRelayAcceptable(activity *models.Activity) error {
-	domain, _ := url.Parse(activity.Actor)
-	if contains(RelayState.Subscriptions, domain.Host) {
-		return nil
+func isActorSubscribed(actorID *url.URL) bool {
+	if contains(RelayState.Subscriptions, actorID.Host) {
+		return true
 	}
-	return errors.New("to use the relay service, please follow in advance")
+	return false
 }
 
-func isRelayRetransmission(activity *models.Activity, actor *models.Actor) bool {
+func isActivityAbleToRelay(activity *models.Activity, actor *models.Actor) bool {
 	domain, _ := url.Parse(activity.Actor)
 	if contains(RelayState.LimitedDomains, domain.Host) {
 		return false
@@ -197,11 +207,12 @@ func isRelayRetransmission(activity *models.Activity, actor *models.Actor) bool 
 }
 
 func executeFollowing(activity *models.Activity, actor *models.Actor) error {
-	err := isFollowAcceptable(activity)
-	if err != nil {
-		return err
-	} else {
-		actorID, _ := url.Parse(activity.Actor)
+	actorID, _ := url.Parse(actor.ID)
+	if isActorBlocked(actorID) {
+		return errors.New(actorID.Host + " is blocked")
+	}
+	switch {
+	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
 		if RelayState.RelayConfig.ManuallyAccept {
 			RelayState.RedisClient.HMSet("relay:pending:"+actorID.Host, map[string]interface{}{
 				"inbox_url":   actor.Endpoints.SharedInbox,
@@ -223,14 +234,61 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 			})
 			logrus.Info("Accepted Follow Request : ", activity.Actor)
 		}
+	case contains(activity.Object, RelayActor.ID):
+		fallthrough
+	default:
+		err := errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
+		return err
+	}
+	return nil
+}
+
+func executeUnfollowing(activity *models.Activity, actor *models.Actor) error {
+	actorID, _ := url.Parse(actor.ID)
+	switch {
+	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
+		RelayState.DelSubscription(actorID.Host)
+		logrus.Info("Accepted Unfollow Request : ", activity.Actor)
 		return nil
+	case contains(activity.Object, RelayActor.ID):
+		fallthrough
+	default:
+		err := errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
+		return err
 	}
 }
 
-func executeUnfollowing(activity *models.Activity) error {
-	actorID, _ := url.Parse(activity.Actor)
-	RelayState.DelSubscription(actorID.Host)
-	logrus.Info("Accepted Unfollow Request : ", activity.Actor)
+func executeRejectRequest(activity *models.Activity, actor *models.Actor, err error) {
+	reject := activity.GenerateReply(RelayActor, activity, "Reject")
+	jsonData, _ := json.Marshal(&reject)
+	go enqueueRegisterActivity(actor.Inbox, jsonData)
+	logrus.Error("Rejected Follow, Unfollow Request : ", activity.Actor, " ", err.Error())
+}
+
+func executeRelayActivity(activity *models.Activity, actor *models.Actor, body []byte) error {
+	actorID, _ := url.Parse(actor.ID)
+	if !isActorSubscribed(actorID) {
+		err := errors.New("to use the relay service, please follow in advance")
+		return err
+	}
+	if isActivityAbleToRelay(activity, actor) {
+		if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
+			nestedObject, err := activity.UnwrapInnerActivity()
+			if err != nil {
+				logrus.Error("Failed to decode inner activity : ", err.Error())
+			} else {
+				announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, nestedObject.ID, "Announce")
+				jsonData, _ := json.Marshal(&announce)
+				go enqueueRelayActivity(actorID.Host, jsonData)
+				logrus.Debug("Accepted Announce ", nestedObject.Type, " : ", activity.Actor)
+			}
+		} else {
+			go enqueueRelayActivity(actorID.Host, body)
+			logrus.Debug("Accepted Relay Activity : ", activity.Actor)
+		}
+	} else {
+		logrus.Debug("Skipped Relay Activity : ", activity.Actor)
+	}
 	return nil
 }
 
@@ -248,29 +306,12 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				// Mastodon Traditional Style (Activity Transfer)
 				switch activity.Type {
 				case "Create", "Update", "Delete", "Move":
-					err = isRelayAcceptable(activity)
+					err = executeRelayActivity(activity, actor, body)
 					if err != nil {
 						writer.WriteHeader(401)
 						writer.Write([]byte(err.Error()))
 
 						return
-					}
-					if isRelayRetransmission(activity, actor) {
-						if RelayState.RelayConfig.CreateAsAnnounce && activity.Type == "Create" {
-							nestedObject, err := activity.UnwrapInnerActivity()
-							if err != nil {
-								logrus.Error("Failed to decode inner activity : ", err.Error())
-							}
-							announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, nestedObject.ID, "Announce")
-							jsonData, _ := json.Marshal(&announce)
-							go enqueueRelayActivity(actorID.Host, jsonData)
-							logrus.Debug("Accepted Announce ", nestedObject.Type, " : ", activity.Actor)
-						} else {
-							go enqueueRelayActivity(actorID.Host, body)
-							logrus.Debug("Accepted Relay Activity : ", activity.Actor)
-						}
-					} else {
-						logrus.Debug("Skipped Relay Activity : ", activity.Actor)
 					}
 					writer.WriteHeader(202)
 					writer.Write(nil)
@@ -282,55 +323,29 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				// LitePub Relay Style
 				switch activity.Type {
 				case "Follow":
-					switch {
-					case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
-						err = executeFollowing(activity, actor)
-						if err != nil {
-							resp := activity.GenerateReply(RelayActor, activity, "Reject")
-							jsonData, _ := json.Marshal(&resp)
-							go enqueueRegisterActivity(actor.Inbox, jsonData)
-							logrus.Error("Rejected Follow Request : ", activity.Actor, " ", err.Error())
-						}
-						writer.WriteHeader(202)
-						writer.Write(nil)
-					case contains(activity.Object, RelayActor.ID):
-						fallthrough
-					default:
-						err = errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to follow")
-						reject := activity.GenerateReply(RelayActor, activity, "Reject")
-						jsonData, _ := json.Marshal(&reject)
-						go enqueueRegisterActivity(actor.Inbox, jsonData)
-						logrus.Error("Rejected Follow Request : ", activity.Actor, " ", err.Error())
-						writer.WriteHeader(202)
-						writer.Write(nil)
+					err = executeFollowing(activity, actor)
+					if err != nil {
+						executeRejectRequest(activity, actor, err)
 					}
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				case "Undo":
 					innerActivity, _ := activity.UnwrapInnerActivity()
 					switch innerActivity.Type {
 					case "Follow":
-						switch {
-						case contains(innerActivity.Object, "https://www.w3.org/ns/activitystreams#Public"):
-							executeUnfollowing(activity)
-							writer.WriteHeader(202)
-							writer.Write(nil)
-						case contains(innerActivity.Object, RelayActor.ID):
-							fallthrough
-						default:
-							err = errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
-							reject := activity.GenerateReply(RelayActor, activity, "Reject")
-							jsonData, _ := json.Marshal(&reject)
-							go enqueueRegisterActivity(actor.Inbox, jsonData)
-							logrus.Error("Rejected Follow Request : ", activity.Actor, " ", err.Error())
-							writer.WriteHeader(202)
-							writer.Write(nil)
+						err = executeUnfollowing(activity, actor)
+						if err != nil {
+							executeRejectRequest(activity, actor, err)
 						}
+						writer.WriteHeader(202)
+						writer.Write(nil)
 					default:
 						writer.WriteHeader(202)
 						writer.Write(nil)
 					}
 				case "Announce":
-					err = isRelayAcceptable(activity)
-					if err != nil {
+					if !isActorSubscribed(actorID) {
+						err = errors.New("to use the relay service, please follow in advance")
 						writer.WriteHeader(401)
 						writer.Write([]byte(err.Error()))
 
@@ -347,48 +362,22 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 				// Follow, Unfollow Only
 				switch activity.Type {
 				case "Follow":
-					switch {
-					case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
-						err = executeFollowing(activity, actor)
-						if err != nil {
-							resp := activity.GenerateReply(RelayActor, activity, "Reject")
-							jsonData, _ := json.Marshal(&resp)
-							go enqueueRegisterActivity(actor.Inbox, jsonData)
-							logrus.Error("Rejected Follow Request : ", activity.Actor, " ", err.Error())
-						}
-						writer.WriteHeader(202)
-						writer.Write(nil)
-					case contains(activity.Object, RelayActor.ID):
-						fallthrough
-					default:
-						err = errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to follow")
-						reject := activity.GenerateReply(RelayActor, activity, "Reject")
-						jsonData, _ := json.Marshal(&reject)
-						go enqueueRegisterActivity(actor.Inbox, jsonData)
-						logrus.Error("Rejected Follow Request : ", activity.Actor, " ", err.Error())
-						writer.WriteHeader(202)
-						writer.Write(nil)
+					err = executeFollowing(activity, actor)
+					if err != nil {
+						executeRejectRequest(activity, actor, err)
 					}
+					writer.WriteHeader(202)
+					writer.Write(nil)
 				case "Undo":
 					innerActivity, _ := activity.UnwrapInnerActivity()
 					switch innerActivity.Type {
 					case "Follow":
-						switch {
-						case contains(innerActivity.Object, "https://www.w3.org/ns/activitystreams#Public"):
-							executeUnfollowing(activity)
-							writer.WriteHeader(202)
-							writer.Write(nil)
-						case contains(innerActivity.Object, RelayActor.ID):
-							fallthrough
-						default:
-							err = errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
-							reject := activity.GenerateReply(RelayActor, activity, "Reject")
-							jsonData, _ := json.Marshal(&reject)
-							go enqueueRegisterActivity(actor.Inbox, jsonData)
-							logrus.Error("Rejected Unfollow Request : ", activity.Actor, " ", err.Error())
-							writer.WriteHeader(202)
-							writer.Write(nil)
+						err = executeUnfollowing(innerActivity, actor)
+						if err != nil {
+							executeRejectRequest(activity, actor, err)
 						}
+						writer.WriteHeader(202)
+						writer.Write(nil)
 					default:
 						writer.WriteHeader(202)
 						writer.Write(nil)

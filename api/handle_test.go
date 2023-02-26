@@ -337,13 +337,13 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 
 	RelayState.SetConfig(BlockService, false)
 
-	if isRelayRetransmission(&activity, &personActor) != true {
+	if isActivityAbleToRelay(&activity, &personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isRelayRetransmission(&activity, &serviceActor) != true {
+	if isActivityAbleToRelay(&activity, &serviceActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
-	if isRelayRetransmission(&activity, &applicationActor) != true {
+	if isActivityAbleToRelay(&activity, &applicationActor) != true {
 		t.Fatalf("fail - Service activity should relay")
 	}
 }
@@ -356,13 +356,13 @@ func TestSuitableRelayBlockService(t *testing.T) {
 
 	RelayState.SetConfig(BlockService, true)
 
-	if isRelayRetransmission(&activity, &personActor) != true {
+	if isActivityAbleToRelay(&activity, &personActor) != true {
 		t.Fatalf("fail - Person activity should relay")
 	}
-	if isRelayRetransmission(&activity, &serviceActor) != false {
+	if isActivityAbleToRelay(&activity, &serviceActor) != false {
 		t.Fatalf("fail - Service activity should not relay when blocking mode")
 	}
-	if isRelayRetransmission(&activity, &applicationActor) != false {
+	if isActivityAbleToRelay(&activity, &applicationActor) != false {
 		t.Fatalf("fail - Application activity should not relay when blocking mode")
 	}
 	RelayState.SetConfig(BlockService, false)
@@ -786,8 +786,8 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	defer s.Close()
 
 	RelayState.AddSubscription(models.Subscription{
-		Domain:   domain.Host,
-		InboxURL: "https://mastodon.test.yukimochi.io/inbox",
+		Domain:   "carol-sol-coffee-shareware.trycloudflare.com",
+		InboxURL: "https://carol-sol-coffee-shareware.trycloudflare.com/inbox",
 	})
 	RelayState.AddSubscription(models.Subscription{
 		Domain:   "example.org",
@@ -800,7 +800,7 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	if err != nil {
 		t.Fatalf("fail - " + err.Error())
 	}
-	if r.StatusCode != 202 {
+	if r.StatusCode != 400 {
 		t.Fatalf("fail - StatusCode is not match")
 	}
 	RelayState.DelSubscription(domain.Host)

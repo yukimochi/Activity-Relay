@@ -15,7 +15,7 @@
   "published": "2023-02-25T17:37:46.363511Z",
   "to": [
     "https://carol-sol-coffee-shareware.trycloudflare.com/relay/followers",
-    "https://carol-sol-coffee-shareware.trycloudflare.com/users/admin"
+    "https://relay.toot.yukimochi.jp/actor"
   ],
   "type": "Announce"
 }
