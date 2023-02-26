@@ -311,7 +311,7 @@ func finalizeMutuallyFollow(activity *models.Activity, actor *models.Actor, acti
 	actorID, _ := url.Parse(actor.ID)
 	if contains(activity.Actor, RelayActor.ID) && contains(activity.Object, actor.ID) && isActorFollowers(actorID) {
 		RelayState.UpdateFollowerStatus(actorID.Host, activityType == "Accept")
-		logrus.Info("Confirmed MutuallyFollow "+activityType+"ed : ", activity.Actor)
+		logrus.Info("Confirmed MutuallyFollow "+activityType+"ed : ", actor.ID)
 	}
 }
 
