@@ -202,9 +202,10 @@ func isToMyFollower(entries []string) bool {
 	for _, entry := range entries {
 		isToFollower := regexp.MustCompile(`/followers$`)
 		if isToFollower.MatchString(entry) {
-			actorID, _ := url.Parse(entry)
-			if contains(RelayState.Followers, actorID.Host) {
-				return true
+			for _, follower := range RelayState.Followers {
+				if follower.ActorID+"/followers" == entry {
+					return true
+				}
 			}
 		}
 	}
