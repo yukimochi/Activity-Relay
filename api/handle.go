@@ -237,7 +237,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	case contains(activity.Object, RelayActor.ID):
 		fallthrough
 	default:
-		err := errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to unfollow")
+		err := errors.New("only https://www.w3.org/ns/activitystreams#Public is allowed to follow")
 		return err
 	}
 	return nil
