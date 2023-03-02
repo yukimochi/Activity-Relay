@@ -71,6 +71,16 @@ JOB_CONCURRENCY: 50
  - RELAY_ICON
  - RELAY_IMAGE
 
+## How to Use Relay (for Relay Customers)
+
+### Mastodon, Misskey and their forks
+
+Subscribe this inbox `https://<your-relay-server-address>/inbox`
+
+### Pleroma and their forks
+
+Follow this actor `https://<your-relay-server-address>/actor`
+
 ## [Document](https://github.com/yukimochi/Activity-Relay/wiki)
 
 See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki) to build / install / control relay.
