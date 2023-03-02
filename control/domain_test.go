@@ -158,7 +158,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	app.Execute()
 
 	app = domainCmdInit()
-	app.SetArgs([]string{"set", "-t", "blocked", "-u", "blockedDomain.example.jp"})
+	app.SetArgs([]string{"unset", "-t", "blocked", "blockedDomain.example.jp"})
 	app.Execute()
 	RelayState.Load()
 
@@ -188,7 +188,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 	app.Execute()
 
 	app = domainCmdInit()
-	app.SetArgs([]string{"set", "-t", "limited", "-u", "limitedDomain.example.jp"})
+	app.SetArgs([]string{"unset", "-t", "limited", "limitedDomain.example.jp"})
 	app.Execute()
 	RelayState.Load()
 
