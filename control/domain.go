@@ -18,7 +18,7 @@ func domainCmdInit() *cobra.Command {
 	var domainList = &cobra.Command{
 		Use:   "list [flags]",
 		Short: "List domain",
-		Long:  "List domain which filtered given type.",
+		Long:  "List domain which filtered provided type.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(listDomains, cmd, args)
 		},
@@ -28,8 +28,8 @@ func domainCmdInit() *cobra.Command {
 
 	var domainSet = &cobra.Command{
 		Use:   "set [flags]",
-		Short: "Set or unset domain as limited or blocked",
-		Long:  "Set or unset domain as limited or blocked.",
+		Short: "Set domain as limited or blocked",
+		Long:  "Set domain as limited or blocked.",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(setDomainType, cmd, args)
@@ -37,13 +37,25 @@ func domainCmdInit() *cobra.Command {
 	}
 	domainSet.Flags().StringP("type", "t", "", "Apply domain type [limited,blocked]")
 	domainSet.MarkFlagRequired("type")
-	domainSet.Flags().BoolP("undo", "u", false, "Unset domain as limited or blocked")
 	domain.AddCommand(domainSet)
+
+	var domainUnset = &cobra.Command{
+		Use:   "unset [flags]",
+		Short: "Unset domain as limited or blocked",
+		Long:  "Unset domain as limited or blocked.",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return InitProxyE(unsetDomainType, cmd, args)
+		},
+	}
+	domainUnset.Flags().StringP("type", "t", "", "Apply domain type [limited,blocked]")
+	domainUnset.MarkFlagRequired("type")
+	domain.AddCommand(domainUnset)
 
 	var domainUnfollow = &cobra.Command{
 		Use:   "unfollow [flags]",
-		Short: "Send Unfollow request for given domains",
-		Long:  "Send unfollow request for given domains.",
+		Short: "Send Unfollow request for provided domains",
+		Long:  "Send unfollow request for provided domains.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(unfollowDomains, cmd, args)
 		},
@@ -53,86 +65,132 @@ func domainCmdInit() *cobra.Command {
 	return domain
 }
 
-func createUnfollowRequestResponse(subscription models.Subscription) error {
+func createUnfollowToSubscriberRequest(subscriber models.Subscriber) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
-		ID:      subscription.ActivityID,
-		Actor:   subscription.ActorID,
+		ID:      subscriber.ActivityID,
+		Actor:   subscriber.ActorID,
 		Type:    "Follow",
 		Object:  "https://www.w3.org/ns/activitystreams#Public",
 	}
 
 	resp := activity.GenerateReply(RelayActor, activity, "Reject")
 	jsonData, _ := json.Marshal(&resp)
-	pushRegisterJob(subscription.InboxURL, jsonData)
+	enqueueRegisterActivity(subscriber.InboxURL, jsonData)
+
+	return nil
+}
+
+func createUnfollowToFollowerRequest(follower models.Follower) error {
+	activity := models.Activity{
+		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
+		ID:      follower.ActivityID,
+		Actor:   follower.ActorID,
+		Type:    "Follow",
+		Object:  RelayActor.ID,
+	}
+
+	resp := activity.GenerateReply(RelayActor, activity, "Reject")
+	jsonData, _ := json.Marshal(&resp)
+	enqueueRegisterActivity(follower.InboxURL, jsonData)
 
 	return nil
 }
 
 func listDomains(cmd *cobra.Command, _ []string) error {
-	var domains []string
+	var count int
 	switch cmd.Flag("type").Value.String() {
 	case "limited":
-		cmd.Println(" - Limited domain :")
-		domains = RelayState.LimitedDomains
+		cmd.Println(" - Limited domains :")
+		for _, domain := range RelayState.LimitedDomains {
+			count = count + 1
+			cmd.Println(domain)
+		}
 	case "blocked":
-		cmd.Println(" - Blocked domain :")
-		domains = RelayState.BlockedDomains
+		cmd.Println(" - Blocked domains :")
+		for _, domain := range RelayState.BlockedDomains {
+			count = count + 1
+			cmd.Println(domain)
+		}
 	default:
-		cmd.Println(" - Subscriber domain :")
-		temp := RelayState.Subscriptions
-		for _, domain := range temp {
-			domains = append(domains, domain.Domain)
+		cmd.Println(" - Subscriber list :")
+		subscribers := RelayState.Subscribers
+		for _, subscriber := range subscribers {
+			count = count + 1
+			cmd.Println("[*] " + subscriber.Domain)
+		}
+		cmd.Println(" - Follower list :")
+		followers := RelayState.Followers
+		for _, follower := range followers {
+			count = count + 1
+			if follower.MutuallyFollow {
+				cmd.Println("[*] " + follower.Domain)
+			} else {
+				cmd.Println("[-] " + follower.Domain)
+			}
 		}
 	}
-	for _, domain := range domains {
-		cmd.Println(domain)
-	}
-	cmd.Println(fmt.Sprintf("Total : %d", len(domains)))
+	cmd.Println(fmt.Sprintf("Total : %d", count))
 
 	return nil
 }
 
 func setDomainType(cmd *cobra.Command, args []string) error {
-	undo := cmd.Flag("undo").Value.String() == "true"
 	switch cmd.Flag("type").Value.String() {
 	case "limited":
 		for _, domain := range args {
-			RelayState.SetLimitedDomain(domain, !undo)
-			if undo {
-				cmd.Println("Unset [" + domain + "] as limited domain")
-			} else {
-				cmd.Println("Set [" + domain + "] as limited domain")
-			}
+			RelayState.SetLimitedDomain(domain, true)
+			cmd.Println("Set [" + domain + "] as limited domain")
 		}
 	case "blocked":
 		for _, domain := range args {
-			RelayState.SetBlockedDomain(domain, !undo)
-			if undo {
-				cmd.Println("Unset [" + domain + "] as blocked domain")
-			} else {
-				cmd.Println("Set [" + domain + "] as blocked domain")
-			}
+			RelayState.SetBlockedDomain(domain, true)
+			cmd.Println("Set [" + domain + "] as blocked domain")
 		}
 	default:
-		cmd.Println("Invalid type given")
+		cmd.Println("Invalid type provided")
+	}
+
+	return nil
+}
+
+func unsetDomainType(cmd *cobra.Command, args []string) error {
+	switch cmd.Flag("type").Value.String() {
+	case "limited":
+		for _, domain := range args {
+			RelayState.SetLimitedDomain(domain, false)
+			cmd.Println("Unset [" + domain + "] as limited domain")
+		}
+	case "blocked":
+		for _, domain := range args {
+			RelayState.SetBlockedDomain(domain, false)
+			cmd.Println("Unset [" + domain + "] as blocked domain")
+		}
+	default:
+		cmd.Println("Invalid type provided")
 	}
 
 	return nil
 }
 
 func unfollowDomains(cmd *cobra.Command, args []string) error {
-	subscriptions := RelayState.Subscriptions
+	subscriptions := RelayState.Subscribers
+	followers := RelayState.Followers
 	for _, domain := range args {
-		if contains(subscriptions, domain) {
-			subscription := *RelayState.SelectSubscription(domain)
-			createUnfollowRequestResponse(subscription)
-			RelayState.DelSubscription(subscription.Domain)
+		switch {
+		case contains(subscriptions, domain):
+			subscription := *RelayState.SelectSubscriber(domain)
+			createUnfollowToSubscriberRequest(subscription)
+			RelayState.DelSubscriber(subscription.Domain)
 			cmd.Println("Unfollow [" + subscription.Domain + "]")
-		} else {
-			cmd.Println("Invalid domain [" + domain + "] given")
+		case contains(followers, domain):
+			follower := *RelayState.SelectFollower(domain)
+			createUnfollowToFollowerRequest(follower)
+			RelayState.DelFollower(follower.Domain)
+			cmd.Println("Unfollow [" + follower.Domain + "]")
+		default:
+			cmd.Println("Invalid domain [" + domain + "] provided")
 		}
 	}
-
 	return nil
 }

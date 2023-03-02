@@ -3,6 +3,7 @@ package control
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	uuid "github.com/satori/go.uuid"
@@ -54,7 +55,7 @@ func followCmdInit() *cobra.Command {
 	var updateActor = &cobra.Command{
 		Use:   "update",
 		Short: "Update actor object",
-		Long:  "Update actor object for whole subscribers.",
+		Long:  "Update actor object for whole subscribers/followers.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(updateActor, cmd, args)
 		},
@@ -64,7 +65,7 @@ func followCmdInit() *cobra.Command {
 	return follow
 }
 
-func pushRegisterJob(inboxURL string, body []byte) {
+func enqueueRegisterActivity(inboxURL string, body []byte) {
 	job := &tasks.Signature{
 		Name:       "register",
 		RetryCount: 25,
@@ -105,21 +106,39 @@ func createFollowRequestResponse(domain string, response string) error {
 	if err != nil {
 		return err
 	}
-	pushRegisterJob(data["inbox_url"], jsonData)
+	enqueueRegisterActivity(data["inbox_url"], jsonData)
 	RelayState.RedisClient.Del("relay:pending:" + domain)
-	if response == "Accept" {
-		RelayState.AddSubscription(models.Subscription{
-			Domain:     domain,
-			InboxURL:   data["inbox_url"],
-			ActivityID: data["activity_id"],
-			ActorID:    data["actor"],
-		})
-	}
 
+	switch {
+	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
+		if response == "Accept" {
+			RelayState.AddSubscriber(models.Subscriber{
+				Domain:     domain,
+				InboxURL:   data["inbox_url"],
+				ActivityID: data["activity_id"],
+				ActorID:    data["actor"],
+			})
+		}
+	case contains(activity.Object, RelayActor.ID):
+		if response == "Accept" {
+			RelayState.AddFollower(models.Follower{
+				Domain:     domain,
+				InboxURL:   data["inbox_url"],
+				ActivityID: data["activity_id"],
+				ActorID:    data["actor"],
+			})
+			actorID, _ := url.Parse(data["actor"])
+			if !contains(RelayState.LimitedDomains, actorID.Host) {
+				followRequest := models.NewActivityPubActivity(RelayActor, []string{data["actor"]}, data["actor"], "Follow")
+				jsonData, _ := json.Marshal(&followRequest)
+				enqueueRegisterActivity(data["inbox_url"], jsonData)
+			}
+		}
+	}
 	return nil
 }
 
-func createUpdateActorActivity(subscription models.Subscription) error {
+func createUpdateActorActivity(subscription models.Subscriber) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams"},
 		ID:      GlobalConfig.ServerHostname().String() + "/activities/" + uuid.NewV4().String(),
@@ -133,7 +152,7 @@ func createUpdateActorActivity(subscription models.Subscription) error {
 	if err != nil {
 		return err
 	}
-	pushRegisterJob(subscription.InboxURL, jsonData)
+	enqueueRegisterActivity(subscription.InboxURL, jsonData)
 
 	return nil
 }
@@ -203,7 +222,7 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 }
 
 func updateActor(cmd *cobra.Command, _ []string) error {
-	for _, subscription := range RelayState.Subscriptions {
+	for _, subscription := range RelayState.SubscribersAndFollowers {
 		err := createUpdateActorActivity(subscription)
 		if err != nil {
 			cmd.Println("Failed Update RelayActor for " + subscription.Domain)
