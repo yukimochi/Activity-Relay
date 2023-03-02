@@ -86,7 +86,7 @@ Thank you for your support!
 ### Monthly Donation
 
 - [Patreon](https://www.patreon.com/yukimochi)
-- [pixiv fanbox](https://yukimochi.fanbox.cc)
+- [pixivFANBOX](https://yukimochi.fanbox.cc)
 - [fantia](https://fantia.jp/fanclubs/11264)
 
 **[My Donor List](https://relay.toot.yukimochi.jp#patreon-list)**
