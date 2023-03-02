@@ -42,7 +42,7 @@ func configCmdInit() *cobra.Command {
 	var configImport = &cobra.Command{
 		Use:   "import [flags]",
 		Short: "Import all relay information",
-		Long:  "Import all relay information from JSON file.",
+		Long:  "Import all relay information from JSON.",
 		Run: func(cmd *cobra.Command, args []string) {
 			InitProxy(importConfig, cmd, args)
 		},

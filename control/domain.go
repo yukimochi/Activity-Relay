@@ -28,8 +28,8 @@ func domainCmdInit() *cobra.Command {
 
 	var domainSet = &cobra.Command{
 		Use:   "set [flags]",
-		Short: "Set or unset domain as limited or blocked",
-		Long:  "Set or unset domain as limited or blocked.",
+		Short: "Set domain as limited or blocked",
+		Long:  "Set domain as limited or blocked.",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(setDomainType, cmd, args)
@@ -37,8 +37,20 @@ func domainCmdInit() *cobra.Command {
 	}
 	domainSet.Flags().StringP("type", "t", "", "Apply domain type [limited,blocked]")
 	domainSet.MarkFlagRequired("type")
-	domainSet.Flags().BoolP("undo", "u", false, "Unset domain as limited or blocked")
 	domain.AddCommand(domainSet)
+
+	var domainUnset = &cobra.Command{
+		Use:   "unset [flags]",
+		Short: "Unset domain as limited or blocked",
+		Long:  "Unset domain as limited or blocked.",
+		Args:  cobra.MinimumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return InitProxyE(unsetDomainType, cmd, args)
+		},
+	}
+	domainUnset.Flags().StringP("type", "t", "", "Apply domain type [limited,blocked]")
+	domainUnset.MarkFlagRequired("type")
+	domain.AddCommand(domainUnset)
 
 	var domainUnfollow = &cobra.Command{
 		Use:   "unfollow [flags]",
@@ -124,25 +136,35 @@ func listDomains(cmd *cobra.Command, _ []string) error {
 }
 
 func setDomainType(cmd *cobra.Command, args []string) error {
-	undo := cmd.Flag("undo").Value.String() == "true"
 	switch cmd.Flag("type").Value.String() {
 	case "limited":
 		for _, domain := range args {
-			RelayState.SetLimitedDomain(domain, !undo)
-			if undo {
-				cmd.Println("Unset [" + domain + "] as limited domain")
-			} else {
-				cmd.Println("Set [" + domain + "] as limited domain")
-			}
+			RelayState.SetLimitedDomain(domain, true)
+			cmd.Println("Set [" + domain + "] as limited domain")
 		}
 	case "blocked":
 		for _, domain := range args {
-			RelayState.SetBlockedDomain(domain, !undo)
-			if undo {
-				cmd.Println("Unset [" + domain + "] as blocked domain")
-			} else {
-				cmd.Println("Set [" + domain + "] as blocked domain")
-			}
+			RelayState.SetBlockedDomain(domain, true)
+			cmd.Println("Set [" + domain + "] as blocked domain")
+		}
+	default:
+		cmd.Println("Invalid type provided")
+	}
+
+	return nil
+}
+
+func unsetDomainType(cmd *cobra.Command, args []string) error {
+	switch cmd.Flag("type").Value.String() {
+	case "limited":
+		for _, domain := range args {
+			RelayState.SetLimitedDomain(domain, false)
+			cmd.Println("Unset [" + domain + "] as limited domain")
+		}
+	case "blocked":
+		for _, domain := range args {
+			RelayState.SetBlockedDomain(domain, false)
+			cmd.Println("Unset [" + domain + "] as blocked domain")
 		}
 	default:
 		cmd.Println("Invalid type provided")

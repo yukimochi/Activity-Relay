@@ -55,7 +55,7 @@ func followCmdInit() *cobra.Command {
 	var updateActor = &cobra.Command{
 		Use:   "update",
 		Short: "Update actor object",
-		Long:  "Update actor object for whole subscribers.",
+		Long:  "Update actor object for whole subscribers/followers.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(updateActor, cmd, args)
 		},
@@ -222,7 +222,7 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 }
 
 func updateActor(cmd *cobra.Command, _ []string) error {
-	for _, subscription := range RelayState.Subscribers {
+	for _, subscription := range RelayState.SubscribersAndFollowers {
 		err := createUpdateActorActivity(subscription)
 		if err != nil {
 			cmd.Println("Failed Update RelayActor for " + subscription.Domain)
