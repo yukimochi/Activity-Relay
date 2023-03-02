@@ -76,6 +76,7 @@ JOB_CONCURRENCY: 50
 See [GitHub wiki](https://github.com/yukimochi/Activity-Relay/wiki) to build / install / control relay.
 
 ## License
+
 GNU AFFERO GENERAL PUBLIC LICENSE
 
 ## Project Sponsors
@@ -84,9 +85,12 @@ Thank you for your support!
 
 ### Monthly Donation
 
+- [Patreon](https://www.patreon.com/yukimochi)
+- [pixiv fanbox](https://yukimochi.fanbox.cc)
+- [fantia](https://fantia.jp/fanclubs/11264)
+
 **[My Donor List](https://relay.toot.yukimochi.jp#patreon-list)**
-  
-#### Donation Platform
- - [Patreon](https://www.patreon.com/yukimochi)
- - [pixiv fanbox](https://yukimochi.fanbox.cc)
- - [fantia](https://fantia.jp/fanclubs/11264)
+
+### Open Source Support Program
+
+- [JetBrains for Open Source](https://jb.gg/OpenSourceSupport)
