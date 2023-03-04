@@ -39,7 +39,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 
 	handlersRegister()
 
-	logrus.Info("Staring API Server at ", GlobalConfig.ServerBind())
+	logrus.Info("Starting API Server at ", GlobalConfig.ServerBind())
 	err = http.ListenAndServe(GlobalConfig.ServerBind(), nil)
 	if err != nil {
 		return err
