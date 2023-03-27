@@ -146,33 +146,36 @@ func (activity *Activity) GenerateReply(actor Actor, object interface{}, activit
 
 // UnwrapInnerActivity : Unwrap inner activity.
 func (activity *Activity) UnwrapInnerActivity() (*Activity, error) {
-	mappedObject := activity.Object.(map[string]interface{})
-	if id, ok := mappedObject["id"].(string); ok {
-		if nestedType, ok := mappedObject["type"].(string); ok {
-			actor, ok := mappedObject["actor"].(string)
-			if !ok {
-				actor = ""
-			}
-			switch object := mappedObject["object"].(type) {
+	switch innerActivity := activity.Object.(type) {
+	case map[string]interface{}:
+		innerId, IdOk := innerActivity["id"].(string)
+		innerType, TypeOk := innerActivity["type"].(string)
+		innerActor, ActorOk := innerActivity["actor"].(string)
+		nestedObject, ActivityOk := innerActivity["object"].(interface{})
+
+		if IdOk && TypeOk && ActorOk && ActivityOk {
+			switch object := innerActivity["object"].(type) {
 			case string:
 				return &Activity{
-					ID:     id,
-					Type:   nestedType,
-					Actor:  actor,
+					ID:     innerId,
+					Type:   innerType,
+					Actor:  innerActor,
 					Object: object,
 				}, nil
 			default:
 				return &Activity{
-					ID:     id,
-					Type:   nestedType,
-					Actor:  actor,
-					Object: mappedObject["object"],
+					ID:     innerId,
+					Type:   innerType,
+					Actor:  innerActor,
+					Object: nestedObject,
 				}, nil
 			}
+		} else {
+			return nil, errors.New("innerActivity couldn't unwrap")
 		}
-		return nil, errors.New("unwrap type failed")
+	default:
+		return nil, errors.New("object is not Activity")
 	}
-	return nil, errors.New("unwrap id failed")
 }
 
 // NewActivityPubActivity : Generate activity.
