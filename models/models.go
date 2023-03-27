@@ -151,7 +151,7 @@ func (activity *Activity) UnwrapInnerActivity() (*Activity, error) {
 		innerId, IdOk := innerActivity["id"].(string)
 		innerType, TypeOk := innerActivity["type"].(string)
 		innerActor, ActorOk := innerActivity["actor"].(string)
-		nestedObject, ActivityOk := innerActivity["object"].(interface{})
+		innerObject, ActivityOk := innerActivity["object"]
 
 		if IdOk && TypeOk && ActorOk && ActivityOk {
 			switch object := innerActivity["object"].(type) {
@@ -167,7 +167,7 @@ func (activity *Activity) UnwrapInnerActivity() (*Activity, error) {
 					ID:     innerId,
 					Type:   innerType,
 					Actor:  innerActor,
-					Object: nestedObject,
+					Object: innerObject,
 				}, nil
 			}
 		} else {
