@@ -135,7 +135,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					writer.WriteHeader(202)
 					writer.Write(nil)
 				case "Undo":
-					innerActivity, _ := activity.UnwrapInnerActivity()
+					innerActivity, err := activity.UnwrapInnerActivity()
+					if err != nil {
+						writer.WriteHeader(202)
+						writer.Write(nil)
+
+						return
+					}
 					switch innerActivity.Type {
 					case "Follow":
 						err = executeUnfollowing(innerActivity, actor)
@@ -149,7 +155,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.Write(nil)
 					}
 				case "Accept":
-					innerActivity, _ := activity.UnwrapInnerActivity()
+					innerActivity, err := activity.UnwrapInnerActivity()
+					if err != nil {
+						writer.WriteHeader(202)
+						writer.Write(nil)
+
+						return
+					}
 					switch innerActivity.Type {
 					case "Follow":
 						finalizeMutuallyFollow(innerActivity, actor, activity.Type)
@@ -160,7 +172,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 						writer.Write(nil)
 					}
 				case "Reject":
-					innerActivity, _ := activity.UnwrapInnerActivity()
+					innerActivity, err := activity.UnwrapInnerActivity()
+					if err != nil {
+						writer.WriteHeader(202)
+						writer.Write(nil)
+
+						return
+					}
 					switch innerActivity.Type {
 					case "Follow":
 						finalizeMutuallyFollow(innerActivity, actor, activity.Type)
@@ -209,7 +227,13 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 					writer.WriteHeader(202)
 					writer.Write(nil)
 				case "Undo":
-					innerActivity, _ := activity.UnwrapInnerActivity()
+					innerActivity, err := activity.UnwrapInnerActivity()
+					if err != nil {
+						writer.WriteHeader(202)
+						writer.Write(nil)
+
+						return
+					}
 					switch innerActivity.Type {
 					case "Follow":
 						err = executeUnfollowing(innerActivity, actor)
