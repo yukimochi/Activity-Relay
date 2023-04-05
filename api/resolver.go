@@ -332,21 +332,15 @@ func executeRelayActivity(activity *models.Activity, actor *models.Actor, body [
 	if isActorAbleToRelay(actor) {
 		go enqueueActivityForSubscriber(actorID.Host, body)
 
-		var innerActivityId = ""
-		switch innerObject := activity.Object.(type) {
-		case string:
-			innerActivityId = innerObject
-		case map[string]interface{}:
-			innerActivity, _ := activity.UnwrapInnerActivity()
-			innerActivityId = innerActivity.ID
-		}
-		if innerActivityId != "" {
-			announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, innerActivityId, "Announce")
+		var innnerObjectId, err = activity.UnwrapInnerObjectId()
+		if err != nil {
+			logrus.Debug("Accepted Relay Activity (Announce Failed) : ", activity.Actor)
+		} else {
+			announce := models.NewActivityPubActivity(RelayActor, []string{RelayActor.Followers()}, innnerObjectId, "Announce")
 			jsonData, _ := json.Marshal(&announce)
 			go enqueueActivityForFollower(actorID.Host, jsonData)
+			logrus.Debug("Accepted Relay Activity : ", activity.Actor)
 		}
-
-		logrus.Debug("Accepted Relay Activity : ", activity.Actor)
 	} else {
 		logrus.Debug("Skipped Relay Activity : ", activity.Actor)
 	}

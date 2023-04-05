@@ -170,12 +170,23 @@ func (activity *Activity) UnwrapInnerActivity() (*Activity, error) {
 					Object: innerObject,
 				}, nil
 			}
-		} else {
-			return nil, errors.New("innerActivity couldn't unwrap")
 		}
-	default:
-		return nil, errors.New("object is not Activity")
 	}
+	return nil, errors.New("object is not Activity")
+}
+
+// UnwrapInnerObjectId : Unwrap inner object id.
+func (activity *Activity) UnwrapInnerObjectId() (string, error) {
+	switch innerObject := activity.Object.(type) {
+	case string:
+		return innerObject, nil
+	case map[string]interface{}:
+		innerId, IdOk := innerObject["id"].(string)
+		if IdOk {
+			return innerId, nil
+		}
+	}
+	return "", errors.New("object not has id")
 }
 
 // NewActivityPubActivity : Generate activity.
