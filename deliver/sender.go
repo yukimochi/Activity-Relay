@@ -9,6 +9,7 @@ import (
 	"github.com/go-fed/httpsig"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"net/url"
 	"regexp"
 	"time"
 )
@@ -43,13 +44,21 @@ func sendActivity(inboxURL string, KeyID string, body []byte, privateKey *rsa.Pr
 	appendSignature(req, &body, KeyID, privateKey)
 	resp, err := HttpClient.Do(req)
 	if err != nil {
-		return err
+		urlErr := err.(*url.Error)
+		errMsg := ""
+
+		if urlErr.Timeout() {
+			errMsg = inboxURL + ": Client.Timeout exceeded while awaiting headers"
+		} else {
+			errMsg = inboxURL + ": " + urlErr.Unwrap().Error()
+		}
+		return errors.New(inboxURL + ": " + errMsg)
 	}
 	defer resp.Body.Close()
 
 	logrus.Debug(inboxURL, " ", resp.StatusCode)
 	if resp.StatusCode/100 != 2 {
-		return errors.New("Post " + inboxURL + ": " + resp.Status)
+		return errors.New(inboxURL + ": " + resp.Status)
 	}
 
 	return nil
