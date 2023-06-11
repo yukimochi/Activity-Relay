@@ -48,9 +48,9 @@ func sendActivity(inboxURL string, KeyID string, body []byte, privateKey *rsa.Pr
 		errMsg := ""
 
 		if urlErr.Timeout() {
-			errMsg = inboxURL + ": Client.Timeout exceeded while awaiting headers"
+			errMsg = "Client.Timeout exceeded while awaiting headers"
 		} else {
-			errMsg = inboxURL + ": " + urlErr.Unwrap().Error()
+			errMsg = urlErr.Unwrap().Error()
 		}
 		return errors.New(inboxURL + ": " + errMsg)
 	}
