@@ -121,15 +121,15 @@ func handleLanding(writer http.ResponseWriter, request *http.Request) {
 			ServiceImage   string
 		}{
 			Domain:         GlobalConfig.ServerHostname().String(),
-			NumDomains:     len(RelayState.Subscriptions),
+			NumDomains:     len(RelayState.SubscribersAndFollowers),
 			SubbedDomains:  []string{},
 			ServiceSummary: GlobalConfig.ServerServiceSummary(),
 			ServiceIcon:    ServiceIcon,
 			ServiceImage:   ServiceImage,
 		}
 
-		for i := 0; i < len(RelayState.Subscriptions); i++ {
-			data.SubbedDomains = append(data.SubbedDomains, RelayState.Subscriptions[i].Domain)
+		for i := 0; i < len(RelayState.SubscribersAndFollowers); i++ {
+			data.SubbedDomains = append(data.SubbedDomains, RelayState.SubscribersAndFollowers[i].Domain)
 		}
 
 		var htmlContent bytes.Buffer
