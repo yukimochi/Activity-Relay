@@ -77,4 +77,7 @@ func handlersRegister() {
 	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
 		handleInbox(w, r, decodeActivity)
 	})
+	if GlobalConfig.ServerServiceLanding() == "true" {
+		http.HandleFunc("/", handleLanding)
+	}
 }

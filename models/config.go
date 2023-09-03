@@ -25,6 +25,7 @@ type RelayConfig struct {
 	serviceSummary  string
 	serviceIconURL  *url.URL
 	serviceImageURL *url.URL
+	serviceLanding  string
 	jobConcurrency  int
 }
 
@@ -40,6 +41,8 @@ func NewRelayConfig() (*RelayConfig, error) {
 		logrus.Warn("RELAY_ICON: INVALID OR EMPTY. THIS COLUMN IS DISABLED.")
 		iconURL = nil
 	}
+
+	serviceLanding := viper.GetString("RELAY_LANDING")
 
 	imageURL, err := url.ParseRequestURI(viper.GetString("RELAY_IMAGE"))
 	if err != nil {
@@ -80,6 +83,7 @@ func NewRelayConfig() (*RelayConfig, error) {
 		serviceSummary:  viper.GetString("RELAY_SUMMARY"),
 		serviceIconURL:  iconURL,
 		serviceImageURL: imageURL,
+		serviceLanding:  serviceLanding,
 		jobConcurrency:  jobConcurrency,
 	}, nil
 }
@@ -94,9 +98,29 @@ func (relayConfig *RelayConfig) ServerHostname() *url.URL {
 	return relayConfig.domain
 }
 
+// ServerServiceSummary is API Server's service summary.
+func (relayConfig *RelayConfig) ServerServiceSummary() string {
+	return relayConfig.serviceSummary
+}
+
+// ServerServiceIcon is API Server's icon URL.
+func (relayConfig *RelayConfig) ServerServiceIcon() *url.URL {
+	return relayConfig.serviceIconURL
+}
+
+// ServerServiceImage is API Server's image URL.
+func (relayConfig *RelayConfig) ServerServiceImage() *url.URL {
+	return relayConfig.serviceImageURL
+}
+
 // ServerServiceName is API Server's servername definition.
 func (relayConfig *RelayConfig) ServerServiceName() string {
 	return relayConfig.serviceName
+}
+
+// ServerServiceLanding is API Server's service landing definition.
+func (relayConfig *RelayConfig) ServerServiceLanding() string {
+	return relayConfig.serviceLanding
 }
 
 // JobConcurrency is API Worker's jobConcurrency definition.

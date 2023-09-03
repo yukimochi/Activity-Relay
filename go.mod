@@ -1,6 +1,6 @@
 module github.com/yukimochi/Activity-Relay
 
-go 1.20
+go 1.19
 
 require (
 	github.com/Songmu/go-httpdate v1.0.0
