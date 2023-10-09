@@ -3,7 +3,7 @@ package models
 import (
 	"strings"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	"github.com/sirupsen/logrus"
 )
 

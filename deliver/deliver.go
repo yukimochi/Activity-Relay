@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
