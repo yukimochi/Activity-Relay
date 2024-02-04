@@ -5,13 +5,14 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"github.com/Songmu/go-httpdate"
-	"github.com/go-fed/httpsig"
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"regexp"
 	"time"
+
+	"github.com/Songmu/go-httpdate"
+	"github.com/go-fed/httpsig"
+	"github.com/sirupsen/logrus"
 )
 
 func compatibilityForHTTPSignature11(request *http.Request, algorithm httpsig.Algorithm) {

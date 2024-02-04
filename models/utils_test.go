@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"errors"
 	"testing"
 )
@@ -9,7 +10,7 @@ func TestRedisHGetOrCreateWithDefault(t *testing.T) {
 	relayConfig := createRelayConfig(t)
 
 	t.Run("Execute HGet when value exist", func(t *testing.T) {
-		_, err := relayConfig.redisClient.HSet("gotest:redis:hget:or:create:with:default", "exist", "1").Result()
+		_, err := relayConfig.redisClient.HSet(context.TODO(), "gotest:redis:hget:or:create:with:default", "exist", "1").Result()
 		if err != nil {
 			t.Error(err)
 		}
@@ -22,7 +23,7 @@ func TestRedisHGetOrCreateWithDefault(t *testing.T) {
 			t.Error(errors.New("value is override by redisHGetOrCreateWithDefault"))
 		}
 
-		_, err = relayConfig.redisClient.HDel("gotest:redis:hget:or:create:with:default", "exist").Result()
+		_, err = relayConfig.redisClient.HDel(context.TODO(), "gotest:redis:hget:or:create:with:default", "exist").Result()
 		if err != nil {
 			t.Error(err)
 		}
@@ -34,7 +35,7 @@ func TestRedisHGetOrCreateWithDefault(t *testing.T) {
 			t.Error(err)
 		}
 
-		value, err := relayConfig.redisClient.HGet("gotest:redis:hget:or:create:with:default", "not_exist").Result()
+		value, err := relayConfig.redisClient.HGet(context.TODO(), "gotest:redis:hget:or:create:with:default", "not_exist").Result()
 		if err != nil {
 			t.Error(err)
 		}
@@ -43,7 +44,7 @@ func TestRedisHGetOrCreateWithDefault(t *testing.T) {
 			t.Error(errors.New("redisHGetOrCreateWithDefault is not write default value successfully"))
 		}
 
-		_, err = relayConfig.redisClient.HDel("gotest:redis:hget:or:create:with:default", "not_exist").Result()
+		_, err = relayConfig.redisClient.HDel(context.TODO(), "gotest:redis:hget:or:create:with:default", "not_exist").Result()
 		if err != nil {
 			t.Error(err)
 		}

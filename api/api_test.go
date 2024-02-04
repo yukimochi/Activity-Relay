@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -33,7 +34,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	RelayState = models.NewState(RelayState.RedisClient, false)
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 	code := m.Run()
 	os.Exit(code)
 }

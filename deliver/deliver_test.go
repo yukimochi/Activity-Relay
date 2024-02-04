@@ -1,8 +1,8 @@
 package deliver
 
 import (
+	"context"
 	"fmt"
-	uuid "github.com/satori/go.uuid"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +10,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/spf13/viper"
 	"github.com/yukimochi/Activity-Relay/models"
 )
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	RedisClient.FlushAll().Result()
+	RedisClient.FlushAll(context.TODO()).Result()
 	code := m.Run()
 	os.Exit(code)
 }
@@ -55,11 +56,11 @@ func TestRelayActivity(t *testing.T) {
 	}))
 	defer s.Close()
 
-	activityID := uuid.NewV4()
+	activityID := uuid.New()
 	remainCount := 1
 
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
+	RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
 
 	err := relayActivityV2(s.URL, activityID.String())
 	if err != nil {
@@ -73,18 +74,18 @@ func TestRelayActivityNoHost(t *testing.T) {
 	}))
 	defer s.Close()
 
-	activityID := uuid.NewV4()
+	activityID := uuid.New()
 	remainCount := 1
 
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
+	RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
 
 	err := relayActivityV2("http://nohost.example.jp", activityID.String())
 	if err == nil {
 		t.Fatal("fail - Error not reported")
 	}
 	domain, _ := url.Parse("http://nohost.example.jp")
-	data, _ := RedisClient.HGet("relay:statistics:"+domain.Host, "last_error").Result()
+	data, _ := RedisClient.HGet(context.TODO(), "relay:statistics:"+domain.Host, "last_error").Result()
 	if data == "" {
 		t.Fatal("fail - Error not saved")
 	}
@@ -97,18 +98,18 @@ func TestRelayActivityResp500(t *testing.T) {
 	}))
 	defer s.Close()
 
-	activityID := uuid.NewV4()
+	activityID := uuid.New()
 	remainCount := 1
 
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
+	RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, "ExampleData", remainCount, 10).Result()
 
 	err := relayActivityV2(s.URL, activityID.String())
 	if err == nil {
 		t.Fatal("fail - Error not reported")
 	}
 	domain, _ := url.Parse(s.URL)
-	data, _ := RedisClient.HGet("relay:statistics:"+domain.Host, "last_error").Result()
+	data, _ := RedisClient.HGet(context.TODO(), "relay:statistics:"+domain.Host, "last_error").Result()
 	if data == "" {
 		t.Fatal("fail - Error not saved")
 	}

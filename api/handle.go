@@ -3,10 +3,11 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/sirupsen/logrus"
-	"github.com/yukimochi/Activity-Relay/models"
 	"net/http"
 	"net/url"
+
+	"github.com/sirupsen/logrus"
+	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func handleWebfinger(writer http.ResponseWriter, request *http.Request) {

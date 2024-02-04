@@ -1,11 +1,12 @@
 package models
 
 import (
+	"context"
 	"testing"
 )
 
 func TestLoadEmpty(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 	relayState.Load()
 
 	if relayState.RelayConfig.PersonOnly != false {
@@ -17,7 +18,7 @@ func TestLoadEmpty(t *testing.T) {
 }
 
 func TestSetConfig(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	relayState.SetConfig(PersonOnly, true)
 	<-ch
@@ -43,7 +44,7 @@ func TestSetConfig(t *testing.T) {
 }
 
 func TestTreatSubscriptionNotify(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	relayState.AddSubscriber(Subscriber{
 		Domain:   "example.com",
@@ -75,7 +76,7 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 }
 
 func TestSelectDomain(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	exampleSubscription := Subscriber{
 		Domain:   "example.com",
@@ -97,7 +98,7 @@ func TestSelectDomain(t *testing.T) {
 }
 
 func TestBlockedDomain(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	relayState.SetBlockedDomain("example.com", true)
 	<-ch
@@ -126,7 +127,7 @@ func TestBlockedDomain(t *testing.T) {
 }
 
 func TestLimitedDomain(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	relayState.SetLimitedDomain("example.com", true)
 	<-ch
@@ -155,14 +156,14 @@ func TestLimitedDomain(t *testing.T) {
 }
 
 func TestLoadCompatibleSubscription(t *testing.T) {
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	relayState.AddSubscriber(Subscriber{
 		Domain:   "example.com",
 		InboxURL: "https://example.com/inbox",
 	})
 
-	relayState.RedisClient.HDel("relay:subscription:example.com", "activity_id", "actor_id")
+	relayState.RedisClient.HDel(context.TODO(), "relay:subscription:example.com", "activity_id", "actor_id")
 	relayState.Load()
 
 	valid := false

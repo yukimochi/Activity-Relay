@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"github.com/Songmu/go-httpdate"
-	"github.com/go-fed/httpsig"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 	"testing"
 	"time"
+
+	"github.com/Songmu/go-httpdate"
+	"github.com/go-fed/httpsig"
 )
 
 func TestAppendSignature(t *testing.T) {

@@ -1,13 +1,14 @@
 package deliver
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/go-redis/redis/v7"
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1"
@@ -29,7 +30,7 @@ var (
 func relayActivityV2(args ...string) error {
 	inboxURL := args[0]
 	activityID := args[1]
-	body, err := RedisClient.HGet("relay:activity:"+activityID, "body").Result()
+	body, err := RedisClient.HGet(context.TODO(), "relay:activity:"+activityID, "body").Result()
 	if err != nil {
 		return errors.New("activity ttl expired")
 	}
@@ -38,10 +39,10 @@ func relayActivityV2(args ...string) error {
 	if err != nil {
 		domain, _ := url.Parse(inboxURL)
 		pushErrorLogScript := "local change = redis.call('HSETNX', KEYS[1], 'last_error', ARGV[1]); if change == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end;"
-		RedisClient.Eval(pushErrorLogScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
+		RedisClient.Eval(context.TODO(), pushErrorLogScript, []string{"relay:statistics:" + domain.Host}, err.Error(), 60).Result()
 	}
 	reductionRemainCountScript := "local remain_count = redis.call('HINCRBY', KEYS[1], 'remain_count', -1); if remain_count < 1 then redis.call('DEL', KEYS[1]) end;"
-	RedisClient.Eval(reductionRemainCountScript, []string{"relay:activity:" + activityID}).Result()
+	RedisClient.Eval(context.TODO(), reductionRemainCountScript, []string{"relay:activity:" + activityID}).Result()
 	return err
 }
 
@@ -72,7 +73,7 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 		return err
 	}
 
-	workerID := uuid.NewV4()
+	workerID := uuid.New()
 	worker := MachineryServer.NewWorker(workerID.String(), GlobalConfig.JobConcurrency())
 	err = worker.Launch()
 	if err != nil {

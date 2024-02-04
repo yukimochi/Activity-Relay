@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/patrickmn/go-cache"
-	uuid "github.com/satori/go.uuid"
 )
 
 // PublicKey : Activity Certificate.
@@ -135,7 +135,7 @@ type Activity struct {
 func (activity *Activity) GenerateReply(actor Actor, object interface{}, activityType string) Activity {
 	return Activity{
 		[]string{"https://www.w3.org/ns/activitystreams"},
-		actor.ID + "/activities/" + uuid.NewV4().String(),
+		actor.ID + "/activities/" + uuid.New().String(),
 		actor.ID,
 		activityType,
 		object,
@@ -193,7 +193,7 @@ func (activity *Activity) UnwrapInnerObjectId() (string, error) {
 func NewActivityPubActivity(actor Actor, to []string, object interface{}, activityType string) Activity {
 	return Activity{
 		[]string{"https://www.w3.org/ns/activitystreams"},
-		actor.ID + "/activities/" + uuid.NewV4().String(),
+		actor.ID + "/activities/" + uuid.New().String(),
 		actor.ID,
 		activityType,
 		object,

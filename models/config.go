@@ -1,13 +1,14 @@
 package models
 
 import (
+	"context"
 	"crypto/rsa"
 	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/yukimochi/machinery-v1/v1"
@@ -63,7 +64,7 @@ func NewRelayConfig() (*RelayConfig, error) {
 		return nil, errors.New("REDIS_URL: " + err.Error())
 	}
 	redisClient := redis.NewClient(redisOption)
-	err = redisClient.Ping().Err()
+	err = redisClient.Ping(context.TODO()).Err()
 	if err != nil {
 		return nil, errors.New("REDIS_URL: " + err.Error())
 	}

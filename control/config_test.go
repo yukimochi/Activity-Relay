@@ -2,6 +2,7 @@ package control
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"strings"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestPersonOnly(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 
@@ -29,7 +30,7 @@ func TestPersonOnly(t *testing.T) {
 }
 
 func TestManuallyAccept(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 
@@ -49,7 +50,7 @@ func TestManuallyAccept(t *testing.T) {
 }
 
 func TestInvalidConfig(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
@@ -65,7 +66,7 @@ func TestInvalidConfig(t *testing.T) {
 }
 
 func TestListConfig(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
@@ -94,7 +95,7 @@ func TestListConfig(t *testing.T) {
 }
 
 func TestExportConfig(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	buffer := new(bytes.Buffer)
@@ -115,7 +116,7 @@ func TestExportConfig(t *testing.T) {
 }
 
 func TestImportConfig(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
