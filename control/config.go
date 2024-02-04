@@ -2,6 +2,7 @@ package control
 
 import (
 	"encoding/json"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"

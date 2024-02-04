@@ -2,6 +2,7 @@ package control
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"strings"
@@ -9,14 +10,14 @@ import (
 )
 
 func TestListFollows(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := followCmdInit()
 
 	buffer := new(bytes.Buffer)
 	app.SetOut(buffer)
 
-	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
@@ -38,11 +39,11 @@ Total : 1
 }
 
 func TestAcceptSubscribe(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := followCmdInit()
 
-	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
@@ -53,23 +54,23 @@ func TestAcceptSubscribe(t *testing.T) {
 	app.SetArgs([]string{"accept", "example.com"})
 	app.Execute()
 
-	valid, _ := RelayState.RedisClient.Exists("relay:pending:example.com").Result()
+	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("Not removed follow request.")
 	}
 
-	valid, _ = RelayState.RedisClient.Exists("relay:subscription:example.com").Result()
+	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:example.com").Result()
 	if valid != 1 {
 		t.Fatalf("Not created subscriber.")
 	}
 }
 
 func TestAcceptFollow(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := followCmdInit()
 
-	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
@@ -80,23 +81,23 @@ func TestAcceptFollow(t *testing.T) {
 	app.SetArgs([]string{"accept", "example.com"})
 	app.Execute()
 
-	valid, _ := RelayState.RedisClient.Exists("relay:pending:example.com").Result()
+	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("Not removed follow request.")
 	}
 
-	valid, _ = RelayState.RedisClient.Exists("relay:follower:example.com").Result()
+	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:follower:example.com").Result()
 	if valid != 1 {
 		t.Fatalf("Not created follower.")
 	}
 }
 
 func TestRejectFollow(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := followCmdInit()
 
-	RelayState.RedisClient.HMSet("relay:pending:example.com", map[string]interface{}{
+	RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:example.com", map[string]interface{}{
 		"inbox_url":   "https://example.com/inbox",
 		"activity_id": "https://example.com/UUID",
 		"type":        "Follow",
@@ -107,19 +108,19 @@ func TestRejectFollow(t *testing.T) {
 	app.SetArgs([]string{"reject", "example.com"})
 	app.Execute()
 
-	valid, _ := RelayState.RedisClient.Exists("relay:pending:example.com").Result()
+	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("No response follow request.")
 	}
 
-	valid, _ = RelayState.RedisClient.Exists("relay:subscription:example.com").Result()
+	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:example.com").Result()
 	if valid != 0 {
 		t.Fatalf("Created subscription.")
 	}
 }
 
 func TestInvalidFollow(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := followCmdInit()
 
@@ -136,7 +137,7 @@ func TestInvalidFollow(t *testing.T) {
 }
 
 func TestInvalidRejectFollow(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := followCmdInit()
 

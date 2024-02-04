@@ -1,14 +1,16 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	uuid "github.com/satori/go.uuid"
+	"net/url"
+	"regexp"
+
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1/tasks"
-	"net/url"
-	"regexp"
 )
 
 func contains(entries interface{}, key string) bool {
@@ -87,7 +89,7 @@ func enqueueRelayActivity(inboxURL string, activityID string) {
 }
 
 func enqueueActivityForAll(sourceDomain string, body []byte) {
-	activityID := uuid.NewV4()
+	activityID := uuid.New()
 	remainCount := len(RelayState.SubscribersAndFollowers) - 1
 
 	if remainCount < 1 {
@@ -95,7 +97,7 @@ func enqueueActivityForAll(sourceDomain string, body []byte) {
 	}
 
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RelayState.RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
+	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
 	for _, subscription := range RelayState.SubscribersAndFollowers {
 		if sourceDomain == subscription.Domain {
@@ -106,7 +108,7 @@ func enqueueActivityForAll(sourceDomain string, body []byte) {
 }
 
 func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
-	activityID := uuid.NewV4()
+	activityID := uuid.New()
 	remainCount := len(RelayState.Subscribers)
 	if contains(RelayState.Subscribers, sourceDomain) {
 		remainCount = remainCount - 1
@@ -116,7 +118,7 @@ func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
 	}
 
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RelayState.RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
+	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
 	for _, subscription := range RelayState.Subscribers {
 		if sourceDomain == subscription.Domain {
@@ -127,7 +129,7 @@ func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
 }
 
 func enqueueActivityForFollower(sourceDomain string, body []byte) {
-	activityID := uuid.NewV4()
+	activityID := uuid.New()
 	remainCount := len(RelayState.Followers)
 	if contains(RelayState.Followers, sourceDomain) {
 		remainCount = remainCount - 1
@@ -137,7 +139,7 @@ func enqueueActivityForFollower(sourceDomain string, body []byte) {
 	}
 
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RelayState.RedisClient.Eval(pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
+	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
 	for _, subscription := range RelayState.Followers {
 		if sourceDomain == subscription.Domain {
@@ -220,7 +222,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
 		if RelayState.RelayConfig.ManuallyAccept {
-			RelayState.RedisClient.HMSet("relay:pending:"+actorID.Host, map[string]interface{}{
+			RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
 				"inbox_url":   actor.Endpoints.SharedInbox,
 				"activity_id": activity.ID,
 				"type":        "Follow",
@@ -243,7 +245,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	case contains(activity.Object, RelayActor.ID):
 		if isActorAbleToBeFollower(actorID) {
 			if RelayState.RelayConfig.ManuallyAccept {
-				RelayState.RedisClient.HMSet("relay:pending:"+actorID.Host, map[string]interface{}{
+				RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
 					"inbox_url":   actor.Endpoints.SharedInbox,
 					"activity_id": activity.ID,
 					"type":        "Follow",

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"os"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestDecodeActivity(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
@@ -41,7 +42,7 @@ func TestDecodeActivity(t *testing.T) {
 }
 
 func TestDecodeActivityWithNoSignature(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
@@ -65,7 +66,7 @@ func TestDecodeActivityWithNoSignature(t *testing.T) {
 }
 
 func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",
@@ -90,7 +91,7 @@ func TestDecodeActivityWithNotFoundKeyId(t *testing.T) {
 }
 
 func TestDecodeActivityWithInvalidDigest(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	RelayState.AddSubscriber(models.Subscriber{
 		Domain:   "innocent.yukimochi.io",

@@ -1,12 +1,13 @@
 package control
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/yukimochi/Activity-Relay/models"
@@ -89,7 +90,7 @@ func enqueueRegisterActivity(inboxURL string, body []byte) {
 }
 
 func createFollowRequestResponse(domain string, response string) error {
-	data, err := RelayState.RedisClient.HGetAll("relay:pending:" + domain).Result()
+	data, err := RelayState.RedisClient.HGetAll(context.TODO(), "relay:pending:"+domain).Result()
 	if err != nil {
 		return err
 	}
@@ -107,7 +108,7 @@ func createFollowRequestResponse(domain string, response string) error {
 		return err
 	}
 	enqueueRegisterActivity(data["inbox_url"], jsonData)
-	RelayState.RedisClient.Del("relay:pending:" + domain)
+	RelayState.RedisClient.Del(context.TODO(), "relay:pending:"+domain)
 
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
@@ -141,7 +142,7 @@ func createFollowRequestResponse(domain string, response string) error {
 func createUpdateActorActivity(subscription models.Subscriber) error {
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams"},
-		ID:      GlobalConfig.ServerHostname().String() + "/activities/" + uuid.NewV4().String(),
+		ID:      GlobalConfig.ServerHostname().String() + "/activities/" + uuid.New().String(),
 		Actor:   GlobalConfig.ServerHostname().String() + "/actor",
 		Type:    "Update",
 		To:      []string{"https://www.w3.org/ns/activitystreams#Public"},
@@ -160,7 +161,7 @@ func createUpdateActorActivity(subscription models.Subscriber) error {
 func listFollows(cmd *cobra.Command, _ []string) error {
 	var domains []string
 	cmd.Println(" - Follow request :")
-	follows, err := RelayState.RedisClient.Keys("relay:pending:*").Result()
+	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
 	if err != nil {
 		return err
 	}
@@ -178,7 +179,7 @@ func listFollows(cmd *cobra.Command, _ []string) error {
 func acceptFollow(cmd *cobra.Command, args []string) error {
 	var err error
 	var domains []string
-	follows, err := RelayState.RedisClient.Keys("relay:pending:*").Result()
+	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
 	if err != nil {
 		return err
 	}
@@ -201,7 +202,7 @@ func acceptFollow(cmd *cobra.Command, args []string) error {
 func rejectFollow(cmd *cobra.Command, args []string) error {
 	var err error
 	var domains []string
-	follows, err := RelayState.RedisClient.Keys("relay:pending:*").Result()
+	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
 	if err != nil {
 		return err
 	}

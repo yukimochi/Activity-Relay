@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -33,7 +34,7 @@ func TestMain(m *testing.M) {
 	relayState = NewState(globalConfig.RedisClient(), true)
 	ch = make(chan bool)
 	relayState.ListenNotify(ch)
-	relayState.RedisClient.FlushAll().Result()
+	relayState.RedisClient.FlushAll(context.TODO()).Result()
 	code := m.Run()
 	os.Exit(code)
 }

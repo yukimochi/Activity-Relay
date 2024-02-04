@@ -2,6 +2,7 @@ package control
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"strings"
@@ -9,7 +10,7 @@ import (
 )
 
 func TestListDomainSubscriber(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -41,7 +42,7 @@ Total : 1
 }
 
 func TestListDomainLimited(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -72,7 +73,7 @@ Total : 1
 }
 
 func TestListDomainBlocked(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -103,7 +104,7 @@ Total : 1
 }
 
 func TestSetDomainBlocked(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := domainCmdInit()
 
@@ -124,7 +125,7 @@ func TestSetDomainBlocked(t *testing.T) {
 }
 
 func TestSetDomainLimited(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := domainCmdInit()
 
@@ -145,7 +146,7 @@ func TestSetDomainLimited(t *testing.T) {
 }
 
 func TestUnsetDomainBlocked(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -175,7 +176,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 }
 
 func TestUnsetDomainLimited(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -205,7 +206,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 }
 
 func TestSetDomainInvalid(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -232,7 +233,7 @@ func TestSetDomainInvalid(t *testing.T) {
 }
 
 func TestUnfollowDomain(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
@@ -262,7 +263,7 @@ func TestUnfollowDomain(t *testing.T) {
 }
 
 func TestInvalidUnfollowDomain(t *testing.T) {
-	RelayState.RedisClient.FlushAll().Result()
+	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")

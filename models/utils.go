@@ -1,13 +1,14 @@
 package models
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"io/ioutil"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,18 +28,18 @@ func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
 }
 
 func redisHGetOrCreateWithDefault(redisClient *redis.Client, key string, field string, defaultValue string) (string, error) {
-	keyExist, err := redisClient.HExists(key, field).Result()
+	keyExist, err := redisClient.HExists(context.TODO(), key, field).Result()
 	if err != nil {
 		return "", err
 	}
 	if keyExist {
-		value, err := redisClient.HGet(key, field).Result()
+		value, err := redisClient.HGet(context.TODO(), key, field).Result()
 		if err != nil {
 			return "", err
 		}
 		return value, nil
 	} else {
-		_, err := redisClient.HSet(key, field, defaultValue).Result()
+		_, err := redisClient.HSet(context.TODO(), key, field, defaultValue).Result()
 		if err != nil {
 			return "", err
 		}
