@@ -11,6 +11,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/yukimochi/machinery-v1/v1"
+	machineryConfig "github.com/yukimochi/machinery-v1/v1/config"
 )
 
 type ServerConfig struct {
@@ -175,4 +177,18 @@ func (config *RelayConfigV2) NewRedisClient(ctx context.Context) (*redis.Client,
 		return nil, err
 	}
 	return redisClient, nil
+}
+
+func (config *RelayConfigV2) NewMachineryServer() (*machinery.Server, error) {
+	cnf := &machineryConfig.Config{
+		Broker:          config.redisOptions.Addr,
+		DefaultQueue:    "relay",
+		ResultBackend:   config.redisOptions.Addr,
+		ResultsExpireIn: 1,
+	}
+	server, err := machinery.NewServer(cnf)
+	if err != nil {
+		return nil, err
+	}
+	return server, nil
 }

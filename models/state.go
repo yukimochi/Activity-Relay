@@ -23,7 +23,7 @@ type RelayState struct {
 	RedisClient *redis.Client `json:"-"`
 	notifiable  bool
 
-	RelayConfig             relayConfig  `json:"relayConfig,omitempty"`
+	RelayConfig             RelayOption  `json:"relayConfig,omitempty"`
 	LimitedDomains          []string     `json:"limitedDomains,omitempty"`
 	BlockedDomains          []string     `json:"blockedDomains,omitempty"`
 	Subscribers             []Subscriber `json:"subscriptions,omitempty"`
@@ -237,29 +237,7 @@ func (config *RelayState) refresh() {
 	}
 }
 
-// Subscriber : Manage for Mastodon Traditional Style Relay Subscriber
-type Subscriber struct {
-	Domain     string `json:"domain,omitempty"`
-	InboxURL   string `json:"inbox_url,omitempty"`
-	ActivityID string `json:"activity_id,omitempty"`
-	ActorID    string `json:"actor_id,omitempty"`
-}
-
-// Follower : Manage for LitePub Style Relay Follower
-type Follower struct {
-	Domain         string `json:"domain,omitempty"`
-	InboxURL       string `json:"inbox_url,omitempty"`
-	ActivityID     string `json:"activity_id,omitempty"`
-	ActorID        string `json:"actor_id,omitempty"`
-	MutuallyFollow bool   `json:"mutually_follow,omitempty"`
-}
-
-type relayConfig struct {
-	PersonOnly     bool `json:"blockService,omitempty"`
-	ManuallyAccept bool `json:"manuallyAccept,omitempty"`
-}
-
-func (config *relayConfig) load(redisClient *redis.Client) {
+func (config *RelayOption) load(redisClient *redis.Client) {
 	personOnly, err := redisClient.HGet(context.TODO(), "relay:config", "block_service").Result()
 	if err != nil {
 		personOnly = "0"

@@ -20,37 +20,37 @@ func TestNewRelayConfigV2(t *testing.T) {
 
 		// ServerConfig
 		if relayConfig.serverConfig.Domain.Host != "relay.toot.yukimochi.jp" {
-			t.Error("fail - parse: RelayConfig.serverConfig.Domain")
+			t.Error("fail - parse: RelayOption.serverConfig.Domain")
 		}
 		if relayConfig.serverConfig.Bind != "0.0.0.0:8080" {
-			t.Error("fail - parse: RelayConfig.serverConfig.Bind")
+			t.Error("fail - parse: RelayOption.serverConfig.Bind")
 		}
 		if relayConfig.serverConfig.PrivateKey == nil {
-			t.Error("fail - parse: RelayConfig.serverConfig.PrivateKey")
+			t.Error("fail - parse: RelayOption.serverConfig.PrivateKey")
 		}
 
 		// ServiceConfig
 		if relayConfig.serviceConfig.Name != "YUKIMOCHI Toot Relay Service" {
-			t.Error("fail - parse: RelayConfig.serviceConfig.Name")
+			t.Error("fail - parse: RelayOption.serviceConfig.Name")
 		}
 		if relayConfig.serviceConfig.Summary != "YUKIMOCHI Toot Relay Service is Running by Activity-Relay" {
-			t.Error("fail - parse: RelayConfig.serviceConfig.Summary")
+			t.Error("fail - parse: RelayOption.serviceConfig.Summary")
 		}
 		if relayConfig.serviceConfig.IconURL.String() != "https://example.com/example_icon.png" {
-			t.Error("fail - parse: RelayConfig.serviceConfig.IconURL")
+			t.Error("fail - parse: RelayOption.serviceConfig.IconURL")
 		}
 		if relayConfig.serviceConfig.ImageURL.String() != "https://example.com/example_image.png" {
-			t.Error("fail - parse: RelayConfig.serviceConfig.ImageURL")
+			t.Error("fail - parse: RelayOption.serviceConfig.ImageURL")
 		}
 
 		// RedisOptions
 		if relayConfig.redisOptions == nil {
-			t.Error("fail - parse: RelayConfig.redisOptions")
+			t.Error("fail - parse: RelayOption.redisOptions")
 		}
 
 		// JobConcurrency
 		if relayConfig.jobConcurrency != 50 {
-			t.Error("fail - parse: RelayConfig.jobConcurrency")
+			t.Error("fail - parse: RelayOption.jobConcurrency")
 		}
 	})
 
@@ -65,7 +65,7 @@ func TestNewRelayConfigV2(t *testing.T) {
 
 		// ServerConfig
 		if relayConfig.serverConfig != nil {
-			t.Error("fail - parse: RelayConfig.serverConfig")
+			t.Error("fail - parse: RelayOption.serverConfig")
 		}
 	})
 
@@ -80,7 +80,7 @@ func TestNewRelayConfigV2(t *testing.T) {
 
 		// JobConcurrency
 		if relayConfig.jobConcurrency != 0 {
-			t.Error("fail - parse: RelayConfig.jobConcurrency")
+			t.Error("fail - parse: RelayOption.jobConcurrency")
 		}
 	})
 
@@ -106,7 +106,7 @@ func TestNewRelayConfigV2(t *testing.T) {
 }
 
 func TestNewRedisClient(t *testing.T) {
-	t.Run("success create client for reachable redis serer", func(t *testing.T) {
+	t.Run("success create client for reachable redis server", func(t *testing.T) {
 		relayConfig, err := NewRelayConfigV2(RelayConfigV2BuilderOptions{
 			WithServerConfig:   false,
 			WithJobConcurrency: false,
@@ -117,7 +117,7 @@ func TestNewRedisClient(t *testing.T) {
 
 		_, err = relayConfig.NewRedisClient(context.Background())
 		if err != nil {
-			t.Error("fail - create client for reachable redis serer")
+			t.Error("fail - create client for reachable redis server")
 		}
 	})
 
@@ -135,7 +135,7 @@ func TestNewRedisClient(t *testing.T) {
 
 		_, err = relayConfig.NewRedisClient(context.Background())
 		if err == nil {
-			t.Error("fail - create client for unreachable redis serer")
+			t.Error("fail - create client for unreachable redis server")
 		}
 
 		viper.Set("REDIS_URL", validURL)
