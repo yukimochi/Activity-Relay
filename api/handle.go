@@ -5,93 +5,176 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 )
 
 func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
-	queriedResource := request.URL.Query()["resource"]
-	if request.Method != "GET" || len(queriedResource) == 0 {
-		writer.WriteHeader(400)
-		writer.Write(nil)
-	} else {
-		queriedSubject := queriedResource[0]
+	switch request.Method {
+	case "HEAD", "GET":
+		queriedResource := request.URL.Query()["resource"]
+		if len(queriedResource) == 0 {
+			http.Error(writer, "400 Bad Request", 400)
+			return
+		}
+		var queriedSubject *models.WebfingerResource
 		for _, webfingerResource := range WebfingerResources {
-			if queriedSubject == webfingerResource.Subject {
-				webfinger, err := json.Marshal(&webfingerResource)
-				if err != nil {
-					logrus.Fatal("Failed to marshal webfinger resource : ", err.Error())
-					writer.WriteHeader(500)
-					writer.Write(nil)
-					return
-				}
-				writer.Header().Add("Content-Type", "application/json")
-				writer.WriteHeader(200)
-				writer.Write(webfinger)
-				return
+			if queriedResource[0] == webfingerResource.Subject {
+				queriedSubject = &webfingerResource
+				break
 			}
 		}
-		writer.WriteHeader(404)
-		writer.Write(nil)
+
+		if queriedSubject == nil {
+			http.Error(writer, "404 Not Found", 404)
+			return
+		}
+
+		response, err := json.Marshal(queriedSubject)
+		if err != nil {
+			logrus.Fatal("Failed to marshal webfinger resource : ", err.Error())
+			http.Error(writer, "500 Internal Server Error", 500)
+			return
+		}
+
+		switch request.Method {
+		case "HEAD":
+			writer.Header().Add("Content-Type", "application/json")
+			writer.Header().Add("Content-Length", strconv.Itoa(len(response)))
+			writer.WriteHeader(200)
+			_, err := writer.Write(nil)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		case "GET":
+			writer.Header().Add("Content-Type", "application/json")
+			writer.WriteHeader(200)
+			_, err := writer.Write(response)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		}
+		break
+	default:
+		http.Error(writer, "400 Bad Request", 400)
+		return
 	}
 }
 
 func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != "GET" {
-		writer.WriteHeader(400)
-		writer.Write(nil)
-	} else {
-		nodeinfoLinks, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
+	switch request.Method {
+	case "HEAD", "GET":
+		response, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
 		if err != nil {
 			logrus.Fatal("Failed to marshal nodeinfo links : ", err.Error())
-			writer.WriteHeader(500)
-			writer.Write(nil)
+			http.Error(writer, "500 Internal Server Error", 500)
 			return
 		}
-		writer.Header().Add("Content-Type", "application/json")
-		writer.WriteHeader(200)
-		writer.Write(nodeinfoLinks)
+
+		switch request.Method {
+		case "HEAD":
+			writer.Header().Add("Content-Type", "application/json")
+			writer.Header().Add("Content-Length", strconv.Itoa(len(response)))
+			writer.WriteHeader(200)
+			_, err := writer.Write(nil)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		case "GET":
+			writer.Header().Add("Content-Type", "application/json")
+			writer.WriteHeader(200)
+			_, err := writer.Write(response)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		}
+		break
+	default:
+		http.Error(writer, "400 Bad Request", 400)
+		return
 	}
 }
 
 func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != "GET" {
-		writer.WriteHeader(400)
-		writer.Write(nil)
-	} else {
+	switch request.Method {
+	case "HEAD", "GET":
 		userTotal := len(RelayState.Subscribers)
 		Nodeinfo.Nodeinfo.Usage.Users.Total = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
-		nodeinfo, err := json.Marshal(&Nodeinfo.Nodeinfo)
+
+		response, err := json.Marshal(&Nodeinfo.Nodeinfo)
 		if err != nil {
 			logrus.Fatal("Failed to marshal nodeinfo : ", err.Error())
-			writer.WriteHeader(500)
-			writer.Write(nil)
+			http.Error(writer, "500 Internal Server Error", 500)
 			return
 		}
-		writer.Header().Add("Content-Type", "application/json")
-		writer.WriteHeader(200)
-		writer.Write(nodeinfo)
+
+		switch request.Method {
+		case "HEAD":
+			writer.Header().Add("Content-Type", "application/json")
+			writer.Header().Add("Content-Length", strconv.Itoa(len(response)))
+			writer.WriteHeader(200)
+			_, err := writer.Write(nil)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		case "GET":
+			writer.Header().Add("Content-Type", "application/json")
+			writer.WriteHeader(200)
+			_, err := writer.Write(response)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		}
+		break
+	default:
+		http.Error(writer, "400 Bad Request", 400)
+		return
 	}
 }
 
 func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
-	if request.Method == "GET" {
-		relayActor, err := json.Marshal(&RelayActor)
+	switch request.Method {
+	case "HEAD", "GET":
+		response, err := json.Marshal(&RelayActor)
 		if err != nil {
 			logrus.Fatal("Failed to marshal relay actor : ", err.Error())
-			writer.WriteHeader(500)
-			writer.Write(nil)
+			http.Error(writer, "500 Internal Server Error", 500)
 			return
 		}
-		writer.Header().Add("Content-Type", "application/activity+json")
-		writer.WriteHeader(200)
-		writer.Write(relayActor)
-	} else {
-		writer.WriteHeader(400)
-		writer.Write(nil)
+
+		switch request.Method {
+		case "HEAD":
+			writer.Header().Add("Content-Type", "application/activity+json")
+			writer.Header().Add("Content-Length", strconv.Itoa(len(response)))
+			writer.WriteHeader(200)
+			_, err := writer.Write(nil)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		case "GET":
+			writer.Header().Add("Content-Type", "application/activity+json")
+			writer.WriteHeader(200)
+			_, err := writer.Write(response)
+			if err != nil {
+				logrus.Fatal("Failed to write response : ", err.Error())
+			}
+			break
+		}
+		break
+	default:
+		http.Error(writer, "400 Bad Request", 400)
+		return
 	}
 }
 
