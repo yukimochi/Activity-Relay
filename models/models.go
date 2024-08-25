@@ -1,6 +1,8 @@
 package models
 
 import (
+	"bytes"
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"io"
@@ -85,7 +87,7 @@ func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 }
 
 // NewActivityPubActorFromRemoteActor : Retrieve Actor from remote instance.
-func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cache.Cache) (Actor, error) {
+func NewActivityPubActorFromRemoteActor(url string, KeyID string, uaString string, privateKey *rsa.PrivateKey, cache *cache.Cache) (Actor, error) {
 	var actor = new(Actor)
 	var err error
 	cacheData, found := cache.Get(url)
@@ -97,9 +99,11 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 			return *actor, nil
 		}
 	}
-	req, _ := http.NewRequest("GET", url, nil)
+	body := []byte(nil)
+	req, _ := http.NewRequest("GET", url, bytes.NewBuffer(body))
 	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
+	AppendSignature(req, &body, KeyID, privateKey)
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
