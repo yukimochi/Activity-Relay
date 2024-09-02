@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/yukimochi/Activity-Relay/models"
 	"github.com/yukimochi/machinery-v1/v1"
@@ -24,6 +26,8 @@ var (
 	ActorCache      *cache.Cache
 	MachineryServer *machinery.Server
 	RelayState      models.RelayState
+
+	metrics *defaultMetrics
 )
 
 func Entrypoint(g *models.RelayConfig, v string) error {
@@ -31,6 +35,9 @@ func Entrypoint(g *models.RelayConfig, v string) error {
 
 	version = v
 	GlobalConfig = g
+
+	// Initialize the metrics
+	metrics = newDefaultMetrics(prometheus.DefaultRegisterer, nil, nil)
 
 	err = initialize(GlobalConfig)
 	if err != nil {
@@ -70,11 +77,31 @@ func initialize(globalConfig *models.RelayConfig) error {
 }
 
 func handlersRegister() {
-	http.HandleFunc("/.well-known/nodeinfo", handleNodeinfoLink)
-	http.HandleFunc("/.well-known/webfinger", handleWebfinger)
-	http.HandleFunc("/nodeinfo/2.1", handleNodeinfo)
-	http.HandleFunc("/actor", handleRelayActor)
-	http.HandleFunc("/inbox", func(w http.ResponseWriter, r *http.Request) {
+	// Register the Prometheus metrics endpoint
+	http.Handle("/metrics", promhttp.Handler())
+
+	// Register the new health and readiness endpoints
+	http.Handle("/-/healthy", metrics.MetricsMiddleware(http.HandlerFunc(handleHealthy)))
+	http.Handle("/-/ready", metrics.MetricsMiddleware(http.HandlerFunc(handleReady)))
+
+	// Wrap handlers with the metrics middleware, preserving the URL path
+	http.Handle("/.well-known/nodeinfo", metrics.MetricsMiddleware(http.HandlerFunc(handleNodeinfoLink)))
+	http.Handle("/.well-known/webfinger", metrics.MetricsMiddleware(http.HandlerFunc(handleWebfinger)))
+	http.Handle("/nodeinfo/2.1", metrics.MetricsMiddleware(http.HandlerFunc(handleNodeinfo)))
+	http.Handle("/actor", metrics.MetricsMiddleware(http.HandlerFunc(handleRelayActor)))
+	http.Handle("/inbox", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handleInbox(w, r, decodeActivity)
-	})
+	})))
+}
+
+// handleHealthy returns a health status message
+func handleHealthy(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ActivityRelay is Healthy."))
+}
+
+// handleReady returns a readiness status message
+func handleReady(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ActivityRelay is Ready."))
 }
