@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var globalConfig *RelayConfig
+var GlobalConfig *RelayConfig
 var relayState RelayState
 var ch chan bool
 
@@ -25,13 +25,13 @@ func TestMain(m *testing.M) {
 	viper.Set("ACTOR_PEM", "../misc/test/testKey.pem")
 	viper.BindEnv("REDIS_URL")
 
-	globalConfig, err = NewRelayConfig()
+	GlobalConfig, err = NewRelayConfig()
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	relayState = NewState(globalConfig.RedisClient(), true)
+	relayState = NewState(GlobalConfig.RedisClient(), true)
 	ch = make(chan bool)
 	relayState.ListenNotify(ch)
 	relayState.RedisClient.FlushAll(context.TODO()).Result()
