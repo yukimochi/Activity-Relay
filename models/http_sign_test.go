@@ -1,18 +1,17 @@
-package deliver
+package models
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
+	"github.com/Songmu/go-httpdate"
+	"github.com/go-fed/httpsig"
 	"io"
 	"net/http"
 	"os"
 	"regexp"
 	"testing"
 	"time"
-
-	"github.com/Songmu/go-httpdate"
-	"github.com/go-fed/httpsig"
 )
 
 func TestAppendSignature(t *testing.T) {
@@ -21,7 +20,7 @@ func TestAppendSignature(t *testing.T) {
 	req, _ := http.NewRequest("POST", "https://localhost", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json")
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
-	appendSignature(req, &body, "https://innocent.yukimochi.io/users/YUKIMOCHI#main-key", GlobalConfig.ActorKey())
+	AppendSignature(req, &body, "https://innocent.yukimochi.io/users/YUKIMOCHI#main-key", GlobalConfig.ActorKey())
 
 	// Activated compatibilityForHTTPSignature11
 	sign := req.Header.Get("Signature")
