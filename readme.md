@@ -17,7 +17,7 @@
 
 ## Requirements
 
- - [Redis](https://github.com/antirez/redis)
+ - [Redis](https://github.com/redis/redis)
 
 ## Run
 
