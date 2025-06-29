@@ -16,22 +16,22 @@ func TestNewRelayConfig(t *testing.T) {
 		}
 
 		if relayConfig.serverBind != "0.0.0.0:8080" {
-			t.Error("fail - parse: RelayConfig.serverBind")
+			t.Errorf("Expected RelayConfig.serverBind to be '0.0.0.0:8080', but got '%s'", relayConfig.serverBind)
 		}
 		if relayConfig.domain.Host != "relay.toot.yukimochi.jp" {
-			t.Error("fail - parse: RelayConfig.domain")
+			t.Errorf("Expected RelayConfig.domain.Host to be 'relay.toot.yukimochi.jp', but got '%s'", relayConfig.domain.Host)
 		}
 		if relayConfig.serviceName != "YUKIMOCHI Toot Relay Service" {
-			t.Error("fail - parse: RelayConfig.serviceName")
+			t.Errorf("Expected RelayConfig.serviceName to be 'YUKIMOCHI Toot Relay Service', but got '%s'", relayConfig.serviceName)
 		}
 		if relayConfig.serviceSummary != "YUKIMOCHI Toot Relay Service is Running by Activity-Relay" {
-			t.Error("fail - parse: RelayConfig.serviceSummary")
+			t.Errorf("Expected RelayConfig.serviceSummary to be 'YUKIMOCHI Toot Relay Service is Running by Activity-Relay', but got '%s'", relayConfig.serviceSummary)
 		}
 		if relayConfig.serviceIconURL.String() != "https://example.com/example_icon.png" {
-			t.Error("fail - parse: RelayConfig.serviceIconURL")
+			t.Errorf("Expected RelayConfig.serviceIconURL to be 'https://example.com/example_icon.png', but got '%s'", relayConfig.serviceIconURL.String())
 		}
 		if relayConfig.serviceImageURL.String() != "https://example.com/example_image.png" {
-			t.Error("fail - parse: RelayConfig.serviceImageURL")
+			t.Errorf("Expected RelayConfig.serviceImageURL to be 'https://example.com/example_image.png', but got '%s'", relayConfig.serviceImageURL.String())
 		}
 	})
 
@@ -50,7 +50,7 @@ func TestNewRelayConfig(t *testing.T) {
 			viper.Set(viperKey, value)
 			_, err := NewRelayConfig()
 			if err == nil {
-				t.Error("fail - invalid key should be raise error : " + key)
+				t.Errorf("Expected error for invalid key '%s', but got nil", key)
 			}
 
 			viper.Set(viperKey, valid)
@@ -70,14 +70,14 @@ func createRelayConfig(t *testing.T) *RelayConfig {
 func TestRelayConfig_ServerBind(t *testing.T) {
 	relayConfig := createRelayConfig(t)
 	if relayConfig.ServerBind() != relayConfig.serverBind {
-		t.Error("fail - accessor: ServerBind()")
+		t.Errorf("Expected ServerBind() to return '%s', but got '%s'", relayConfig.serverBind, relayConfig.ServerBind())
 	}
 }
 
 func TestRelayConfig_ServerHostname(t *testing.T) {
 	relayConfig := createRelayConfig(t)
 	if relayConfig.ServerHostname() != relayConfig.domain {
-		t.Error("fail - accessor: ServerHostname()")
+		t.Errorf("Expected ServerHostname() to return '%v', but got '%v'", relayConfig.domain, relayConfig.ServerHostname())
 	}
 }
 
@@ -96,7 +96,7 @@ func TestRelayConfig_DumpWelcomeMessage(t *testing.T) {
 
 	for key, information := range informations {
 		if !strings.Contains(w, information) {
-			t.Error("fail - lack welcome message information : ", key)
+			t.Errorf("Expected welcome message to contain '%s' for key '%s', but not found", information, key)
 		}
 	}
 }
@@ -106,6 +106,6 @@ func TestNewMachineryServer(t *testing.T) {
 
 	_, err := NewMachineryServer(relayConfig)
 	if err != nil {
-		t.Error("fail - machinery server can't create : ", err)
+		t.Errorf("Expected NewMachineryServer to succeed, but got error: %v", err)
 	}
 }

@@ -30,13 +30,13 @@ func TestHandleWebfingerGet(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
-	if r.Header.Get("Content-Type") != "application/json" {
-		t.Fatalf("fail - Content-Type is not match")
+	if ct := r.Header.Get("Content-Type"); ct != "application/json" {
+		t.Fatalf("Expected Content-Type to be 'application/json', but got '%s'", ct)
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 200, but got %d", r.StatusCode)
 	}
 	defer r.Body.Close()
 
@@ -44,12 +44,12 @@ func TestHandleWebfingerGet(t *testing.T) {
 	var webfinger models.WebfingerResource
 	err = json.Unmarshal(data, &webfinger)
 	if err != nil {
-		t.Fatalf("fail - response is not valid")
+		t.Fatalf("Expected valid JSON response, but got error: %v", err)
 	}
 
 	domain, _ := url.Parse(webfinger.Links[0].Href)
 	if domain.Host != GlobalConfig.ServerHostname().Host {
-		t.Fatalf("fail - host is not match")
+		t.Fatalf("Expected host to be '%s', but got '%s'", GlobalConfig.ServerHostname().Host, domain.Host)
 	}
 }
 
@@ -64,10 +64,10 @@ func TestHandleWebfingerGetBadResource(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 404 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 404, but got %d", r.StatusCode)
 	}
 }
 
@@ -79,13 +79,13 @@ func TestHandleNodeinfoLinkGet(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.Header.Get("Content-Type") != "application/json" {
-		t.Fatalf("fail - Content-Type not match")
+		t.Fatalf("Expected Content-Type to be 'application/json', but got '%s'", r.Header.Get("Content-Type"))
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 200, but got %d", r.StatusCode)
 	}
 	defer r.Body.Close()
 
@@ -93,7 +93,7 @@ func TestHandleNodeinfoLinkGet(t *testing.T) {
 	var nodeinfoLinks models.NodeinfoLinks
 	err = json.Unmarshal(data, &nodeinfoLinks)
 	if err != nil {
-		t.Fatalf("fail - response is not valid")
+		t.Fatalf("Expected valid JSON response, but got error: %v", err)
 	}
 }
 
@@ -105,10 +105,10 @@ func TestHandleNodeinfoLinkInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 400, but got %d", r.StatusCode)
 	}
 }
 
@@ -120,13 +120,13 @@ func TestHandleNodeinfoGet(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.Header.Get("Content-Type") != "application/json" {
-		t.Fatalf("fail - Content-Type is not match")
+		t.Fatalf("Expected Content-Type to be 'application/json', but got '%s'", r.Header.Get("Content-Type"))
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 200, but got %d", r.StatusCode)
 	}
 	defer r.Body.Close()
 
@@ -134,7 +134,7 @@ func TestHandleNodeinfoGet(t *testing.T) {
 	var nodeinfo models.Nodeinfo
 	err = json.Unmarshal(data, &nodeinfo)
 	if err != nil {
-		t.Fatalf("fail - response is not valid")
+		t.Fatalf("Expected valid JSON response, but got error: %v", err)
 	}
 }
 
@@ -146,10 +146,10 @@ func TestHandleNodeinfoInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 400, but got %d", r.StatusCode)
 	}
 }
 
@@ -161,10 +161,10 @@ func TestHandleWebfingerInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 400, but got %d", r.StatusCode)
 	}
 }
 
@@ -174,13 +174,13 @@ func TestHandleActorGet(t *testing.T) {
 
 	r, err := http.Get(s.URL)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.Header.Get("Content-Type") != "application/activity+json" {
-		t.Fatalf("fail - Content-Type not match")
+		t.Fatalf("Expected Content-Type to be 'application/activity+json', but got '%s'", r.Header.Get("Content-Type"))
 	}
 	if r.StatusCode != 200 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 200, but got %d", r.StatusCode)
 	}
 	defer r.Body.Close()
 
@@ -188,12 +188,12 @@ func TestHandleActorGet(t *testing.T) {
 	var actor models.Actor
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
-		t.Fatalf("fail - response is not valid")
+		t.Fatalf("Expected valid JSON response, but got error: %v", err)
 	}
 
 	domain, _ := url.Parse(actor.ID)
 	if domain.Host != GlobalConfig.ServerHostname().Host {
-		t.Fatalf("fail - host is not match")
+		t.Fatalf("Expected host to be '%s', but got '%s'", GlobalConfig.ServerHostname().Host, domain.Host)
 	}
 }
 
@@ -203,10 +203,10 @@ func TestHandleActorInvalidMethod(t *testing.T) {
 
 	r, err := http.Post(s.URL, "text/plain", nil)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 400, but got %d", r.StatusCode)
 	}
 }
 
@@ -376,10 +376,10 @@ func TestHandleInboxNoSignature(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 400, but got %d", r.StatusCode)
 	}
 }
 
@@ -393,10 +393,10 @@ func TestHandleInboxInvalidMethod(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 405 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 405, but got %d", r.StatusCode)
 	}
 }
 
@@ -413,14 +413,14 @@ func TestHandleInboxValidFollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("fail - follow request not work")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to exist (value=1), but got %d", domain.Host, res)
 	}
 	RelayState.DelSubscriber(domain.Host)
 }
@@ -441,18 +441,18 @@ func TestHandleInboxValidManuallyFollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:"+domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("fail - manually follow not work")
+		t.Fatalf("Expected Redis key 'relay:pending:%s' to exist (value=1), but got %d", domain.Host, res)
 	}
 	res, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("fail - manually follow not work")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to not exist (value=0), but got %d", domain.Host, res)
 	}
 	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetConfig(ManuallyAccept, false)
@@ -473,14 +473,14 @@ func TestHandleInboxValidFollowBlocked(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("fail - follow request not blocked")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to not exist (value=0), but got %d", domain.Host, res)
 	}
 	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetBlockedDomain(domain.Host, false)
@@ -499,14 +499,14 @@ func TestHandleInboxFollowLitePub(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("fail - follow request not blocked")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to not exist (value=0), but got %d", domain.Host, res)
 	}
 }
 
@@ -523,14 +523,14 @@ func TestHandleInboxInvalidFollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("fail - follow request not blocked")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to not exist (value=0), but got %d", domain.Host, res)
 	}
 }
 
@@ -552,14 +552,14 @@ func TestHandleInboxValidUnfollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("fail - unfollow request not works")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to not exist (value=0), but got %d", domain.Host, res)
 	}
 	RelayState.DelSubscriber(domain.Host)
 }
@@ -588,14 +588,14 @@ func TestHandleInboxValidManuallyUnFollow(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:"+domain.Host).Result()
 	if res != 0 {
-		t.Fatalf("fail - pending follow request not deleted")
+		t.Fatalf("Expected Redis key 'relay:pending:%s' to not exist (value=0), but got %d", domain.Host, res)
 	}
 	RelayState.RedisClient.Del(context.TODO(), "relay:pending:"+domain.Host)
 	RelayState.SetConfig(ManuallyAccept, false)
@@ -619,14 +619,14 @@ func TestHandleInboxUnfollowAsActor(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("fail - invalid unfollow request should be blocked")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to exist (value=1), but got %d", domain.Host, res)
 	}
 	RelayState.DelSubscriber(domain.Host)
 }
@@ -649,14 +649,14 @@ func TestHandleInboxUnfollowLitePub(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	res, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:"+domain.Host).Result()
 	if res != 1 {
-		t.Fatalf("fail - invalid unfollow request should be blocked")
+		t.Fatalf("Expected Redis key 'relay:subscription:%s' to exist (value=1), but got %d", domain.Host, res)
 	}
 	RelayState.DelSubscriber(domain.Host)
 }
@@ -683,10 +683,10 @@ func TestHandleInboxValidCreate(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	RelayState.DelSubscriber(domain.Host)
 	RelayState.DelSubscriber("example.org")
@@ -713,10 +713,10 @@ func TestHandleInboxLimitedCreate(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 202 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 202, but got %d", r.StatusCode)
 	}
 	RelayState.DelSubscriber(domain.Host)
 	RelayState.SetLimitedDomain(domain.Host, false)
@@ -734,10 +734,10 @@ func TestHandleInboxUnsubscriptionCreate(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 401 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 401, but got %d", r.StatusCode)
 	}
 }
 
@@ -763,10 +763,10 @@ func TestHandleInboxAnnounceLitePub(t *testing.T) {
 	client := new(http.Client)
 	r, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("fail - " + err.Error())
+		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
 	if r.StatusCode != 400 {
-		t.Fatalf("fail - StatusCode is not match")
+		t.Fatalf("Expected StatusCode to be 400, but got %d", r.StatusCode)
 	}
 	RelayState.DelSubscriber(domain.Host)
 	RelayState.DelSubscriber("example.org")

@@ -37,7 +37,7 @@ func TestListDomainSubscriber(t *testing.T) {
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -68,7 +68,7 @@ limitedDomain.example.jp
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -99,7 +99,7 @@ blockedDomain.example.jp
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -120,7 +120,7 @@ func TestSetDomainBlocked(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not set blocked domain")
+		t.Fatalf("Expected blocked domain 'testdomain.example.jp' to be set, but not found")
 	}
 }
 
@@ -141,7 +141,7 @@ func TestSetDomainLimited(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not set limited domain")
+		t.Fatalf("Expected limited domain 'testdomain.example.jp' to be set, but not found")
 	}
 }
 
@@ -171,7 +171,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not unset blocked domain")
+		t.Fatalf("Expected blocked domain 'blockedDomain.example.jp' to be unset, but still found")
 	}
 }
 
@@ -201,7 +201,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not unset blocked domain")
+		t.Fatalf("Expected limited domain 'limitedDomain.example.jp' to be unset, but still found")
 	}
 }
 
@@ -228,7 +228,7 @@ func TestSetDomainInvalid(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid type provided" {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be 'Invalid type provided', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -258,7 +258,7 @@ func TestUnfollowDomain(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not unfollowed domain")
+		t.Fatalf("Expected domain 'subscription.example.jp' to be unfollowed, but still found in subscribers")
 	}
 }
 
@@ -285,6 +285,6 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] provided" {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be 'Invalid domain [unknown.tld] provided', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }

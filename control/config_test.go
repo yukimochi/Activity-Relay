@@ -80,15 +80,15 @@ func TestListConfig(t *testing.T) {
 		switch strings.Split(row, ":")[0] {
 		case "Blocking for service-type actor ":
 			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Invalid Response.")
+				t.Fatalf("Expected 'Blocking for service-type actor' to be false, but got true")
 			}
 		case "Manually accept follow-request ":
 			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Invalid Response.")
+				t.Fatalf("Expected 'Manually accept follow-request' to be false, but got true")
 			}
 		case "Announce activity instead of relay create activity ":
 			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Invalid Response.")
+				t.Fatalf("Expected 'Announce activity instead of relay create activity' to be false, but got true")
 			}
 		}
 	}
@@ -111,7 +111,7 @@ func TestExportConfig(t *testing.T) {
 	jsonData, _ := io.ReadAll(file)
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected exported config to be '%s', but got '%s'", string(jsonData), strings.Split(output, "\n")[0])
 	}
 }
 
@@ -137,6 +137,6 @@ func TestImportConfig(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != string(jsonData) {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected exported config to be '%s', but got '%s'", string(jsonData), strings.Split(output, "\n")[0])
 	}
 }

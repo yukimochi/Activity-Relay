@@ -10,10 +10,10 @@ func TestLoadEmpty(t *testing.T) {
 	relayState.Load()
 
 	if relayState.RelayConfig.PersonOnly != false {
-		t.Fatalf("fail - read config")
+		t.Fatalf("Expected PersonOnly to be false, but got %v", relayState.RelayConfig.PersonOnly)
 	}
 	if relayState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("fail - read config")
+		t.Fatalf("Expected ManuallyAccept to be false, but got %v", relayState.RelayConfig.ManuallyAccept)
 	}
 }
 
@@ -23,23 +23,23 @@ func TestSetConfig(t *testing.T) {
 	relayState.SetConfig(PersonOnly, true)
 	<-ch
 	if relayState.RelayConfig.PersonOnly != true {
-		t.Fatalf("fail - enable config")
+		t.Fatalf("Expected PersonOnly to be true, but got %v", relayState.RelayConfig.PersonOnly)
 	}
 	relayState.SetConfig(ManuallyAccept, true)
 	<-ch
 	if relayState.RelayConfig.ManuallyAccept != true {
-		t.Fatalf("fail - enable config")
+		t.Fatalf("Expected ManuallyAccept to be true, but got %v", relayState.RelayConfig.ManuallyAccept)
 	}
 
 	relayState.SetConfig(PersonOnly, false)
 	<-ch
 	if relayState.RelayConfig.PersonOnly != false {
-		t.Fatalf("fail - disable config")
+		t.Fatalf("Expected PersonOnly to be false, but got %v", relayState.RelayConfig.PersonOnly)
 	}
 	relayState.SetConfig(ManuallyAccept, false)
 	<-ch
 	if relayState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("fail - disable config")
+		t.Fatalf("Expected ManuallyAccept to be false, but got %v", relayState.RelayConfig.ManuallyAccept)
 	}
 }
 
@@ -59,7 +59,7 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - write config")
+		t.Fatalf("Expected subscriber 'example.com' with inbox 'https://example.com/inbox' to be present, but not found")
 	}
 
 	relayState.DelSubscriber("example.com")
@@ -71,7 +71,7 @@ func TestTreatSubscriptionNotify(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - write config")
+		t.Fatalf("Expected subscriber 'example.com' to be deleted, but still found")
 	}
 }
 
@@ -88,12 +88,12 @@ func TestSelectDomain(t *testing.T) {
 
 	subscription := relayState.SelectSubscriber("example.com")
 	if *subscription != exampleSubscription {
-		t.Fatalf("fail - select domain")
+		t.Fatalf("Expected to select subscriber %+v, but got %+v", exampleSubscription, *subscription)
 	}
 
 	subscription = relayState.SelectSubscriber("example.org")
 	if subscription != nil {
-		t.Fatalf("fail - select domain")
+		t.Fatalf("Expected nil for non-existent subscriber 'example.org', but got %+v", *subscription)
 	}
 }
 
@@ -110,7 +110,7 @@ func TestBlockedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - write config")
+		t.Fatalf("Expected blocked domain 'example.com' to be present, but not found")
 	}
 
 	relayState.SetBlockedDomain("example.com", false)
@@ -122,7 +122,7 @@ func TestBlockedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - write config")
+		t.Fatalf("Expected blocked domain 'example.com' to be removed, but still found")
 	}
 }
 
@@ -139,7 +139,7 @@ func TestLimitedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - write config")
+		t.Fatalf("Expected limited domain 'example.com' to be present, but not found")
 	}
 
 	relayState.SetLimitedDomain("example.com", false)
@@ -151,7 +151,7 @@ func TestLimitedDomain(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - write config")
+		t.Fatalf("Expected limited domain 'example.com' to be removed, but still found")
 	}
 }
 
@@ -173,6 +173,6 @@ func TestLoadCompatibleSubscription(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - load compati config")
+		t.Fatalf("Expected compatible subscriber 'example.com' with inbox 'https://example.com/inbox' to be present, but not found")
 	}
 }

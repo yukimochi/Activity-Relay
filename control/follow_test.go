@@ -34,7 +34,7 @@ example.com
 Total : 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -56,12 +56,12 @@ func TestAcceptSubscribe(t *testing.T) {
 
 	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
 	if valid != 0 {
-		t.Fatalf("Not removed follow request.")
+		t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
 	}
 
 	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:example.com").Result()
 	if valid != 1 {
-		t.Fatalf("Not created subscriber.")
+		t.Fatalf("Expected relay:subscription:example.com to be created, but not found (value: %d)", valid)
 	}
 }
 
@@ -83,12 +83,12 @@ func TestAcceptFollow(t *testing.T) {
 
 	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
 	if valid != 0 {
-		t.Fatalf("Not removed follow request.")
+		t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
 	}
 
 	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:follower:example.com").Result()
 	if valid != 1 {
-		t.Fatalf("Not created follower.")
+		t.Fatalf("Expected relay:follower:example.com to be created, but not found (value: %d)", valid)
 	}
 }
 
@@ -110,12 +110,12 @@ func TestRejectFollow(t *testing.T) {
 
 	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
 	if valid != 0 {
-		t.Fatalf("No response follow request.")
+		t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
 	}
 
 	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:example.com").Result()
 	if valid != 0 {
-		t.Fatalf("Created subscription.")
+		t.Fatalf("Expected relay:subscription:example.com to NOT be created, but found (value: %d)", valid)
 	}
 }
 
@@ -132,7 +132,7 @@ func TestInvalidFollow(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be 'Invalid domain [unknown.tld] given', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -149,7 +149,7 @@ func TestInvalidRejectFollow(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be 'Invalid domain [unknown.tld] given', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
