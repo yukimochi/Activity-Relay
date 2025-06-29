@@ -54,15 +54,19 @@ func TestAcceptSubscribe(t *testing.T) {
 	app.SetArgs([]string{"accept", "example.com"})
 	app.Execute()
 
-	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
-	if valid != 0 {
-		t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
-	}
+	t.Run("Pending entry should be removed", func(t *testing.T) {
+		valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
+		if valid != 0 {
+			t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
+		}
+	})
 
-	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:example.com").Result()
-	if valid != 1 {
-		t.Fatalf("Expected relay:subscription:example.com to be created, but not found (value: %d)", valid)
-	}
+	t.Run("Subscription entry should be created", func(t *testing.T) {
+		valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:subscription:example.com").Result()
+		if valid != 1 {
+			t.Fatalf("Expected relay:subscription:example.com to be created, but not found (value: %d)", valid)
+		}
+	})
 }
 
 func TestAcceptFollow(t *testing.T) {
@@ -81,15 +85,19 @@ func TestAcceptFollow(t *testing.T) {
 	app.SetArgs([]string{"accept", "example.com"})
 	app.Execute()
 
-	valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
-	if valid != 0 {
-		t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
-	}
+	t.Run("Pending entry should be removed", func(t *testing.T) {
+		valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:pending:example.com").Result()
+		if valid != 0 {
+			t.Fatalf("Expected relay:pending:example.com to be removed, but still exists (value: %d)", valid)
+		}
+	})
 
-	valid, _ = RelayState.RedisClient.Exists(context.TODO(), "relay:follower:example.com").Result()
-	if valid != 1 {
-		t.Fatalf("Expected relay:follower:example.com to be created, but not found (value: %d)", valid)
-	}
+	t.Run("Follower entry should be created", func(t *testing.T) {
+		valid, _ := RelayState.RedisClient.Exists(context.TODO(), "relay:follower:example.com").Result()
+		if valid != 1 {
+			t.Fatalf("Expected relay:follower:example.com to be created, but not found (value: %d)", valid)
+		}
+	})
 }
 
 func TestRejectFollow(t *testing.T) {

@@ -32,25 +32,33 @@ func TestHandleWebfingerGet(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Expected request to succeed, but got error: %v", err)
 	}
-	if ct := r.Header.Get("Content-Type"); ct != "application/json" {
-		t.Fatalf("Expected Content-Type to be 'application/json', but got '%s'", ct)
-	}
-	if r.StatusCode != 200 {
-		t.Fatalf("Expected StatusCode to be 200, but got %d", r.StatusCode)
-	}
 	defer r.Body.Close()
 
-	data, _ := io.ReadAll(r.Body)
-	var webfinger models.WebfingerResource
-	err = json.Unmarshal(data, &webfinger)
-	if err != nil {
-		t.Fatalf("Expected valid JSON response, but got error: %v", err)
-	}
+	t.Run("Check Content-Type header", func(t *testing.T) {
+		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
+			t.Fatalf("Expected Content-Type to be 'application/json', but got '%s'", ct)
+		}
+	})
 
-	domain, _ := url.Parse(webfinger.Links[0].Href)
-	if domain.Host != GlobalConfig.ServerHostname().Host {
-		t.Fatalf("Expected host to be '%s', but got '%s'", GlobalConfig.ServerHostname().Host, domain.Host)
-	}
+	t.Run("Check status code", func(t *testing.T) {
+		if r.StatusCode != 200 {
+			t.Fatalf("Expected StatusCode to be 200, but got %d", r.StatusCode)
+		}
+	})
+
+	t.Run("Check JSON response structure", func(t *testing.T) {
+		data, _ := io.ReadAll(r.Body)
+		var webfinger models.WebfingerResource
+		err = json.Unmarshal(data, &webfinger)
+		if err != nil {
+			t.Fatalf("Expected valid JSON response, but got error: %v", err)
+		}
+
+		domain, _ := url.Parse(webfinger.Links[0].Href)
+		if domain.Host != GlobalConfig.ServerHostname().Host {
+			t.Fatalf("Expected host to be '%s', but got '%s'", GlobalConfig.ServerHostname().Host, domain.Host)
+		}
+	})
 }
 
 func TestHandleWebfingerGetBadResource(t *testing.T) {
