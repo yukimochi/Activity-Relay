@@ -15,7 +15,7 @@ func TestListDomainSubscriber(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -31,13 +31,13 @@ func TestListDomainSubscriber(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Subscriber list :
+	valid := ` - Subscriber list:
 [*] subscription.example.jp
- - Follower list :
-Total : 1
+ - Follower list:
+Total: 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -47,7 +47,7 @@ func TestListDomainLimited(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -63,12 +63,12 @@ func TestListDomainLimited(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Limited domains :
+	valid := ` - Limited domains:
 limitedDomain.example.jp
-Total : 1
+Total: 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -78,7 +78,7 @@ func TestListDomainBlocked(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -94,12 +94,12 @@ func TestListDomainBlocked(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Blocked domains :
+	valid := ` - Blocked domains:
 blockedDomain.example.jp
-Total : 1
+Total: 1
 `
 	if output != valid {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
 	}
 }
 
@@ -120,7 +120,7 @@ func TestSetDomainBlocked(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not set blocked domain")
+		t.Fatalf("Expected blocked domain 'testdomain.example.jp' to be set, but not found")
 	}
 }
 
@@ -141,7 +141,7 @@ func TestSetDomainLimited(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not set limited domain")
+		t.Fatalf("Expected limited domain 'testdomain.example.jp' to be set, but not found")
 	}
 }
 
@@ -151,7 +151,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -171,7 +171,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not unset blocked domain")
+		t.Fatalf("Expected blocked domain 'blockedDomain.example.jp' to be unset, but still found")
 	}
 }
 
@@ -181,7 +181,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -201,7 +201,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not unset blocked domain")
+		t.Fatalf("Expected limited domain 'limitedDomain.example.jp' to be unset, but still found")
 	}
 }
 
@@ -211,7 +211,7 @@ func TestSetDomainInvalid(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -227,8 +227,8 @@ func TestSetDomainInvalid(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid type provided" {
-		t.Fatalf("Invalid Response.")
+	if strings.Split(output, "\n")[0] != "Invalid type provided: hoge" {
+		t.Fatalf("Expected output to be 'Invalid type provided: hoge', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -238,7 +238,7 @@ func TestUnfollowDomain(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -258,7 +258,7 @@ func TestUnfollowDomain(t *testing.T) {
 	}
 
 	if !valid {
-		t.Fatalf("Not unfollowed domain")
+		t.Fatalf("Expected domain 'subscription.example.jp' to be unfollowed, but still found in subscribers")
 	}
 }
 
@@ -268,7 +268,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -284,7 +284,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] provided" {
-		t.Fatalf("Invalid Response.")
+	if strings.Split(output, "\n")[0] != "Invalid domain provided: unknown.tld" {
+		t.Fatalf("Expected output to be 'Invalid domain provided: unknown.tld', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }

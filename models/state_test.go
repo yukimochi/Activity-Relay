@@ -10,69 +10,84 @@ func TestLoadEmpty(t *testing.T) {
 	relayState.Load()
 
 	if relayState.RelayConfig.PersonOnly != false {
-		t.Fatalf("fail - read config")
+		t.Fatalf("Expected PersonOnly to be false, but got %v", relayState.RelayConfig.PersonOnly)
 	}
 	if relayState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("fail - read config")
+		t.Fatalf("Expected ManuallyAccept to be false, but got %v", relayState.RelayConfig.ManuallyAccept)
 	}
 }
 
 func TestSetConfig(t *testing.T) {
 	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
-	relayState.SetConfig(PersonOnly, true)
-	<-ch
-	if relayState.RelayConfig.PersonOnly != true {
-		t.Fatalf("fail - enable config")
-	}
-	relayState.SetConfig(ManuallyAccept, true)
-	<-ch
-	if relayState.RelayConfig.ManuallyAccept != true {
-		t.Fatalf("fail - enable config")
-	}
+	t.Run("Set PersonOnly to true", func(t *testing.T) {
+		relayState.SetConfig(PersonOnly, true)
+		<-ch
+		if relayState.RelayConfig.PersonOnly != true {
+			t.Fatalf("Expected PersonOnly to be true, but got %v", relayState.RelayConfig.PersonOnly)
+		}
+	})
 
-	relayState.SetConfig(PersonOnly, false)
-	<-ch
-	if relayState.RelayConfig.PersonOnly != false {
-		t.Fatalf("fail - disable config")
-	}
-	relayState.SetConfig(ManuallyAccept, false)
-	<-ch
-	if relayState.RelayConfig.ManuallyAccept != false {
-		t.Fatalf("fail - disable config")
-	}
+	t.Run("Set ManuallyAccept to true", func(t *testing.T) {
+		relayState.SetConfig(ManuallyAccept, true)
+		<-ch
+		if relayState.RelayConfig.ManuallyAccept != true {
+			t.Fatalf("Expected ManuallyAccept to be true, but got %v", relayState.RelayConfig.ManuallyAccept)
+		}
+	})
+
+	t.Run("Set PersonOnly to false", func(t *testing.T) {
+		relayState.SetConfig(PersonOnly, false)
+		<-ch
+		if relayState.RelayConfig.PersonOnly != false {
+			t.Fatalf("Expected PersonOnly to be false, but got %v", relayState.RelayConfig.PersonOnly)
+		}
+	})
+
+	t.Run("Set ManuallyAccept to false", func(t *testing.T) {
+		relayState.SetConfig(ManuallyAccept, false)
+		<-ch
+		if relayState.RelayConfig.ManuallyAccept != false {
+			t.Fatalf("Expected ManuallyAccept to be false, but got %v", relayState.RelayConfig.ManuallyAccept)
+		}
+	})
 }
 
 func TestTreatSubscriptionNotify(t *testing.T) {
 	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
-	relayState.AddSubscriber(Subscriber{
-		Domain:   "example.com",
-		InboxURL: "https://example.com/inbox",
+	t.Run("Add subscriber", func(t *testing.T) {
+		relayState.AddSubscriber(Subscriber{
+			Domain:   "example.com",
+			InboxURL: "https://example.com/inbox",
+		})
+		<-ch
+
+		valid := false
+		for _, domain := range relayState.Subscribers {
+			if domain.Domain == "example.com" && domain.InboxURL == "https://example.com/inbox" {
+				valid = true
+			}
+		}
+		if !valid {
+			t.Fatalf("Expected subscriber 'example.com' with inbox 'https://example.com/inbox' to be present, but not found")
+		}
 	})
-	<-ch
 
-	valid := false
-	for _, domain := range relayState.Subscribers {
-		if domain.Domain == "example.com" && domain.InboxURL == "https://example.com/inbox" {
-			valid = true
+	t.Run("Delete subscriber", func(t *testing.T) {
+		relayState.DelSubscriber("example.com")
+		<-ch
+
+		valid := true
+		for _, domain := range relayState.Subscribers {
+			if domain.Domain == "example.com" {
+				valid = false
+			}
 		}
-	}
-	if !valid {
-		t.Fatalf("fail - write config")
-	}
-
-	relayState.DelSubscriber("example.com")
-	<-ch
-
-	for _, domain := range relayState.Subscribers {
-		if domain.Domain == "example.com" {
-			valid = false
+		if !valid {
+			t.Fatalf("Expected subscriber 'example.com' to be deleted, but still found")
 		}
-	}
-	if !valid {
-		t.Fatalf("fail - write config")
-	}
+	})
 }
 
 func TestSelectDomain(t *testing.T) {
@@ -86,73 +101,87 @@ func TestSelectDomain(t *testing.T) {
 	relayState.AddSubscriber(exampleSubscription)
 	<-ch
 
-	subscription := relayState.SelectSubscriber("example.com")
-	if *subscription != exampleSubscription {
-		t.Fatalf("fail - select domain")
-	}
+	t.Run("Select existing subscriber", func(t *testing.T) {
+		subscription := relayState.SelectSubscriber("example.com")
+		if *subscription != exampleSubscription {
+			t.Fatalf("Expected to select subscriber %+v, but got %+v", exampleSubscription, *subscription)
+		}
+	})
 
-	subscription = relayState.SelectSubscriber("example.org")
-	if subscription != nil {
-		t.Fatalf("fail - select domain")
-	}
+	t.Run("Select non-existent subscriber", func(t *testing.T) {
+		subscription := relayState.SelectSubscriber("example.org")
+		if subscription != nil {
+			t.Fatalf("Expected nil for non-existent subscriber 'example.org', but got %+v", *subscription)
+		}
+	})
 }
 
 func TestBlockedDomain(t *testing.T) {
 	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
-	relayState.SetBlockedDomain("example.com", true)
-	<-ch
+	t.Run("Set blocked domain to true", func(t *testing.T) {
+		relayState.SetBlockedDomain("example.com", true)
+		<-ch
 
-	valid := false
-	for _, domain := range relayState.BlockedDomains {
-		if domain == "example.com" {
-			valid = true
+		valid := false
+		for _, domain := range relayState.BlockedDomains {
+			if domain == "example.com" {
+				valid = true
+			}
 		}
-	}
-	if !valid {
-		t.Fatalf("fail - write config")
-	}
-
-	relayState.SetBlockedDomain("example.com", false)
-	<-ch
-
-	for _, domain := range relayState.BlockedDomains {
-		if domain == "example.com" {
-			valid = false
+		if !valid {
+			t.Fatalf("Expected blocked domain 'example.com' to be present, but not found")
 		}
-	}
-	if !valid {
-		t.Fatalf("fail - write config")
-	}
+	})
+
+	t.Run("Set blocked domain to false", func(t *testing.T) {
+		relayState.SetBlockedDomain("example.com", false)
+		<-ch
+
+		valid := true
+		for _, domain := range relayState.BlockedDomains {
+			if domain == "example.com" {
+				valid = false
+			}
+		}
+		if !valid {
+			t.Fatalf("Expected blocked domain 'example.com' to be removed, but still found")
+		}
+	})
 }
 
 func TestLimitedDomain(t *testing.T) {
 	relayState.RedisClient.FlushAll(context.TODO()).Result()
 
-	relayState.SetLimitedDomain("example.com", true)
-	<-ch
+	t.Run("Set limited domain to true", func(t *testing.T) {
+		relayState.SetLimitedDomain("example.com", true)
+		<-ch
 
-	valid := false
-	for _, domain := range relayState.LimitedDomains {
-		if domain == "example.com" {
-			valid = true
+		valid := false
+		for _, domain := range relayState.LimitedDomains {
+			if domain == "example.com" {
+				valid = true
+			}
 		}
-	}
-	if !valid {
-		t.Fatalf("fail - write config")
-	}
-
-	relayState.SetLimitedDomain("example.com", false)
-	<-ch
-
-	for _, domain := range relayState.LimitedDomains {
-		if domain == "example.com" {
-			valid = false
+		if !valid {
+			t.Fatalf("Expected limited domain 'example.com' to be present, but not found")
 		}
-	}
-	if !valid {
-		t.Fatalf("fail - write config")
-	}
+	})
+
+	t.Run("Set limited domain to false", func(t *testing.T) {
+		relayState.SetLimitedDomain("example.com", false)
+		<-ch
+
+		valid := true
+		for _, domain := range relayState.LimitedDomains {
+			if domain == "example.com" {
+				valid = false
+			}
+		}
+		if !valid {
+			t.Fatalf("Expected limited domain 'example.com' to be removed, but still found")
+		}
+	})
 }
 
 func TestLoadCompatibleSubscription(t *testing.T) {
@@ -173,6 +202,6 @@ func TestLoadCompatibleSubscription(t *testing.T) {
 		}
 	}
 	if !valid {
-		t.Fatalf("fail - load compati config")
+		t.Fatalf("Expected compatible subscriber 'example.com' with inbox 'https://example.com/inbox' to be present, but not found")
 	}
 }

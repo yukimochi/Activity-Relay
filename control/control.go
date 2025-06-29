@@ -50,7 +50,7 @@ func initConfig(cmd *cobra.Command) error {
 		viper.SetConfigType("yaml")
 		viper.ReadConfig(file)
 	} else {
-		logrus.Warn("Config file not exist. Use environment variables.")
+		logrus.Warn("Config file not found. Using environment variables.")
 
 		viper.BindEnv("ACTOR_PEM")
 		viper.BindEnv("REDIS_URL")

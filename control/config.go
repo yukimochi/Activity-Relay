@@ -16,14 +16,14 @@ const (
 func configCmdInit() *cobra.Command {
 	var config = &cobra.Command{
 		Use:   "config",
-		Short: "Manage configuration for relay",
-		Long:  "Enable/disable relay customize and import/export relay database.",
+		Short: "Manage relay configuration",
+		Long:  "Enable/disable relay customization and import/export relay database.",
 	}
 
 	var configList = &cobra.Command{
 		Use:   "list",
-		Short: "List all relay configuration",
-		Long:  "List all relay configuration.",
+		Short: "List all relay configurations",
+		Long:  "List all relay configurations.",
 		Run: func(cmd *cobra.Command, args []string) {
 			InitProxy(listConfig, cmd, args)
 		},
@@ -88,19 +88,19 @@ func configCmdInit() *cobra.Command {
 func editConfig(key string, value bool) string {
 	var statement string
 	if value {
-		statement = "Enabled"
+		statement = "enabled"
 	} else {
-		statement = "Disabled"
+		statement = "disabled"
 	}
 	switch key {
 	case "person-only":
 		RelayState.SetConfig(PersonOnly, value)
-		return "Limited for Person-Type Actor is " + statement + "."
+		return "Person-Type Actor limitation is " + statement + "."
 	case "manually-accept":
 		RelayState.SetConfig(ManuallyAccept, value)
-		return "Manually Accept Follow-Request is " + statement + "."
+		return "Manual follow request acceptance is " + statement + "."
 	}
-	return "Invalid Config Provided."
+	return "Invalid configuration provided: " + key
 }
 
 func configEnable(cmd *cobra.Command, args []string) error {
@@ -120,8 +120,8 @@ func configDisable(cmd *cobra.Command, args []string) error {
 }
 
 func listConfig(cmd *cobra.Command, _ []string) {
-	cmd.Println("Limited for Person-Type Actor : ", RelayState.RelayConfig.PersonOnly)
-	cmd.Println("Manually Accept Follow-Request : ", RelayState.RelayConfig.ManuallyAccept)
+	cmd.Println("Person-Type Actor limitation:", RelayState.RelayConfig.PersonOnly)
+	cmd.Println("Manual follow request acceptance:", RelayState.RelayConfig.ManuallyAccept)
 }
 
 func exportConfig(cmd *cobra.Command, _ []string) {
@@ -140,11 +140,11 @@ func importConfig(cmd *cobra.Command, _ []string) {
 
 	if data.RelayConfig.PersonOnly {
 		RelayState.SetConfig(PersonOnly, true)
-		cmd.Println("Blocking for service-type actor is Enabled.")
+		cmd.Println("Person-Type Actor limitation is enabled.")
 	}
 	if data.RelayConfig.ManuallyAccept {
 		RelayState.SetConfig(ManuallyAccept, true)
-		cmd.Println("Manually accept follow-request is Enabled.")
+		cmd.Println("Manual follow request acceptance is enabled.")
 	}
 	for _, LimitedDomain := range data.LimitedDomains {
 		RelayState.SetLimitedDomain(LimitedDomain, true)
