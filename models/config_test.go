@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewRelayConfig(t *testing.T) {
-	t.Run("success valid configuration", func(t *testing.T) {
+	t.Run("Load valid configuration successfully", func(t *testing.T) {
 		relayConfig, err := NewRelayConfig()
 		if err != nil {
 			t.Fatal(err)
@@ -35,7 +35,7 @@ func TestNewRelayConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("fail invalid configuration", func(t *testing.T) {
+	t.Run("Fail to load invalid configuration", func(t *testing.T) {
 		invalidConfig := map[string]string{
 			"ACTOR_PEM@notFound":        "../misc/test/notfound.pem",
 			"ACTOR_PEM@invalidKey":      "../misc/test/actor.dh.pem",

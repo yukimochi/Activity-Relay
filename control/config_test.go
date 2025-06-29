@@ -9,44 +9,52 @@ import (
 	"testing"
 )
 
-func TestPersonOnly(t *testing.T) {
+func TestPersonOnlyConfiguration(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"enable", "person-only"})
-	app.Execute()
-	RelayState.Load()
-	if !RelayState.RelayConfig.PersonOnly {
-		t.Fatalf("Not Enabled Limited for Person-Type Actor")
-	}
+	t.Run("Enable person-only configuration", func(t *testing.T) {
+		app.SetArgs([]string{"enable", "person-only"})
+		app.Execute()
+		RelayState.Load()
+		if !RelayState.RelayConfig.PersonOnly {
+			t.Fatalf("Expected PersonOnly to be enabled, but it was not")
+		}
+	})
 
-	app.SetArgs([]string{"disable", "person-only"})
-	app.Execute()
-	RelayState.Load()
-	if RelayState.RelayConfig.PersonOnly {
-		t.Fatalf("Not Disabled Limited for Person-Type Actor")
-	}
+	t.Run("Disable person-only configuration", func(t *testing.T) {
+		app.SetArgs([]string{"disable", "person-only"})
+		app.Execute()
+		RelayState.Load()
+		if RelayState.RelayConfig.PersonOnly {
+			t.Fatalf("Expected PersonOnly to be disabled, but it was not")
+		}
+	})
 }
 
-func TestManuallyAccept(t *testing.T) {
+func TestManuallyAcceptConfiguration(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
 
-	app.SetArgs([]string{"enable", "manually-accept"})
-	app.Execute()
-	RelayState.Load()
-	if !RelayState.RelayConfig.ManuallyAccept {
-		t.Fatalf("Not Enabled Manually Accept Follow-Request")
-	}
+	t.Run("Enable manually-accept configuration", func(t *testing.T) {
+		app.SetArgs([]string{"enable", "manually-accept"})
+		app.Execute()
+		RelayState.Load()
+		if !RelayState.RelayConfig.ManuallyAccept {
+			t.Fatalf("Expected ManuallyAccept to be enabled, but it was not")
+		}
+	})
 
-	app.SetArgs([]string{"disable", "manually-accept"})
-	app.Execute()
-	RelayState.Load()
-	if RelayState.RelayConfig.ManuallyAccept {
-		t.Fatalf("Not Disabled Manually Accept Follow-Request")
-	}
+	t.Run("Disable manually-accept configuration", func(t *testing.T) {
+		app.SetArgs([]string{"disable", "manually-accept"})
+		app.Execute()
+		RelayState.Load()
+		if RelayState.RelayConfig.ManuallyAccept {
+			t.Fatalf("Expected ManuallyAccept to be disabled, but it was not")
+		}
+	})
 }
 
 func TestInvalidConfig(t *testing.T) {
@@ -61,7 +69,7 @@ func TestInvalidConfig(t *testing.T) {
 
 	output := buffer.String()
 	if strings.Split(output, "\n")[0] != "Invalid Config Provided." {
-		t.Fatalf("Invalid Response.")
+		t.Fatalf("Expected output to be 'Invalid Config Provided.', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -106,7 +114,7 @@ func TestExportConfig(t *testing.T) {
 
 	file, err := os.Open("../misc/test/blankConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 	output := buffer.String()
@@ -121,7 +129,7 @@ func TestImportConfig(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 

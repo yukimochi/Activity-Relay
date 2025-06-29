@@ -8,7 +8,7 @@ import (
 func TestRedisHGetOrCreateWithDefault(t *testing.T) {
 	relayConfig := createRelayConfig(t)
 
-	t.Run("Execute HGet when value exist", func(t *testing.T) {
+	t.Run("Execute HGet when value exists", func(t *testing.T) {
 		_, err := relayConfig.redisClient.HSet(context.TODO(), "gotest:redis:hget:or:create:with:default", "exist", "1").Result()
 		if err != nil {
 			t.Error(err)
@@ -28,7 +28,7 @@ func TestRedisHGetOrCreateWithDefault(t *testing.T) {
 		}
 	})
 
-	t.Run("Execute HGet when value not exist", func(t *testing.T) {
+	t.Run("Execute HGet when value does not exist", func(t *testing.T) {
 		_, err := redisHGetOrCreateWithDefault(relayConfig.redisClient, "gotest:redis:hget:or:create:with:default", "not_exist", "2")
 		if err != nil {
 			t.Fatalf("Expected no error from redisHGetOrCreateWithDefault, but got: %v", err)

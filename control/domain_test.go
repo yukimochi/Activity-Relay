@@ -15,7 +15,7 @@ func TestListDomainSubscriber(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -47,7 +47,7 @@ func TestListDomainLimited(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -78,7 +78,7 @@ func TestListDomainBlocked(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -151,7 +151,7 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -181,7 +181,7 @@ func TestUnsetDomainLimited(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -211,7 +211,7 @@ func TestSetDomainInvalid(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -238,7 +238,7 @@ func TestUnfollowDomain(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 
@@ -268,7 +268,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	app := configCmdInit()
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
-		t.Fatalf("Test resource fetch error.")
+		t.Fatalf("Failed to open test resource file: %v", err)
 	}
 	jsonData, _ := io.ReadAll(file)
 

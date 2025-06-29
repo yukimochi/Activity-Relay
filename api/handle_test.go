@@ -218,33 +218,46 @@ func TestHandleActorInvalidMethod(t *testing.T) {
 	}
 }
 
-func TestContains(t *testing.T) {
-	data := "nil"
-	sData := []string{
-		"no",
-		"nil",
-	}
-	invalidData := 0
-	result := contains(data, "true")
-	if result != false {
-		t.Fatalf("fail - not contain but return true")
-	}
-	result = contains(data, "nil")
-	if result != true {
-		t.Fatalf("fail - contains but return false")
-	}
-	result = contains(sData, "true")
-	if result != false {
-		t.Fatalf("fail - not contain but return true (slice)")
-	}
-	result = contains(sData, "nil")
-	if result != true {
-		t.Fatalf("fail - contains but return false (slice)")
-	}
-	result = contains(invalidData, "hoge")
-	if result != false {
-		t.Fatalf("fail - given invalid data but return true (slice)")
-	}
+func TestContainsFunction(t *testing.T) {
+	t.Run("String data contains target", func(t *testing.T) {
+		data := "nil"
+		result := contains(data, "nil")
+		if result != true {
+			t.Fatalf("Expected contains(%q, %q) to be true, but got false", data, "nil")
+		}
+	})
+
+	t.Run("String data does not contain target", func(t *testing.T) {
+		data := "nil"
+		result := contains(data, "true")
+		if result != false {
+			t.Fatalf("Expected contains(%q, %q) to be false, but got true", data, "true")
+		}
+	})
+
+	t.Run("String slice contains target", func(t *testing.T) {
+		sData := []string{"no", "nil"}
+		result := contains(sData, "nil")
+		if result != true {
+			t.Fatalf("Expected contains(%v, %q) to be true, but got false", sData, "nil")
+		}
+	})
+
+	t.Run("String slice does not contain target", func(t *testing.T) {
+		sData := []string{"no", "nil"}
+		result := contains(sData, "true")
+		if result != false {
+			t.Fatalf("Expected contains(%v, %q) to be false, but got true", sData, "true")
+		}
+	})
+
+	t.Run("Invalid data type returns false", func(t *testing.T) {
+		invalidData := 0
+		result := contains(invalidData, "hoge")
+		if result != false {
+			t.Fatalf("Expected contains(%v, %q) to be false for invalid data, but got true", invalidData, "hoge")
+		}
+	})
 }
 
 func mockActivityDecoderProvider(activity *models.Activity, actor *models.Actor) func(r *http.Request) (*models.Activity, *models.Actor, []byte, error) {
@@ -308,7 +321,7 @@ func mockActivity(req string) models.Activity {
 		json.Unmarshal(body, &activity)
 		return activity
 	default:
-		panic("fatal - request not registered")
+		panic("mock activity error: unsupported activity type requested: " + req)
 	}
 }
 
@@ -333,7 +346,7 @@ func mockActor(req string) models.Actor {
 		json.Unmarshal(body, &actor)
 		return actor
 	default:
-		panic("fatal - request not registered")
+		panic("mock actor error: unsupported actor type requested: " + req)
 	}
 }
 
@@ -345,13 +358,13 @@ func TestSuitableRelayNoBlockService(t *testing.T) {
 	RelayState.SetConfig(PersonOnly, false)
 
 	if isActorAbleToRelay(&personActor) != true {
-		t.Fatalf("fail - Person activity should relay")
+		t.Fatalf("Expected Person actor to be able to relay, but it was not")
 	}
 	if isActorAbleToRelay(&serviceActor) != true {
-		t.Fatalf("fail - Service activity should relay")
+		t.Fatalf("Expected Service actor to be able to relay, but it was not")
 	}
 	if isActorAbleToRelay(&applicationActor) != true {
-		t.Fatalf("fail - Service activity should relay")
+		t.Fatalf("Expected Application actor to be able to relay, but it was not")
 	}
 }
 
@@ -363,13 +376,13 @@ func TestSuitableRelayBlockService(t *testing.T) {
 	RelayState.SetConfig(PersonOnly, true)
 
 	if isActorAbleToRelay(&personActor) != true {
-		t.Fatalf("fail - Person activity should relay")
+		t.Fatalf("Expected Person actor to be able to relay, but it was not")
 	}
 	if isActorAbleToRelay(&serviceActor) != false {
-		t.Fatalf("fail - Service activity should not relay when blocking mode")
+		t.Fatalf("Expected Service actor to not be able to relay when PersonOnly is enabled, but it was")
 	}
 	if isActorAbleToRelay(&applicationActor) != false {
-		t.Fatalf("fail - Application activity should not relay when blocking mode")
+		t.Fatalf("Expected Application actor to not be able to relay when PersonOnly is enabled, but it was")
 	}
 	RelayState.SetConfig(PersonOnly, false)
 }
