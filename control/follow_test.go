@@ -29,9 +29,9 @@ func TestListFollows(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Follow request :
+	valid := ` - Follow requests:
 example.com
-Total : 1
+Total: 1
 `
 	if output != valid {
 		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
@@ -143,8 +143,8 @@ func TestInvalidFollow(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Expected output to be 'Invalid domain [unknown.tld] given', but got '%s'", strings.Split(output, "\n")[0])
+	if strings.Split(output, "\n")[0] != "Invalid domain provided: unknown.tld" {
+		t.Fatalf("Expected output to be 'Invalid domain provided: unknown.tld', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -160,8 +160,8 @@ func TestInvalidRejectFollow(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] given" {
-		t.Fatalf("Expected output to be 'Invalid domain [unknown.tld] given', but got '%s'", strings.Split(output, "\n")[0])
+	if strings.Split(output, "\n")[0] != "Invalid domain provided: unknown.tld" {
+		t.Fatalf("Expected output to be 'Invalid domain provided: unknown.tld', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 

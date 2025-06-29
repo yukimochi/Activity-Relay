@@ -68,8 +68,8 @@ func TestInvalidConfig(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid Config Provided." {
-		t.Fatalf("Expected output to be 'Invalid Config Provided.', but got '%s'", strings.Split(output, "\n")[0])
+	if strings.Split(output, "\n")[0] != "Invalid configuration provided: hoge" {
+		t.Fatalf("Expected output to be 'Invalid configuration provided: hoge', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -86,17 +86,13 @@ func TestListConfig(t *testing.T) {
 	output := buffer.String()
 	for _, row := range strings.Split(output, "\n") {
 		switch strings.Split(row, ":")[0] {
-		case "Blocking for service-type actor ":
-			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Expected 'Blocking for service-type actor' to be false, but got true")
+		case "Person-Type Actor limitation":
+			if strings.Split(row, ":")[1] == " true" {
+				t.Fatalf("Expected 'Person-Type Actor limitation' to be false, but got true")
 			}
-		case "Manually accept follow-request ":
-			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Expected 'Manually accept follow-request' to be false, but got true")
-			}
-		case "Announce activity instead of relay create activity ":
-			if strings.Split(row, ":")[1] == "  true" {
-				t.Fatalf("Expected 'Announce activity instead of relay create activity' to be false, but got true")
+		case "Manual follow request acceptance":
+			if strings.Split(row, ":")[1] == " true" {
+				t.Fatalf("Expected 'Manual follow request acceptance' to be false, but got true")
 			}
 		}
 	}

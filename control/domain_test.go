@@ -31,10 +31,10 @@ func TestListDomainSubscriber(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Subscriber list :
+	valid := ` - Subscriber list:
 [*] subscription.example.jp
- - Follower list :
-Total : 1
+ - Follower list:
+Total: 1
 `
 	if output != valid {
 		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
@@ -63,9 +63,9 @@ func TestListDomainLimited(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Limited domains :
+	valid := ` - Limited domains:
 limitedDomain.example.jp
-Total : 1
+Total: 1
 `
 	if output != valid {
 		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
@@ -94,9 +94,9 @@ func TestListDomainBlocked(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	valid := ` - Blocked domains :
+	valid := ` - Blocked domains:
 blockedDomain.example.jp
-Total : 1
+Total: 1
 `
 	if output != valid {
 		t.Fatalf("Expected output to be '%s', but got '%s'", valid, output)
@@ -227,8 +227,8 @@ func TestSetDomainInvalid(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid type provided" {
-		t.Fatalf("Expected output to be 'Invalid type provided', but got '%s'", strings.Split(output, "\n")[0])
+	if strings.Split(output, "\n")[0] != "Invalid type provided: hoge" {
+		t.Fatalf("Expected output to be 'Invalid type provided: hoge', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }
 
@@ -284,7 +284,7 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	app.Execute()
 
 	output := buffer.String()
-	if strings.Split(output, "\n")[0] != "Invalid domain [unknown.tld] provided" {
-		t.Fatalf("Expected output to be 'Invalid domain [unknown.tld] provided', but got '%s'", strings.Split(output, "\n")[0])
+	if strings.Split(output, "\n")[0] != "Invalid domain provided: unknown.tld" {
+		t.Fatalf("Expected output to be 'Invalid domain provided: unknown.tld', but got '%s'", strings.Split(output, "\n")[0])
 	}
 }

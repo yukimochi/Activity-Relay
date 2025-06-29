@@ -17,14 +17,14 @@ import (
 func followCmdInit() *cobra.Command {
 	var follow = &cobra.Command{
 		Use:   "follow",
-		Short: "Manage follow request for relay",
-		Long:  "List all follow request and accept/reject follow requests.",
+		Short: "Manage follow requests for relay",
+		Long:  "List all follow requests and accept/reject follow requests.",
 	}
 
 	var followList = &cobra.Command{
 		Use:   "list",
-		Short: "List follow request",
-		Long:  "List follow request.",
+		Short: "List follow requests",
+		Long:  "List follow requests.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(listFollows, cmd, args)
 		},
@@ -33,8 +33,8 @@ func followCmdInit() *cobra.Command {
 
 	var followAccept = &cobra.Command{
 		Use:   "accept",
-		Short: "Accept follow request",
-		Long:  "Accept follow request by domain.",
+		Short: "Accept follow requests",
+		Long:  "Accept follow requests by domain.",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(acceptFollow, cmd, args)
@@ -44,8 +44,8 @@ func followCmdInit() *cobra.Command {
 
 	var followReject = &cobra.Command{
 		Use:   "reject",
-		Short: "Reject follow request",
-		Long:  "Reject follow request by domain.",
+		Short: "Reject follow requests",
+		Long:  "Reject follow requests by domain.",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(rejectFollow, cmd, args)
@@ -56,7 +56,7 @@ func followCmdInit() *cobra.Command {
 	var updateActor = &cobra.Command{
 		Use:   "update",
 		Short: "Update actor object",
-		Long:  "Update actor object for whole subscribers/followers.",
+		Long:  "Update actor object for all subscribers/followers.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return InitProxyE(updateActor, cmd, args)
 		},
@@ -160,7 +160,7 @@ func createUpdateActorActivity(subscription models.Subscriber) error {
 
 func listFollows(cmd *cobra.Command, _ []string) error {
 	var domains []string
-	cmd.Println(" - Follow request :")
+	cmd.Println(" - Follow requests:")
 	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
 	if err != nil {
 		return err
@@ -171,7 +171,7 @@ func listFollows(cmd *cobra.Command, _ []string) error {
 	for _, domain := range domains {
 		cmd.Println(domain)
 	}
-	cmd.Println(fmt.Sprintf("Total : %d", len(domains)))
+	cmd.Println(fmt.Sprintf("Total: %d", len(domains)))
 
 	return nil
 }
@@ -192,7 +192,7 @@ func acceptFollow(cmd *cobra.Command, args []string) error {
 			cmd.Println("Accept [" + domain + "] follow request")
 			createFollowRequestResponse(domain, "Accept")
 		} else {
-			cmd.Println("Invalid domain [" + domain + "] given")
+			cmd.Println("Invalid domain provided: " + domain)
 		}
 	}
 
@@ -215,7 +215,7 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 			cmd.Println("Reject [" + domain + "] follow request")
 			createFollowRequestResponse(domain, "Reject")
 		} else {
-			cmd.Println("Invalid domain [" + domain + "] given")
+			cmd.Println("Invalid domain provided: " + domain)
 		}
 	}
 
@@ -226,7 +226,7 @@ func updateActor(cmd *cobra.Command, _ []string) error {
 	for _, subscription := range RelayState.SubscribersAndFollowers {
 		err := createUpdateActorActivity(subscription)
 		if err != nil {
-			cmd.Println("Failed Update RelayActor for " + subscription.Domain)
+			cmd.Println("Failed to update RelayActor for [" + subscription.Domain + "]")
 		}
 	}
 	return nil
