@@ -21,11 +21,11 @@ func TestAppendSignature(t *testing.T) {
 	req, _ := http.NewRequest("POST", "https://localhost", bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/activity+json")
 	req.Header.Set("Date", httpdate.Time2Str(time.Now()))
-	appendSignature(req, &body, "https://innocent.yukimochi.io/users/YUKIMOCHI#main-key", GlobalConfig.ActorKey())
+	appendSignature(req, &body, "https://toot.yukimochi.jp/users/YUKIMOCHI#main-key", GlobalConfig.ActorKey())
 
 	// Activated compatibilityForHTTPSignature11
 	sign := req.Header.Get("Signature")
-	activated := regexp.MustCompile(string("algorithm=" + httpsig.RSA_SHA256 + "\"")).MatchString(sign)
+	activated := regexp.MustCompile(`algorithm="` + string(httpsig.RSA_SHA256) + `"`).MatchString(sign)
 	if !activated {
 		t.Fatalf("Expected Signature header to contain algorithm=\"%s\", but got: %s", httpsig.RSA_SHA256, sign)
 	}
