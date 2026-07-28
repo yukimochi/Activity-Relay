@@ -131,6 +131,40 @@ type Activity struct {
 	Cc      []string    `json:"cc,omitempty"`
 }
 
+// UnmarshalJSON normalizes the `to` and `cc` properties so that both
+// single-string and array-of-string forms decode into []string.
+func (a *Activity) UnmarshalJSON(data []byte) error {
+	type alias Activity
+	aux := &struct {
+		*alias
+		To json.RawMessage `json:"to,omitempty"`
+		Cc json.RawMessage `json:"cc,omitempty"`
+	}{
+		alias: (*alias)(a),
+	}
+	if err := json.Unmarshal(data, aux); err != nil {
+		return err
+	}
+	a.To = parseStringOrArray(aux.To)
+	a.Cc = parseStringOrArray(aux.Cc)
+	return nil
+}
+
+func parseStringOrArray(raw json.RawMessage) []string {
+	if len(raw) == 0 {
+		return nil
+	}
+	var arr []string
+	if err := json.Unmarshal(raw, &arr); err == nil {
+		return arr
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		return []string{s}
+	}
+	return nil
+}
+
 // GenerateReply : Generate activity to activity's actor.
 func (activity *Activity) GenerateReply(actor Actor, object interface{}, activityType string) Activity {
 	return Activity{

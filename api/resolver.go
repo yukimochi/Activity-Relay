@@ -184,9 +184,13 @@ func isActorSubscribersOrFollowers(actorID *url.URL) bool {
 	return false
 }
 
-func isActorAbleToBeFollower(actorID *url.URL) bool {
-	endingWithRelay := regexp.MustCompile(`/relay$`)
-	return endingWithRelay.MatchString(actorID.Path)
+func isActorAbleToBeFollower(actor *models.Actor) bool {
+	if actor.Type == "Application" {
+		return true
+	}
+	endingWithActor := regexp.MustCompile(`/relay$`)
+	actorID, _ := url.Parse(actor.ID)
+	return endingWithActor.MatchString(actorID.Path)
 }
 
 func isActorAbleToRelay(actor *models.Actor) bool {
@@ -243,7 +247,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 			logrus.Info("Accepted Follow Request : ", activity.Actor)
 		}
 	case contains(activity.Object, RelayActor.ID):
-		if isActorAbleToBeFollower(actorID) {
+		if isActorAbleToBeFollower(actor) {
 			if RelayState.RelayConfig.ManuallyAccept {
 				RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
 					"inbox_url":   actor.Endpoints.SharedInbox,
@@ -287,7 +291,7 @@ func executeUnfollowing(activity *models.Activity, actor *models.Actor) error {
 		logrus.Info("Accepted Unfollow Request : ", activity.Actor)
 		return nil
 	case contains(activity.Object, RelayActor.ID):
-		if isActorAbleToBeFollower(actorID) {
+		if isActorAbleToBeFollower(actor) {
 			RelayState.DelFollower(actorID.Host)
 			logrus.Info("Accepted Unfollow Request : ", activity.Actor)
 			return nil
