@@ -250,7 +250,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 		if isActorAbleToBeFollower(actor) {
 			if RelayState.RelayConfig.ManuallyAccept {
 				RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
-					"inbox_url":   actor.Endpoints.SharedInbox,
+					"inbox_url":   actor.Inbox,
 					"activity_id": activity.ID,
 					"type":        "Follow",
 					"actor":       actor.ID,
