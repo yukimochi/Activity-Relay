@@ -23,7 +23,10 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 		return nil, nil, nil, err
 	}
 	KeyID := verifier.KeyId()
-	keyOwnerActor, err := models.NewActivityPubActorFromRemoteActor(KeyID, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host), ActorCache)
+	relayKeyID := RelayActor.PublicKey.ID
+	relayPrivateKey := GlobalConfig.ActorKey()
+	uaString := fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host)
+	keyOwnerActor, err := models.NewActivityPubActorFromRemoteActor(KeyID, uaString, ActorCache, relayKeyID, relayPrivateKey)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -56,7 +59,7 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	remoteActor, err := models.NewActivityPubActorFromRemoteActor(activity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host), ActorCache)
+	remoteActor, err := models.NewActivityPubActorFromRemoteActor(activity.Actor, uaString, ActorCache, relayKeyID, relayPrivateKey)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -69,7 +72,7 @@ func fetchOriginalActivityFromURL(url string) (*models.Activity, *models.Actor, 
 	if err != nil {
 		return nil, nil, err
 	}
-	remoteActor, err := models.NewActivityPubActorFromRemoteActor(remoteActivity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host), ActorCache)
+	remoteActor, err := models.NewActivityPubActorFromRemoteActor(remoteActivity.Actor, fmt.Sprintf("%s (golang net/http; Activity-Relay %s; %s)", GlobalConfig.ServerServiceName(), version, GlobalConfig.ServerHostname().Host), ActorCache, RelayActor.PublicKey.ID, GlobalConfig.ActorKey())
 	if err != nil {
 		return &remoteActivity, nil, err
 	}

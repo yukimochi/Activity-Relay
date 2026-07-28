@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"io"
@@ -8,9 +9,26 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/go-fed/httpsig"
 	"github.com/google/uuid"
 	"github.com/patrickmn/go-cache"
 )
+
+func signGETRequest(req *http.Request, keyID string, privateKey *rsa.PrivateKey) error {
+	req.Header.Set("Host", req.URL.Host)
+	req.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+	signer, _, err := httpsig.NewSigner(
+		[]httpsig.Algorithm{httpsig.RSA_SHA256},
+		httpsig.DigestSha256,
+		[]string{httpsig.RequestTarget, "Host", "Date"},
+		httpsig.Signature,
+		60*60,
+	)
+	if err != nil {
+		return err
+	}
+	return signer.SignRequest(privateKey, keyID, req, nil)
+}
 
 // PublicKey : Activity Certificate.
 type PublicKey struct {
@@ -85,7 +103,7 @@ func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 }
 
 // NewActivityPubActorFromRemoteActor : Retrieve Actor from remote instance.
-func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cache.Cache) (Actor, error) {
+func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cache.Cache, keyID string, privateKey *rsa.PrivateKey) (Actor, error) {
 	var actor = new(Actor)
 	var err error
 	cacheData, found := cache.Get(url)
@@ -100,6 +118,11 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
+	if privateKey != nil && keyID != "" {
+		if err := signGETRequest(req, keyID, privateKey); err != nil {
+			return *actor, err
+		}
+	}
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {

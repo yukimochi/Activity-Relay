@@ -331,7 +331,7 @@ func executeRejectRequest(activity *models.Activity, actor *models.Actor, err er
 
 func executeRelayActivity(activity *models.Activity, actor *models.Actor, body []byte) error {
 	actorID, _ := url.Parse(actor.ID)
-	if !isActorSubscribed(actorID) {
+	if !isActorSubscribersOrFollowers(actorID) {
 		err := errors.New("to use the relay service, please follow in advance")
 		return err
 	}
