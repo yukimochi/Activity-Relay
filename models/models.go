@@ -103,9 +103,6 @@ func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 }
 
 // NewActivityPubActorFromRemoteActor : Retrieve Actor from remote instance.
-// When keyID and privateKey are provided, the GET request is signed with
-// HTTP Signature so that instances requiring authenticated fetch (e.g.
-// GoToSocial) respond with 200 instead of 401.
 func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cache.Cache, keyID string, privateKey *rsa.PrivateKey) (Actor, error) {
 	var actor = new(Actor)
 	var err error
