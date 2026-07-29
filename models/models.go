@@ -56,6 +56,7 @@ type Actor struct {
 	PreferredUsername string      `json:"preferredUsername,omitempty"`
 	Summary           string      `json:"summary,omitempty"`
 	Inbox             string      `json:"inbox,omitempty"`
+	Outbox            string      `json:"outbox,omitempty"`
 	Endpoints         *Endpoints  `json:"endpoints,omitempty"`
 	PublicKey         PublicKey   `json:"publicKey,omitempty"`
 	Icon              *Image      `json:"icon,omitempty"`
@@ -81,6 +82,7 @@ func NewActivityPubActorFromRelayConfig(globalConfig *RelayConfig) Actor {
 		PreferredUsername: "relay",
 		Summary:           globalConfig.serviceSummary,
 		Inbox:             hostname + "/inbox",
+		Outbox:            hostname + "/actor/outbox",
 		PublicKey: PublicKey{
 			ID:           hostname + "/actor#main-key",
 			Owner:        hostname + "/actor",
