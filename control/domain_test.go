@@ -13,10 +13,13 @@ func TestListDomainSubscriber(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -45,10 +48,13 @@ func TestListDomainLimited(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -76,10 +82,13 @@ func TestListDomainBlocked(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -149,10 +158,13 @@ func TestUnsetDomainBlocked(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -179,10 +191,13 @@ func TestUnsetDomainLimited(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -209,10 +224,13 @@ func TestSetDomainInvalid(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -236,10 +254,13 @@ func TestUnfollowDomain(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
@@ -266,10 +287,13 @@ func TestInvalidUnfollowDomain(t *testing.T) {
 	RelayState.RedisClient.FlushAll(context.TODO()).Result()
 
 	app := configCmdInit()
+
 	file, err := os.Open("../misc/test/exampleConfig.json")
 	if err != nil {
 		t.Fatalf("Failed to open test resource file: %v", err)
 	}
+	defer file.Close()
+
 	jsonData, _ := io.ReadAll(file)
 
 	app.SetArgs([]string{"import", "--data", string(jsonData)})
