@@ -35,6 +35,51 @@ func TestNewRelayConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("Load outbound blocked CIDRs from environment", func(t *testing.T) {
+		t.Setenv("OUTBOUND_BLOCKED_CIDRS", "8.8.8.8/32, 2606:4700::/32")
+		originalClient := httpClient
+		defer func() { httpClient = originalClient }()
+		relayConfig, err := NewRelayConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer relayConfig.redisClient.Close()
+		defer httpClient.CloseIdleConnections()
+		if len(relayConfig.outboundBlockedCIDRs) != 2 || relayConfig.outboundBlockedCIDRs[0].String() != "8.8.8.8/32" {
+			t.Fatalf("environment CIDRs not loaded: %v", relayConfig.outboundBlockedCIDRs)
+		}
+	})
+
+	t.Run("Load outbound blocked CIDRs from configuration", func(t *testing.T) {
+		original := viper.Get("OUTBOUND_BLOCKED_CIDRS")
+		originalClient := httpClient
+		defer func() { httpClient = originalClient }()
+		viper.Set("OUTBOUND_BLOCKED_CIDRS", "8.8.8.8/32, 2606:4700::/32")
+		defer viper.Set("OUTBOUND_BLOCKED_CIDRS", original)
+
+		relayConfig, err := NewRelayConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer relayConfig.redisClient.Close()
+		if len(relayConfig.outboundBlockedCIDRs) != 2 {
+			t.Fatalf("got %d blocked CIDRs, want 2", len(relayConfig.outboundBlockedCIDRs))
+		}
+		if httpClient.Transport.(outboundRoundTripper).transport != relayConfig.outboundTransport {
+			t.Fatal("remote fetch client does not use the configured transport")
+		}
+		defer httpClient.CloseIdleConnections()
+	})
+
+	t.Run("Reject invalid outbound blocked CIDR", func(t *testing.T) {
+		original := viper.Get("OUTBOUND_BLOCKED_CIDRS")
+		viper.Set("OUTBOUND_BLOCKED_CIDRS", "not-a-cidr")
+		defer viper.Set("OUTBOUND_BLOCKED_CIDRS", original)
+		if _, err := NewRelayConfig(); err == nil {
+			t.Fatal("expected invalid OUTBOUND_BLOCKED_CIDRS to fail")
+		}
+	})
+
 	t.Run("Fail to load invalid configuration", func(t *testing.T) {
 		invalidConfig := map[string]string{
 			"ACTOR_PEM@notFound":        "../misc/test/notfound.pem",

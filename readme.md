@@ -55,6 +55,7 @@ JOB_CONCURRENCY: 50
 
 # RELAY_ICON: https://
 # RELAY_IMAGE: https://
+# OUTBOUND_BLOCKED_CIDRS: 203.0.113.10/32,198.51.100.0/24
 ```
 
 ### Environment Variable
@@ -70,6 +71,7 @@ JOB_CONCURRENCY: 50
  - RELAY_SUMMARY
  - RELAY_ICON
  - RELAY_IMAGE
+ - OUTBOUND_BLOCKED_CIDRS (optional; comma-separated CIDRs; configurable via YAML or environment variable)
 
 ## How to Use Relay (for Relay Customers)
 
