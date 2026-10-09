@@ -2,6 +2,8 @@ package models
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"strings"
 	"sync"
 
@@ -62,74 +64,105 @@ func (config *RelayState) ListenNotify(c chan<- bool) {
 	}()
 }
 
-// Load : Refrash content from redis
+// Load : Refresh content from redis.
+// If any Redis command fails, the previous in-memory state is kept so
+// that a transient error does not wipe the subscriber lists.
 func (config *RelayState) Load() {
-	config.mutex.Lock()
-	defer config.mutex.Unlock()
+	newRelayConfig, err := loadRelayConfig(config.RedisClient)
+	if err != nil {
+		logrus.Error("Failed to reload RelayState, keep previous state : ", err)
+		return
+	}
 
-	config.RelayConfig.load(config.RedisClient)
-	var limitedDomains []string
-	var blockedDomains []string
+	limitedDomains, err := config.RedisClient.HKeys(context.TODO(), "relay:config:limitedDomain").Result()
+	if err != nil {
+		logrus.Error("Failed to reload RelayState, keep previous state : ", err)
+		return
+	}
+	blockedDomains, err := config.RedisClient.HKeys(context.TODO(), "relay:config:blockedDomain").Result()
+	if err != nil {
+		logrus.Error("Failed to reload RelayState, keep previous state : ", err)
+		return
+	}
+
+	subscriptionKeys, err := RedisScanKeys(config.RedisClient, "relay:subscription:*")
+	if err != nil {
+		logrus.Error("Failed to reload RelayState, keep previous state : ", err)
+		return
+	}
+	followerKeys, err := RedisScanKeys(config.RedisClient, "relay:follower:*")
+	if err != nil {
+		logrus.Error("Failed to reload RelayState, keep previous state : ", err)
+		return
+	}
+
+	// Fetch all subscription/follower fields in a single pipeline so that
+	// a reload does not issue O(N) sequential round-trips.
+	pipe := config.RedisClient.Pipeline()
+	subscriptionCmds := make([]*redis.SliceCmd, len(subscriptionKeys))
+	for i, key := range subscriptionKeys {
+		subscriptionCmds[i] = pipe.HMGet(context.TODO(), key, "inbox_url", "activity_id", "actor_id")
+	}
+	followerCmds := make([]*redis.SliceCmd, len(followerKeys))
+	for i, key := range followerKeys {
+		followerCmds[i] = pipe.HMGet(context.TODO(), key, "inbox_url", "activity_id", "actor_id", "mutually_follow")
+	}
+	if _, err := pipe.Exec(context.TODO()); err != nil {
+		logrus.Error("Failed to reload RelayState, keep previous state : ", err)
+		return
+	}
+
 	var subscribers []Subscriber
 	var followers []Follower
 	var subscribersAndFollowers []Subscriber
-
-	domains, _ := config.RedisClient.HKeys(context.TODO(), "relay:config:limitedDomain").Result()
-	for _, domain := range domains {
-		limitedDomains = append(limitedDomains, domain)
-	}
-	domains, _ = config.RedisClient.HKeys(context.TODO(), "relay:config:blockedDomain").Result()
-	for _, domain := range domains {
-		blockedDomains = append(blockedDomains, domain)
-	}
-
-	domains, err := RedisScanKeys(config.RedisClient, "relay:subscription:*")
-	if err != nil {
-		logrus.Error(err)
-	}
-	for _, domain := range domains {
-		domainName := strings.Replace(domain, "relay:subscription:", "", 1)
-		inboxURL, _ := config.RedisClient.HGet(context.TODO(), domain, "inbox_url").Result()
-		activityID, err := config.RedisClient.HGet(context.TODO(), domain, "activity_id").Result()
-		if err != nil {
-			activityID = ""
+	for i, key := range subscriptionKeys {
+		values, _ := subscriptionCmds[i].Result()
+		subscriber := Subscriber{
+			Domain:     strings.Replace(key, "relay:subscription:", "", 1),
+			InboxURL:   sliceStringValue(values, 0),
+			ActivityID: sliceStringValue(values, 1),
+			ActorID:    sliceStringValue(values, 2),
 		}
-		actorID, err := config.RedisClient.HGet(context.TODO(), domain, "actor_id").Result()
-		if err != nil {
-			actorID = ""
-		}
-		subscribers = append(subscribers, Subscriber{domainName, inboxURL, activityID, actorID})
-		subscribersAndFollowers = append(subscribersAndFollowers, Subscriber{domainName, inboxURL, activityID, actorID})
+		subscribers = append(subscribers, subscriber)
+		subscribersAndFollowers = append(subscribersAndFollowers, subscriber)
 	}
-
-	domains, err = RedisScanKeys(config.RedisClient, "relay:follower:*")
-	if err != nil {
-		logrus.Error(err)
-	}
-	for _, domain := range domains {
-		domainName := strings.Replace(domain, "relay:follower:", "", 1)
-		inboxURL, _ := config.RedisClient.HGet(context.TODO(), domain, "inbox_url").Result()
-		activityID, err := config.RedisClient.HGet(context.TODO(), domain, "activity_id").Result()
-		if err != nil {
-			activityID = ""
+	for i, key := range followerKeys {
+		values, _ := followerCmds[i].Result()
+		follower := Follower{
+			Domain:         strings.Replace(key, "relay:follower:", "", 1),
+			InboxURL:       sliceStringValue(values, 0),
+			ActivityID:     sliceStringValue(values, 1),
+			ActorID:       sliceStringValue(values, 2),
+			MutuallyFollow: sliceStringValue(values, 3) == "1",
 		}
-		actorID, err := config.RedisClient.HGet(context.TODO(), domain, "actor_id").Result()
-		if err != nil {
-			actorID = ""
-		}
-		mutuallyFollow, err := config.RedisClient.HGet(context.TODO(), domain, "mutually_follow").Result()
-		if err != nil {
-			mutuallyFollow = "0"
-		}
-		followers = append(followers, Follower{domainName, inboxURL, activityID, actorID, mutuallyFollow == "1"})
-		subscribersAndFollowers = append(subscribersAndFollowers, Subscriber{domainName, inboxURL, activityID, actorID})
+		followers = append(followers, follower)
+		subscribersAndFollowers = append(subscribersAndFollowers, Subscriber{
+			Domain:     follower.Domain,
+			InboxURL:   follower.InboxURL,
+			ActivityID: follower.ActivityID,
+			ActorID:    follower.ActorID,
+		})
 	}
 
+	config.mutex.Lock()
+	defer config.mutex.Unlock()
+
+	config.RelayConfig = newRelayConfig
 	config.LimitedDomains = limitedDomains
 	config.BlockedDomains = blockedDomains
 	config.Subscribers = subscribers
 	config.Followers = followers
 	config.SubscribersAndFollowers = subscribersAndFollowers
+}
+
+// MarshalJSON : Serialize relay state under the read lock so that a
+// concurrent reload cannot race with an export.
+func (config *RelayState) MarshalJSON() ([]byte, error) {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	type alias RelayState
+	return json.Marshal((*alias)(config))
 }
 
 // SubscribersSnapshot : Return a copy of the subscriber list
@@ -332,15 +365,17 @@ type relayConfig struct {
 	ManuallyAccept bool `json:"manuallyAccept,omitempty"`
 }
 
-func (config *relayConfig) load(redisClient *redis.Client) {
+func loadRelayConfig(redisClient *redis.Client) (relayConfig, error) {
 	personOnly, err := redisClient.HGet(context.TODO(), "relay:config", "block_service").Result()
-	if err != nil {
-		personOnly = "0"
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return relayConfig{}, err
 	}
 	manuallyAccept, err := redisClient.HGet(context.TODO(), "relay:config", "manually_accept").Result()
-	if err != nil {
-		manuallyAccept = "0"
+	if err != nil && !errors.Is(err, redis.Nil) {
+		return relayConfig{}, err
 	}
-	config.PersonOnly = personOnly == "1"
-	config.ManuallyAccept = manuallyAccept == "1"
+	return relayConfig{
+		PersonOnly:     personOnly == "1",
+		ManuallyAccept: manuallyAccept == "1",
+	}, nil
 }
