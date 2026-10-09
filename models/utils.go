@@ -27,10 +27,7 @@ func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
 	return pub, nil
 }
 
-// RedisScanKeys returns all keys matching pattern using SCAN instead of
-// the blocking KEYS command, so that large keyspaces do not stall Redis.
-// Results are deduplicated because SCAN may return the same key more than
-// once over a full iteration.
+// RedisScanKeys returns all deduplicated keys matching pattern using SCAN.
 func RedisScanKeys(redisClient *redis.Client, pattern string) ([]string, error) {
 	var keys []string
 	var cursor uint64
@@ -54,8 +51,8 @@ func RedisScanKeys(redisClient *redis.Client, pattern string) ([]string, error) 
 	}
 }
 
-// sliceStringValue returns the string value at index of a Redis HMGet
-// result, or "" when the slot is missing or holds a non-string value.
+// sliceStringValue returns the string value at index, or "" when it is
+// missing or not a string.
 func sliceStringValue(values []interface{}, index int) string {
 	if index >= len(values) {
 		return ""

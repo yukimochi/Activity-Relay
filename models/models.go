@@ -15,16 +15,12 @@ import (
 )
 
 // httpClient is used to fetch remote actors and activities.
-// It must have a timeout so that an unresponsive remote instance
-// cannot block the caller indefinitely.
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
-// maxRemoteBodySize limits the size of a remote actor/activity response
-// so that a hostile instance cannot exhaust relay memory with a huge body.
+// maxRemoteBodySize limits the size of a remote actor/activity response.
 const maxRemoteBodySize = 1 << 20 // 1 MiB
 
-// readRemoteBody reads a remote response body up to maxRemoteBodySize
-// and fails when the peer sends more than that.
+// readRemoteBody reads a remote response body up to maxRemoteBodySize.
 func readRemoteBody(body io.Reader) ([]byte, error) {
 	data, err := io.ReadAll(io.LimitReader(body, maxRemoteBodySize+1))
 	if err != nil {
@@ -179,8 +175,7 @@ type Activity struct {
 	Cc      []string    `json:"cc,omitempty"`
 }
 
-// UnmarshalJSON normalizes the `to` and `cc` properties so that both
-// single-string and array-of-string forms decode into []string.
+// UnmarshalJSON normalizes the `to` and `cc` properties into []string.
 func (a *Activity) UnmarshalJSON(data []byte) error {
 	type alias Activity
 	aux := &struct {

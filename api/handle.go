@@ -61,8 +61,7 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		writer.Write(nil)
 	} else {
 		userTotal := len(RelayState.SubscribersSnapshot())
-		// Copy the shared resource before filling in the usage counts so
-		// that concurrent requests never race on the global Nodeinfo.
+		// Copy the shared resource before filling in the usage counts.
 		nodeinfoResource := Nodeinfo.Nodeinfo
 		nodeinfoResource.Usage.Users.Total = userTotal
 		nodeinfoResource.Usage.Users.ActiveMonth = userTotal

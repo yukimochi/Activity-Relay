@@ -89,14 +89,11 @@ func enqueueRelayActivity(inboxURL string, activityID string) {
 }
 
 // pushActivityScript stores the activity body with its remaining delivery
-// count and an expiry, so that deliver workers can clean it up once every
-// job has been processed.
+// count and expiry.
 const pushActivityScript = "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 
 // pushActivity stores the activity body and enqueues a relay job for every
-// subscription except the source domain. The stored remain_count always
-// equals the number of enqueued jobs, so that deliver's cleanup cannot be
-// desynced by duplicate or dual-listed domains.
+// subscription except the source domain.
 func pushActivity(sourceDomain string, body []byte, subscriptions []models.Subscriber) {
 	targets := make([]models.Subscriber, 0, len(subscriptions))
 	for _, subscription := range subscriptions {

@@ -65,8 +65,6 @@ func (config *RelayState) ListenNotify(c chan<- bool) {
 }
 
 // Load : Refresh content from redis.
-// If any Redis command fails, the previous in-memory state is kept so
-// that a transient error does not wipe the subscriber lists.
 func (config *RelayState) Load() {
 	newRelayConfig, err := loadRelayConfig(config.RedisClient)
 	if err != nil {
@@ -96,8 +94,7 @@ func (config *RelayState) Load() {
 		return
 	}
 
-	// Fetch all subscription/follower fields in a single pipeline so that
-	// a reload does not issue O(N) sequential round-trips.
+	// Fetch all subscription/follower fields in a single pipeline.
 	pipe := config.RedisClient.Pipeline()
 	subscriptionCmds := make([]*redis.SliceCmd, len(subscriptionKeys))
 	for i, key := range subscriptionKeys {
@@ -155,8 +152,7 @@ func (config *RelayState) Load() {
 	config.SubscribersAndFollowers = subscribersAndFollowers
 }
 
-// MarshalJSON : Serialize relay state under the read lock so that a
-// concurrent reload cannot race with an export.
+// MarshalJSON : Serialize relay state under the read lock.
 func (config *RelayState) MarshalJSON() ([]byte, error) {
 	config.mutex.RLock()
 	defer config.mutex.RUnlock()
