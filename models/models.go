@@ -14,6 +14,11 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+// httpClient is used to fetch remote actors and activities.
+// It must have a timeout so that an unresponsive remote instance
+// cannot block the caller indefinitely.
+var httpClient = &http.Client{Timeout: 10 * time.Second}
+
 func signGETRequest(req *http.Request, keyID string, privateKey *rsa.PrivateKey) error {
 	req.Header.Set("Host", req.URL.Host)
 	req.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
@@ -123,7 +128,7 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 			return *actor, err
 		}
 	}
-	client := new(http.Client)
+	client := httpClient
 	resp, err := client.Do(req)
 	if err != nil {
 		return *actor, err
@@ -266,7 +271,7 @@ func NewActivityPubActivityFromRemoteActivity(url string, uaString string) (Acti
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
-	client := new(http.Client)
+	client := httpClient
 	resp, err := client.Do(req)
 	if err != nil {
 		return *activity, err
