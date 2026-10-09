@@ -17,6 +17,10 @@ import (
 // malicious or broken peer cannot exhaust server memory.
 const maxInboxBodySize = 1 << 20 // 1 MiB
 
+// errRequestBodyTooLarge signals an inbox request body over maxInboxBodySize,
+// so that the handler can answer 413 instead of 400.
+var errRequestBodyTooLarge = errors.New("request body is too large")
+
 func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []byte, error) {
 	request.Header.Set("Host", request.Host)
 	body, err := io.ReadAll(io.LimitReader(request.Body, maxInboxBodySize+1))
@@ -24,7 +28,7 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 		return nil, nil, nil, err
 	}
 	if len(body) > maxInboxBodySize {
-		return nil, nil, nil, errors.New("request body is too large")
+		return nil, nil, nil, errRequestBodyTooLarge
 	}
 
 	// Verify HTTPSignature

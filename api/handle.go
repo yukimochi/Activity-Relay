@@ -61,10 +61,13 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		writer.Write(nil)
 	} else {
 		userTotal := len(RelayState.SubscribersSnapshot())
-		Nodeinfo.Nodeinfo.Usage.Users.Total = userTotal
-		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userTotal
-		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
-		nodeinfo, err := json.Marshal(&Nodeinfo.Nodeinfo)
+		// Copy the shared resource before filling in the usage counts so
+		// that concurrent requests never race on the global Nodeinfo.
+		nodeinfoResource := Nodeinfo.Nodeinfo
+		nodeinfoResource.Usage.Users.Total = userTotal
+		nodeinfoResource.Usage.Users.ActiveMonth = userTotal
+		nodeinfoResource.Usage.Users.ActiveHalfyear = userTotal
+		nodeinfo, err := json.Marshal(&nodeinfoResource)
 		if err != nil {
 			logrus.Error("Failed to marshal nodeinfo : ", err.Error())
 			writer.WriteHeader(500)
@@ -100,7 +103,11 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 	case "POST":
 		activity, actor, body, err := activityDecoder(request)
 		if err != nil {
-			writer.WriteHeader(400)
+			if errors.Is(err, errRequestBodyTooLarge) {
+				writer.WriteHeader(http.StatusRequestEntityTooLarge)
+			} else {
+				writer.WriteHeader(400)
+			}
 			writer.Write(nil)
 		} else {
 			actorID, _ := url.Parse(activity.Actor)
