@@ -45,15 +45,16 @@ func sendActivity(inboxURL string, KeyID string, body []byte, privateKey *rsa.Pr
 	appendSignature(req, &body, KeyID, privateKey)
 	resp, err := HttpClient.Do(req)
 	if err != nil {
-		urlErr := err.(*url.Error)
-		errMsg := ""
-
-		if urlErr.Timeout() {
-			errMsg = "Client.Timeout exceeded while awaiting headers"
-		} else {
-			errMsg = urlErr.Unwrap().Error()
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if urlErr.Timeout() {
+				return errors.New(inboxURL + ": Client.Timeout exceeded while awaiting headers")
+			}
+			if urlErr.Err != nil {
+				return errors.New(inboxURL + ": " + urlErr.Err.Error())
+			}
 		}
-		return errors.New(inboxURL + ": " + errMsg)
+		return errors.New(inboxURL + ": " + err.Error())
 	}
 	defer resp.Body.Close()
 
