@@ -29,6 +29,14 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 		return nil, nil, nil, errRequestBodyTooLarge
 	}
 
+	// Verify Digest
+	givenDigest := request.Header.Get("Digest")
+	hash := sha256.Sum256(body)
+	calculatedDigest := "SHA-256=" + base64.StdEncoding.EncodeToString(hash[:])
+	if givenDigest != calculatedDigest {
+		return nil, nil, nil, errors.New("digest header is mismatch")
+	}
+
 	// Verify HTTPSignature
 	verifier, err := httpsig.NewVerifier(request)
 	if err != nil {
@@ -52,17 +60,6 @@ func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []b
 	err = verifier.Verify(PubKey, httpsig.RSA_SHA256)
 	if err != nil {
 		return nil, nil, nil, err
-	}
-
-	// Verify Digest
-	givenDigest := request.Header.Get("Digest")
-	hash := sha256.New()
-	hash.Write(body)
-	b := hash.Sum(nil)
-	calculatedDigest := "SHA-256=" + base64.StdEncoding.EncodeToString(b)
-
-	if givenDigest != calculatedDigest {
-		return nil, nil, nil, errors.New("digest header is mismatch")
 	}
 
 	// Parse Activity
