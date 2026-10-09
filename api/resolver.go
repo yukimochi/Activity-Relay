@@ -226,12 +226,16 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
 		if RelayState.RelayConfig.ManuallyAccept {
+			object, ok := activity.Object.(string)
+			if !ok {
+				return errors.New("activity object is not a string")
+			}
 			RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
 				"inbox_url":   actor.Endpoints.SharedInbox,
 				"activity_id": activity.ID,
 				"type":        "Follow",
 				"actor":       actor.ID,
-				"object":      activity.Object.(string),
+				"object":      object,
 			})
 			logrus.Info("Pending Follow Request : ", activity.Actor)
 		} else {
@@ -249,12 +253,16 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	case contains(activity.Object, RelayActor.ID):
 		if isActorAbleToBeFollower(actor) {
 			if RelayState.RelayConfig.ManuallyAccept {
+				object, ok := activity.Object.(string)
+				if !ok {
+					return errors.New("activity object is not a string")
+				}
 				RelayState.RedisClient.HMSet(context.TODO(), "relay:pending:"+actorID.Host, map[string]interface{}{
 					"inbox_url":   actor.Inbox,
 					"activity_id": activity.ID,
 					"type":        "Follow",
 					"actor":       actor.ID,
-					"object":      activity.Object.(string),
+					"object":      object,
 				})
 				logrus.Info("Pending Follow Request : ", activity.Actor)
 			} else {
