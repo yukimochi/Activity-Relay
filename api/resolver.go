@@ -88,71 +88,59 @@ func enqueueRelayActivity(inboxURL string, activityID string) {
 	}
 }
 
-func enqueueActivityForAll(sourceDomain string, body []byte) {
-	activityID := uuid.New()
-	subscriptions := RelayState.SubscribersAndFollowersSnapshot()
-	remainCount := len(subscriptions)
-	if contains(subscriptions, sourceDomain) {
-		remainCount = remainCount - 1
-	}
+// pushActivityScript stores the activity body with its remaining delivery
+// count and an expiry, so that deliver workers can clean it up once every
+// job has been processed.
+const pushActivityScript = "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 
-	if remainCount < 1 {
+// pushActivity stores the activity body and enqueues a relay job for every
+// subscription except the source domain. The stored remain_count always
+// equals the number of enqueued jobs, so that deliver's cleanup cannot be
+// desynced by duplicate or dual-listed domains.
+func pushActivity(sourceDomain string, body []byte, subscriptions []models.Subscriber) {
+	targets := make([]models.Subscriber, 0, len(subscriptions))
+	for _, subscription := range subscriptions {
+		if subscription.Domain == sourceDomain {
+			continue
+		}
+		targets = append(targets, subscription)
+	}
+	if len(targets) < 1 {
 		return
 	}
 
-	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
+	activityID := uuid.New()
+	_, err := RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, len(targets), 2*60).Result()
+	if err != nil {
+		logrus.Error("Failed to store activity "+activityID.String()+" : ", err)
+		return
+	}
 
-	for _, subscription := range subscriptions {
-		if sourceDomain == subscription.Domain {
-			continue
-		}
+	for _, subscription := range targets {
 		enqueueRelayActivity(subscription.InboxURL, activityID.String())
 	}
+}
+
+func enqueueActivityForAll(sourceDomain string, body []byte) {
+	pushActivity(sourceDomain, body, RelayState.SubscribersAndFollowersSnapshot())
 }
 
 func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
-	activityID := uuid.New()
-	subscriptions := RelayState.SubscribersSnapshot()
-	remainCount := len(subscriptions)
-	if contains(subscriptions, sourceDomain) {
-		remainCount = remainCount - 1
-	}
-	if remainCount < 1 {
-		return
-	}
-
-	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
-
-	for _, subscription := range subscriptions {
-		if sourceDomain == subscription.Domain {
-			continue
-		}
-		enqueueRelayActivity(subscription.InboxURL, activityID.String())
-	}
+	pushActivity(sourceDomain, body, RelayState.SubscribersSnapshot())
 }
 
 func enqueueActivityForFollower(sourceDomain string, body []byte) {
-	activityID := uuid.New()
 	followers := RelayState.FollowersSnapshot()
-	remainCount := len(followers)
-	if contains(followers, sourceDomain) {
-		remainCount = remainCount - 1
+	subscriptions := make([]models.Subscriber, 0, len(followers))
+	for _, follower := range followers {
+		subscriptions = append(subscriptions, models.Subscriber{
+			Domain:     follower.Domain,
+			InboxURL:   follower.InboxURL,
+			ActivityID: follower.ActivityID,
+			ActorID:    follower.ActorID,
+		})
 	}
-	if remainCount < 1 {
-		return
-	}
-
-	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
-	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
-
-	for _, subscription := range followers {
-		if sourceDomain == subscription.Domain {
-			continue
-		}
-		enqueueRelayActivity(subscription.InboxURL, activityID.String())
-	}
+	pushActivity(sourceDomain, body, subscriptions)
 }
 
 func isActorLimited(actorID *url.URL) bool {
@@ -190,13 +178,17 @@ func isActorSubscribersOrFollowers(actorID *url.URL) bool {
 	return false
 }
 
+var (
+	endingWithRelayActor         = regexp.MustCompile(`/relay$`)
+	endingWithFollowerURLPattern = regexp.MustCompile(`/followers$`)
+)
+
 func isActorAbleToBeFollower(actor *models.Actor) bool {
 	if actor.Type == "Application" {
 		return true
 	}
-	endingWithActor := regexp.MustCompile(`/relay$`)
 	actorID, _ := url.Parse(actor.ID)
-	return endingWithActor.MatchString(actorID.Path)
+	return endingWithRelayActor.MatchString(actorID.Path)
 }
 
 func isActorAbleToRelay(actor *models.Actor) bool {
@@ -211,10 +203,9 @@ func isActorAbleToRelay(actor *models.Actor) bool {
 }
 
 func isToMyFollower(entries []string) bool {
-	isToFollower := regexp.MustCompile(`/followers$`)
 	followers := RelayState.FollowersSnapshot()
 	for _, entry := range entries {
-		if isToFollower.MatchString(entry) {
+		if endingWithFollowerURLPattern.MatchString(entry) {
 			for _, follower := range followers {
 				if follower.ActorID+"/followers" == entry {
 					return true
