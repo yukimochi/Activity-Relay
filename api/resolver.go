@@ -91,7 +91,10 @@ func enqueueRelayActivity(inboxURL string, activityID string) {
 func enqueueActivityForAll(sourceDomain string, body []byte) {
 	activityID := uuid.New()
 	subscriptions := RelayState.SubscribersAndFollowersSnapshot()
-	remainCount := len(subscriptions) - 1
+	remainCount := len(subscriptions)
+	if contains(subscriptions, sourceDomain) {
+		remainCount = remainCount - 1
+	}
 
 	if remainCount < 1 {
 		return
