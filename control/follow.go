@@ -129,7 +129,7 @@ func createFollowRequestResponse(domain string, response string) error {
 				ActorID:    data["actor"],
 			})
 			actorID, _ := url.Parse(data["actor"])
-			if !contains(RelayState.LimitedDomains, actorID.Host) {
+			if !contains(RelayState.LimitedDomainsSnapshot(), actorID.Host) {
 				followRequest := models.NewActivityPubActivity(RelayActor, []string{data["actor"]}, data["actor"], "Follow")
 				jsonData, _ := json.Marshal(&followRequest)
 				enqueueRegisterActivity(data["inbox_url"], jsonData)
@@ -223,7 +223,7 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 }
 
 func updateActor(cmd *cobra.Command, _ []string) error {
-	for _, subscription := range RelayState.SubscribersAndFollowers {
+	for _, subscription := range RelayState.SubscribersAndFollowersSnapshot() {
 		err := createUpdateActorActivity(subscription)
 		if err != nil {
 			cmd.Println("Failed to update RelayActor for [" + subscription.Domain + "]")

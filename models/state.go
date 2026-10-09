@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"strings"
+	"sync"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
@@ -22,6 +23,7 @@ const (
 type RelayState struct {
 	RedisClient *redis.Client `json:"-"`
 	notifiable  bool
+	mutex       sync.RWMutex
 
 	RelayConfig             relayConfig  `json:"relayConfig,omitempty"`
 	LimitedDomains          []string     `json:"limitedDomains,omitempty"`
@@ -32,8 +34,8 @@ type RelayState struct {
 }
 
 // NewState : Create new RelayState instance with redis client
-func NewState(redisClient *redis.Client, notifiable bool) RelayState {
-	var config RelayState
+func NewState(redisClient *redis.Client, notifiable bool) *RelayState {
+	config := new(RelayState)
 	config.RedisClient = redisClient
 	config.notifiable = notifiable
 
@@ -62,6 +64,9 @@ func (config *RelayState) ListenNotify(c chan<- bool) {
 
 // Load : Refrash content from redis
 func (config *RelayState) Load() {
+	config.mutex.Lock()
+	defer config.mutex.Unlock()
+
 	config.RelayConfig.load(config.RedisClient)
 	var limitedDomains []string
 	var blockedDomains []string
@@ -127,6 +132,62 @@ func (config *RelayState) Load() {
 	config.SubscribersAndFollowers = subscribersAndFollowers
 }
 
+// SubscribersSnapshot : Return a copy of the subscriber list
+func (config *RelayState) SubscribersSnapshot() []Subscriber {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return append([]Subscriber(nil), config.Subscribers...)
+}
+
+// FollowersSnapshot : Return a copy of the follower list
+func (config *RelayState) FollowersSnapshot() []Follower {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return append([]Follower(nil), config.Followers...)
+}
+
+// SubscribersAndFollowersSnapshot : Return a copy of the subscriber and follower list
+func (config *RelayState) SubscribersAndFollowersSnapshot() []Subscriber {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return append([]Subscriber(nil), config.SubscribersAndFollowers...)
+}
+
+// LimitedDomainsSnapshot : Return a copy of the limited domain list
+func (config *RelayState) LimitedDomainsSnapshot() []string {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return append([]string(nil), config.LimitedDomains...)
+}
+
+// BlockedDomainsSnapshot : Return a copy of the blocked domain list
+func (config *RelayState) BlockedDomainsSnapshot() []string {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return append([]string(nil), config.BlockedDomains...)
+}
+
+// IsPersonOnly : Return whether Person-Type Actor limitation is enabled
+func (config *RelayState) IsPersonOnly() bool {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return config.RelayConfig.PersonOnly
+}
+
+// IsManuallyAccept : Return whether manual follow request acceptance is enabled
+func (config *RelayState) IsManuallyAccept() bool {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
+	return config.RelayConfig.ManuallyAccept
+}
+
 // SetConfig : Set relay configuration
 func (config *RelayState) SetConfig(key Config, value bool) {
 	strValue := 0
@@ -164,6 +225,9 @@ func (config *RelayState) DelSubscriber(domain string) {
 
 // SelectSubscriber : Select instance from subscriber list
 func (config *RelayState) SelectSubscriber(domain string) *Subscriber {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
 	for _, subscriber := range config.Subscribers {
 		if domain == subscriber.Domain {
 			return &subscriber
@@ -205,6 +269,9 @@ func (config *RelayState) DelFollower(domain string) {
 
 // SelectFollower : Select instance from follower list
 func (config *RelayState) SelectFollower(domain string) *Follower {
+	config.mutex.RLock()
+	defer config.mutex.RUnlock()
+
 	for _, follower := range config.Followers {
 		if domain == follower.Domain {
 			return &follower

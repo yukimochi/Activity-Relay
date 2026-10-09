@@ -11,7 +11,7 @@ import (
 )
 
 var globalConfig *RelayConfig
-var relayState RelayState
+var relayState *RelayState
 var ch chan bool
 
 func TestMain(m *testing.M) {

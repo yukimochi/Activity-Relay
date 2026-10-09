@@ -102,25 +102,25 @@ func listDomains(cmd *cobra.Command, _ []string) error {
 	switch cmd.Flag("type").Value.String() {
 	case "limited":
 		cmd.Println(" - Limited domains:")
-		for _, domain := range RelayState.LimitedDomains {
+		for _, domain := range RelayState.LimitedDomainsSnapshot() {
 			count = count + 1
 			cmd.Println(domain)
 		}
 	case "blocked":
 		cmd.Println(" - Blocked domains:")
-		for _, domain := range RelayState.BlockedDomains {
+		for _, domain := range RelayState.BlockedDomainsSnapshot() {
 			count = count + 1
 			cmd.Println(domain)
 		}
 	default:
 		cmd.Println(" - Subscriber list:")
-		subscribers := RelayState.Subscribers
+		subscribers := RelayState.SubscribersSnapshot()
 		for _, subscriber := range subscribers {
 			count = count + 1
 			cmd.Println("[*] " + subscriber.Domain)
 		}
 		cmd.Println(" - Follower list:")
-		followers := RelayState.Followers
+		followers := RelayState.FollowersSnapshot()
 		for _, follower := range followers {
 			count = count + 1
 			if follower.MutuallyFollow {
@@ -174,8 +174,8 @@ func unsetDomainType(cmd *cobra.Command, args []string) error {
 }
 
 func unfollowDomains(cmd *cobra.Command, args []string) error {
-	subscriptions := RelayState.Subscribers
-	followers := RelayState.Followers
+	subscriptions := RelayState.SubscribersSnapshot()
+	followers := RelayState.FollowersSnapshot()
 	for _, domain := range args {
 		switch {
 		case contains(subscriptions, domain):

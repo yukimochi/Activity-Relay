@@ -60,7 +60,7 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write(nil)
 	} else {
-		userTotal := len(RelayState.Subscribers)
+		userTotal := len(RelayState.SubscribersSnapshot())
 		Nodeinfo.Nodeinfo.Usage.Users.Total = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userTotal
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal

@@ -120,8 +120,8 @@ func configDisable(cmd *cobra.Command, args []string) error {
 }
 
 func listConfig(cmd *cobra.Command, _ []string) {
-	cmd.Println("Person-Type Actor limitation:", RelayState.RelayConfig.PersonOnly)
-	cmd.Println("Manual follow request acceptance:", RelayState.RelayConfig.ManuallyAccept)
+	cmd.Println("Person-Type Actor limitation:", RelayState.IsPersonOnly())
+	cmd.Println("Manual follow request acceptance:", RelayState.IsManuallyAccept())
 }
 
 func exportConfig(cmd *cobra.Command, _ []string) {

@@ -90,7 +90,8 @@ func enqueueRelayActivity(inboxURL string, activityID string) {
 
 func enqueueActivityForAll(sourceDomain string, body []byte) {
 	activityID := uuid.New()
-	remainCount := len(RelayState.SubscribersAndFollowers) - 1
+	subscriptions := RelayState.SubscribersAndFollowersSnapshot()
+	remainCount := len(subscriptions) - 1
 
 	if remainCount < 1 {
 		return
@@ -99,7 +100,7 @@ func enqueueActivityForAll(sourceDomain string, body []byte) {
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
-	for _, subscription := range RelayState.SubscribersAndFollowers {
+	for _, subscription := range subscriptions {
 		if sourceDomain == subscription.Domain {
 			continue
 		}
@@ -109,8 +110,9 @@ func enqueueActivityForAll(sourceDomain string, body []byte) {
 
 func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
 	activityID := uuid.New()
-	remainCount := len(RelayState.Subscribers)
-	if contains(RelayState.Subscribers, sourceDomain) {
+	subscriptions := RelayState.SubscribersSnapshot()
+	remainCount := len(subscriptions)
+	if contains(subscriptions, sourceDomain) {
 		remainCount = remainCount - 1
 	}
 	if remainCount < 1 {
@@ -120,7 +122,7 @@ func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
-	for _, subscription := range RelayState.Subscribers {
+	for _, subscription := range subscriptions {
 		if sourceDomain == subscription.Domain {
 			continue
 		}
@@ -130,8 +132,9 @@ func enqueueActivityForSubscriber(sourceDomain string, body []byte) {
 
 func enqueueActivityForFollower(sourceDomain string, body []byte) {
 	activityID := uuid.New()
-	remainCount := len(RelayState.Followers)
-	if contains(RelayState.Followers, sourceDomain) {
+	followers := RelayState.FollowersSnapshot()
+	remainCount := len(followers)
+	if contains(followers, sourceDomain) {
 		remainCount = remainCount - 1
 	}
 	if remainCount < 1 {
@@ -141,7 +144,7 @@ func enqueueActivityForFollower(sourceDomain string, body []byte) {
 	pushActivityScript := "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 	RelayState.RedisClient.Eval(context.TODO(), pushActivityScript, []string{"relay:activity:" + activityID.String()}, body, remainCount, 2*60).Result()
 
-	for _, subscription := range RelayState.Followers {
+	for _, subscription := range followers {
 		if sourceDomain == subscription.Domain {
 			continue
 		}
@@ -150,35 +153,35 @@ func enqueueActivityForFollower(sourceDomain string, body []byte) {
 }
 
 func isActorLimited(actorID *url.URL) bool {
-	if contains(RelayState.LimitedDomains, actorID.Host) {
+	if contains(RelayState.LimitedDomainsSnapshot(), actorID.Host) {
 		return true
 	}
 	return false
 }
 
 func isActorBlocked(actorID *url.URL) bool {
-	if contains(RelayState.BlockedDomains, actorID.Host) {
+	if contains(RelayState.BlockedDomainsSnapshot(), actorID.Host) {
 		return true
 	}
 	return false
 }
 
 func isActorSubscribed(actorID *url.URL) bool {
-	if contains(RelayState.Subscribers, actorID.Host) {
+	if contains(RelayState.SubscribersSnapshot(), actorID.Host) {
 		return true
 	}
 	return false
 }
 
 func isActorFollowers(actorID *url.URL) bool {
-	if contains(RelayState.Followers, actorID.Host) {
+	if contains(RelayState.FollowersSnapshot(), actorID.Host) {
 		return true
 	}
 	return false
 }
 
 func isActorSubscribersOrFollowers(actorID *url.URL) bool {
-	if contains(RelayState.SubscribersAndFollowers, actorID.Host) {
+	if contains(RelayState.SubscribersAndFollowersSnapshot(), actorID.Host) {
 		return true
 	}
 	return false
@@ -195,20 +198,21 @@ func isActorAbleToBeFollower(actor *models.Actor) bool {
 
 func isActorAbleToRelay(actor *models.Actor) bool {
 	domain, _ := url.Parse(actor.ID)
-	if contains(RelayState.LimitedDomains, domain.Host) {
+	if contains(RelayState.LimitedDomainsSnapshot(), domain.Host) {
 		return false
 	}
-	if RelayState.RelayConfig.PersonOnly && actor.Type != "Person" {
+	if RelayState.IsPersonOnly() && actor.Type != "Person" {
 		return false
 	}
 	return true
 }
 
 func isToMyFollower(entries []string) bool {
+	isToFollower := regexp.MustCompile(`/followers$`)
+	followers := RelayState.FollowersSnapshot()
 	for _, entry := range entries {
-		isToFollower := regexp.MustCompile(`/followers$`)
 		if isToFollower.MatchString(entry) {
-			for _, follower := range RelayState.Followers {
+			for _, follower := range followers {
 				if follower.ActorID+"/followers" == entry {
 					return true
 				}
@@ -225,7 +229,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 	}
 	switch {
 	case contains(activity.Object, "https://www.w3.org/ns/activitystreams#Public"):
-		if RelayState.RelayConfig.ManuallyAccept {
+		if RelayState.IsManuallyAccept() {
 			object, ok := activity.Object.(string)
 			if !ok {
 				return errors.New("activity object is not a string")
@@ -252,7 +256,7 @@ func executeFollowing(activity *models.Activity, actor *models.Actor) error {
 		}
 	case contains(activity.Object, RelayActor.ID):
 		if isActorAbleToBeFollower(actor) {
-			if RelayState.RelayConfig.ManuallyAccept {
+			if RelayState.IsManuallyAccept() {
 				object, ok := activity.Object.(string)
 				if !ok {
 					return errors.New("activity object is not a string")
