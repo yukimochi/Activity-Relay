@@ -90,7 +90,7 @@ func enqueueRelayActivity(inboxURL string, activityID string) {
 
 // pushActivityScript stores the activity body with its remaining delivery
 // count and expiry.
-const pushActivityScript = "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]);"
+const pushActivityScript = "redis.call('HSET',KEYS[1], 'body', ARGV[1], 'remain_count', ARGV[2]); return redis.call('EXPIRE', KEYS[1], ARGV[3]);"
 
 // pushActivity stores the activity body and enqueues a relay job for every
 // subscription except the source domain.
