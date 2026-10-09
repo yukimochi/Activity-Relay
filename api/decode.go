@@ -13,9 +13,21 @@ import (
 	"github.com/yukimochi/Activity-Relay/models"
 )
 
+// maxInboxBodySize limits the size of an inbox request body.
+const maxInboxBodySize = 1 << 20 // 1 MiB
+
+// errRequestBodyTooLarge signals an inbox request body over maxInboxBodySize.
+var errRequestBodyTooLarge = errors.New("request body is too large")
+
 func decodeActivity(request *http.Request) (*models.Activity, *models.Actor, []byte, error) {
 	request.Header.Set("Host", request.Host)
-	body, err := io.ReadAll(request.Body)
+	body, err := io.ReadAll(io.LimitReader(request.Body, maxInboxBodySize+1))
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if len(body) > maxInboxBodySize {
+		return nil, nil, nil, errRequestBodyTooLarge
+	}
 
 	// Verify HTTPSignature
 	verifier, err := httpsig.NewVerifier(request)

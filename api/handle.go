@@ -21,7 +21,7 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 			if queriedSubject == webfingerResource.Subject {
 				webfinger, err := json.Marshal(&webfingerResource)
 				if err != nil {
-					logrus.Fatal("Failed to marshal webfinger resource : ", err.Error())
+					logrus.Error("Failed to marshal webfinger resource : ", err.Error())
 					writer.WriteHeader(500)
 					writer.Write(nil)
 					return
@@ -44,7 +44,7 @@ func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		nodeinfoLinks, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
 		if err != nil {
-			logrus.Fatal("Failed to marshal nodeinfo links : ", err.Error())
+			logrus.Error("Failed to marshal nodeinfo links : ", err.Error())
 			writer.WriteHeader(500)
 			writer.Write(nil)
 			return
@@ -60,13 +60,15 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		writer.WriteHeader(400)
 		writer.Write(nil)
 	} else {
-		userTotal := len(RelayState.Subscribers)
-		Nodeinfo.Nodeinfo.Usage.Users.Total = userTotal
-		Nodeinfo.Nodeinfo.Usage.Users.ActiveMonth = userTotal
-		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
-		nodeinfo, err := json.Marshal(&Nodeinfo.Nodeinfo)
+		userTotal := len(RelayState.SubscribersSnapshot())
+		// Copy the shared resource before filling in the usage counts.
+		nodeinfoResource := Nodeinfo.Nodeinfo
+		nodeinfoResource.Usage.Users.Total = userTotal
+		nodeinfoResource.Usage.Users.ActiveMonth = userTotal
+		nodeinfoResource.Usage.Users.ActiveHalfyear = userTotal
+		nodeinfo, err := json.Marshal(&nodeinfoResource)
 		if err != nil {
-			logrus.Fatal("Failed to marshal nodeinfo : ", err.Error())
+			logrus.Error("Failed to marshal nodeinfo : ", err.Error())
 			writer.WriteHeader(500)
 			writer.Write(nil)
 			return
@@ -81,7 +83,7 @@ func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		relayActor, err := json.Marshal(&RelayActor)
 		if err != nil {
-			logrus.Fatal("Failed to marshal relay actor : ", err.Error())
+			logrus.Error("Failed to marshal relay actor : ", err.Error())
 			writer.WriteHeader(500)
 			writer.Write(nil)
 			return
@@ -100,7 +102,11 @@ func handleInbox(writer http.ResponseWriter, request *http.Request, activityDeco
 	case "POST":
 		activity, actor, body, err := activityDecoder(request)
 		if err != nil {
-			writer.WriteHeader(400)
+			if errors.Is(err, errRequestBodyTooLarge) {
+				writer.WriteHeader(http.StatusRequestEntityTooLarge)
+			} else {
+				writer.WriteHeader(400)
+			}
 			writer.Write(nil)
 		} else {
 			actorID, _ := url.Parse(activity.Actor)

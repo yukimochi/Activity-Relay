@@ -14,6 +14,24 @@ import (
 	"github.com/patrickmn/go-cache"
 )
 
+// httpClient is used to fetch remote actors and activities.
+var httpClient = &http.Client{Timeout: 10 * time.Second}
+
+// maxRemoteBodySize limits the size of a remote actor/activity response.
+const maxRemoteBodySize = 1 << 20 // 1 MiB
+
+// readRemoteBody reads a remote response body up to maxRemoteBodySize.
+func readRemoteBody(body io.Reader) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(body, maxRemoteBodySize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxRemoteBodySize {
+		return nil, errors.New("remote response body is too large")
+	}
+	return data, nil
+}
+
 func signGETRequest(req *http.Request, keyID string, privateKey *rsa.PrivateKey) error {
 	req.Header.Set("Host", req.URL.Host)
 	req.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
@@ -123,7 +141,7 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 			return *actor, err
 		}
 	}
-	client := new(http.Client)
+	client := httpClient
 	resp, err := client.Do(req)
 	if err != nil {
 		return *actor, err
@@ -134,7 +152,10 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 		return *actor, errors.New(resp.Status)
 	}
 
-	data, _ := io.ReadAll(resp.Body)
+	data, err := readRemoteBody(resp.Body)
+	if err != nil {
+		return *actor, err
+	}
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
 		return *actor, err
@@ -154,8 +175,7 @@ type Activity struct {
 	Cc      []string    `json:"cc,omitempty"`
 }
 
-// UnmarshalJSON normalizes the `to` and `cc` properties so that both
-// single-string and array-of-string forms decode into []string.
+// UnmarshalJSON normalizes the `to` and `cc` properties into []string.
 func (a *Activity) UnmarshalJSON(data []byte) error {
 	type alias Activity
 	aux := &struct {
@@ -266,7 +286,7 @@ func NewActivityPubActivityFromRemoteActivity(url string, uaString string) (Acti
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
-	client := new(http.Client)
+	client := httpClient
 	resp, err := client.Do(req)
 	if err != nil {
 		return *activity, err
@@ -277,7 +297,10 @@ func NewActivityPubActivityFromRemoteActivity(url string, uaString string) (Acti
 		return *activity, errors.New(resp.Status)
 	}
 
-	data, _ := io.ReadAll(resp.Body)
+	data, err := readRemoteBody(resp.Body)
+	if err != nil {
+		return *activity, err
+	}
 	err = json.Unmarshal(data, &activity)
 	if err != nil {
 		return *activity, err

@@ -23,7 +23,7 @@ var (
 
 	ActorCache      *cache.Cache
 	MachineryServer *machinery.Server
-	RelayState      models.RelayState
+	RelayState      *models.RelayState
 )
 
 func Entrypoint(g *models.RelayConfig, v string) error {

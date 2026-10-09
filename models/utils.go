@@ -27,6 +27,42 @@ func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
 	return pub, nil
 }
 
+// RedisScanKeys returns all deduplicated keys matching pattern using SCAN.
+func RedisScanKeys(redisClient *redis.Client, pattern string) ([]string, error) {
+	var keys []string
+	var cursor uint64
+	seen := make(map[string]struct{})
+	for {
+		batch, nextCursor, err := redisClient.Scan(context.TODO(), cursor, pattern, 100).Result()
+		if err != nil {
+			return nil, err
+		}
+		for _, key := range batch {
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			keys = append(keys, key)
+		}
+		cursor = nextCursor
+		if cursor == 0 {
+			return keys, nil
+		}
+	}
+}
+
+// sliceStringValue returns the string value at index, or "" when it is
+// missing or not a string.
+func sliceStringValue(values []interface{}, index int) string {
+	if index >= len(values) {
+		return ""
+	}
+	if value, ok := values[index].(string); ok {
+		return value
+	}
+	return ""
+}
+
 func redisHGetOrCreateWithDefault(redisClient *redis.Client, key string, field string, defaultValue string) (string, error) {
 	keyExist, err := redisClient.HExists(context.TODO(), key, field).Result()
 	if err != nil {

@@ -102,25 +102,25 @@ func listDomains(cmd *cobra.Command, _ []string) error {
 	switch cmd.Flag("type").Value.String() {
 	case "limited":
 		cmd.Println(" - Limited domains:")
-		for _, domain := range RelayState.LimitedDomains {
+		for _, domain := range RelayState.LimitedDomainsSnapshot() {
 			count = count + 1
 			cmd.Println(domain)
 		}
 	case "blocked":
 		cmd.Println(" - Blocked domains:")
-		for _, domain := range RelayState.BlockedDomains {
+		for _, domain := range RelayState.BlockedDomainsSnapshot() {
 			count = count + 1
 			cmd.Println(domain)
 		}
 	default:
 		cmd.Println(" - Subscriber list:")
-		subscribers := RelayState.Subscribers
+		subscribers := RelayState.SubscribersSnapshot()
 		for _, subscriber := range subscribers {
 			count = count + 1
 			cmd.Println("[*] " + subscriber.Domain)
 		}
 		cmd.Println(" - Follower list:")
-		followers := RelayState.Followers
+		followers := RelayState.FollowersSnapshot()
 		for _, follower := range followers {
 			count = count + 1
 			if follower.MutuallyFollow {
@@ -174,18 +174,26 @@ func unsetDomainType(cmd *cobra.Command, args []string) error {
 }
 
 func unfollowDomains(cmd *cobra.Command, args []string) error {
-	subscriptions := RelayState.Subscribers
-	followers := RelayState.Followers
+	subscriptions := RelayState.SubscribersSnapshot()
+	followers := RelayState.FollowersSnapshot()
 	for _, domain := range args {
 		switch {
 		case contains(subscriptions, domain):
-			subscription := *RelayState.SelectSubscriber(domain)
-			createUnfollowToSubscriberRequest(subscription)
+			subscription := RelayState.SelectSubscriber(domain)
+			if subscription == nil {
+				cmd.Println("Domain [" + domain + "] is no longer subscribed")
+				continue
+			}
+			createUnfollowToSubscriberRequest(*subscription)
 			RelayState.DelSubscriber(subscription.Domain)
 			cmd.Println("Unfollow [" + subscription.Domain + "]")
 		case contains(followers, domain):
-			follower := *RelayState.SelectFollower(domain)
-			createUnfollowToFollowerRequest(follower)
+			follower := RelayState.SelectFollower(domain)
+			if follower == nil {
+				cmd.Println("Domain [" + domain + "] is no longer followed")
+				continue
+			}
+			createUnfollowToFollowerRequest(*follower)
 			RelayState.DelFollower(follower.Domain)
 			cmd.Println("Unfollow [" + follower.Domain + "]")
 		default:

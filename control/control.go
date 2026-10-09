@@ -20,7 +20,7 @@ var (
 	RelayActor models.Actor
 
 	MachineryServer *machinery.Server
-	RelayState      models.RelayState
+	RelayState      *models.RelayState
 )
 
 func BuildCommand(command *cobra.Command) {
