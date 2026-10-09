@@ -161,7 +161,7 @@ func createUpdateActorActivity(subscription models.Subscriber) error {
 func listFollows(cmd *cobra.Command, _ []string) error {
 	var domains []string
 	cmd.Println(" - Follow requests:")
-	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
+	follows, err := models.RedisScanKeys(RelayState.RedisClient, "relay:pending:*")
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func listFollows(cmd *cobra.Command, _ []string) error {
 func acceptFollow(cmd *cobra.Command, args []string) error {
 	var err error
 	var domains []string
-	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
+	follows, err := models.RedisScanKeys(RelayState.RedisClient, "relay:pending:*")
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func acceptFollow(cmd *cobra.Command, args []string) error {
 func rejectFollow(cmd *cobra.Command, args []string) error {
 	var err error
 	var domains []string
-	follows, err := RelayState.RedisClient.Keys(context.TODO(), "relay:pending:*").Result()
+	follows, err := models.RedisScanKeys(RelayState.RedisClient, "relay:pending:*")
 	if err != nil {
 		return err
 	}

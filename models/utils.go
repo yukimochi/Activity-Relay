@@ -27,6 +27,24 @@ func ReadPublicKeyRSAFromString(pemString string) (*rsa.PublicKey, error) {
 	return pub, nil
 }
 
+// RedisScanKeys returns all keys matching pattern using SCAN instead of
+// the blocking KEYS command, so that large keyspaces do not stall Redis.
+func RedisScanKeys(redisClient *redis.Client, pattern string) ([]string, error) {
+	var keys []string
+	var cursor uint64
+	for {
+		batch, nextCursor, err := redisClient.Scan(context.TODO(), cursor, pattern, 100).Result()
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, batch...)
+		cursor = nextCursor
+		if cursor == 0 {
+			return keys, nil
+		}
+	}
+}
+
 func redisHGetOrCreateWithDefault(redisClient *redis.Client, key string, field string, defaultValue string) (string, error) {
 	keyExist, err := redisClient.HExists(context.TODO(), key, field).Result()
 	if err != nil {

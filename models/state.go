@@ -78,7 +78,10 @@ func (config *RelayState) Load() {
 		blockedDomains = append(blockedDomains, domain)
 	}
 
-	domains, _ = config.RedisClient.Keys(context.TODO(), "relay:subscription:*").Result()
+	domains, err := RedisScanKeys(config.RedisClient, "relay:subscription:*")
+	if err != nil {
+		logrus.Error(err)
+	}
 	for _, domain := range domains {
 		domainName := strings.Replace(domain, "relay:subscription:", "", 1)
 		inboxURL, _ := config.RedisClient.HGet(context.TODO(), domain, "inbox_url").Result()
@@ -94,7 +97,10 @@ func (config *RelayState) Load() {
 		subscribersAndFollowers = append(subscribersAndFollowers, Subscriber{domainName, inboxURL, activityID, actorID})
 	}
 
-	domains, _ = config.RedisClient.Keys(context.TODO(), "relay:follower:*").Result()
+	domains, err = RedisScanKeys(config.RedisClient, "relay:follower:*")
+	if err != nil {
+		logrus.Error(err)
+	}
 	for _, domain := range domains {
 		domainName := strings.Replace(domain, "relay:follower:", "", 1)
 		inboxURL, _ := config.RedisClient.HGet(context.TODO(), domain, "inbox_url").Result()
