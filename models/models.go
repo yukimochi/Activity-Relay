@@ -19,6 +19,23 @@ import (
 // cannot block the caller indefinitely.
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
+// maxRemoteBodySize limits the size of a remote actor/activity response
+// so that a hostile instance cannot exhaust relay memory with a huge body.
+const maxRemoteBodySize = 1 << 20 // 1 MiB
+
+// readRemoteBody reads a remote response body up to maxRemoteBodySize
+// and fails when the peer sends more than that.
+func readRemoteBody(body io.Reader) ([]byte, error) {
+	data, err := io.ReadAll(io.LimitReader(body, maxRemoteBodySize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > maxRemoteBodySize {
+		return nil, errors.New("remote response body is too large")
+	}
+	return data, nil
+}
+
 func signGETRequest(req *http.Request, keyID string, privateKey *rsa.PrivateKey) error {
 	req.Header.Set("Host", req.URL.Host)
 	req.Header.Set("Date", time.Now().UTC().Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
@@ -139,7 +156,10 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 		return *actor, errors.New(resp.Status)
 	}
 
-	data, _ := io.ReadAll(resp.Body)
+	data, err := readRemoteBody(resp.Body)
+	if err != nil {
+		return *actor, err
+	}
 	err = json.Unmarshal(data, &actor)
 	if err != nil {
 		return *actor, err
@@ -282,7 +302,10 @@ func NewActivityPubActivityFromRemoteActivity(url string, uaString string) (Acti
 		return *activity, errors.New(resp.Status)
 	}
 
-	data, _ := io.ReadAll(resp.Body)
+	data, err := readRemoteBody(resp.Body)
+	if err != nil {
+		return *activity, err
+	}
 	err = json.Unmarshal(data, &activity)
 	if err != nil {
 		return *activity, err
