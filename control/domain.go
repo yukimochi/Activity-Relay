@@ -179,13 +179,21 @@ func unfollowDomains(cmd *cobra.Command, args []string) error {
 	for _, domain := range args {
 		switch {
 		case contains(subscriptions, domain):
-			subscription := *RelayState.SelectSubscriber(domain)
-			createUnfollowToSubscriberRequest(subscription)
+			subscription := RelayState.SelectSubscriber(domain)
+			if subscription == nil {
+				cmd.Println("Domain [" + domain + "] is no longer subscribed")
+				continue
+			}
+			createUnfollowToSubscriberRequest(*subscription)
 			RelayState.DelSubscriber(subscription.Domain)
 			cmd.Println("Unfollow [" + subscription.Domain + "]")
 		case contains(followers, domain):
-			follower := *RelayState.SelectFollower(domain)
-			createUnfollowToFollowerRequest(follower)
+			follower := RelayState.SelectFollower(domain)
+			if follower == nil {
+				cmd.Println("Domain [" + domain + "] is no longer followed")
+				continue
+			}
+			createUnfollowToFollowerRequest(*follower)
 			RelayState.DelFollower(follower.Domain)
 			cmd.Println("Unfollow [" + follower.Domain + "]")
 		default:

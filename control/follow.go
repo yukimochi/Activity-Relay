@@ -94,6 +94,9 @@ func createFollowRequestResponse(domain string, response string) error {
 	if err != nil {
 		return err
 	}
+	if len(data) == 0 {
+		return fmt.Errorf("no pending follow request for [%s]", domain)
+	}
 	activity := models.Activity{
 		Context: []string{"https://www.w3.org/ns/activitystreams", "https://w3id.org/security/v1"},
 		ID:      data["activity_id"],
@@ -190,7 +193,9 @@ func acceptFollow(cmd *cobra.Command, args []string) error {
 	for _, domain := range args {
 		if contains(domains, domain) {
 			cmd.Println("Accept [" + domain + "] follow request")
-			createFollowRequestResponse(domain, "Accept")
+			if err := createFollowRequestResponse(domain, "Accept"); err != nil {
+				cmd.Println("Failed to accept [" + domain + "] follow request : " + err.Error())
+			}
 		} else {
 			cmd.Println("Invalid domain provided: " + domain)
 		}
@@ -213,7 +218,9 @@ func rejectFollow(cmd *cobra.Command, args []string) error {
 	for _, domain := range args {
 		if contains(domains, domain) {
 			cmd.Println("Reject [" + domain + "] follow request")
-			createFollowRequestResponse(domain, "Reject")
+			if err := createFollowRequestResponse(domain, "Reject"); err != nil {
+				cmd.Println("Failed to reject [" + domain + "] follow request : " + err.Error())
+			}
 		} else {
 			cmd.Println("Invalid domain provided: " + domain)
 		}

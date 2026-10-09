@@ -125,7 +125,11 @@ func listConfig(cmd *cobra.Command, _ []string) {
 }
 
 func exportConfig(cmd *cobra.Command, _ []string) {
-	jsonData, _ := json.Marshal(&RelayState)
+	jsonData, err := json.Marshal(RelayState)
+	if err != nil {
+		logrus.Error(err)
+		return
+	}
 	cmd.Println(string(jsonData))
 }
 
