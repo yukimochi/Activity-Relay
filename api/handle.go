@@ -21,7 +21,7 @@ func handleWebfinger(writer http.ResponseWriter, request *http.Request) {
 			if queriedSubject == webfingerResource.Subject {
 				webfinger, err := json.Marshal(&webfingerResource)
 				if err != nil {
-					logrus.Fatal("Failed to marshal webfinger resource : ", err.Error())
+					logrus.Error("Failed to marshal webfinger resource : ", err.Error())
 					writer.WriteHeader(500)
 					writer.Write(nil)
 					return
@@ -44,7 +44,7 @@ func handleNodeinfoLink(writer http.ResponseWriter, request *http.Request) {
 	} else {
 		nodeinfoLinks, err := json.Marshal(&Nodeinfo.NodeinfoLinks)
 		if err != nil {
-			logrus.Fatal("Failed to marshal nodeinfo links : ", err.Error())
+			logrus.Error("Failed to marshal nodeinfo links : ", err.Error())
 			writer.WriteHeader(500)
 			writer.Write(nil)
 			return
@@ -66,7 +66,7 @@ func handleNodeinfo(writer http.ResponseWriter, request *http.Request) {
 		Nodeinfo.Nodeinfo.Usage.Users.ActiveHalfyear = userTotal
 		nodeinfo, err := json.Marshal(&Nodeinfo.Nodeinfo)
 		if err != nil {
-			logrus.Fatal("Failed to marshal nodeinfo : ", err.Error())
+			logrus.Error("Failed to marshal nodeinfo : ", err.Error())
 			writer.WriteHeader(500)
 			writer.Write(nil)
 			return
@@ -81,7 +81,7 @@ func handleRelayActor(writer http.ResponseWriter, request *http.Request) {
 	if request.Method == "GET" {
 		relayActor, err := json.Marshal(&RelayActor)
 		if err != nil {
-			logrus.Fatal("Failed to marshal relay actor : ", err.Error())
+			logrus.Error("Failed to marshal relay actor : ", err.Error())
 			writer.WriteHeader(500)
 			writer.Write(nil)
 			return
