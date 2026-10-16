@@ -15,7 +15,7 @@ import (
 )
 
 // httpClient is used to fetch remote actors and activities.
-var httpClient = &http.Client{Timeout: 10 * time.Second}
+var httpClient = (&RelayConfig{}).OutboundHTTPClient(10 * time.Second)
 
 // maxRemoteBodySize limits the size of a remote actor/activity response.
 const maxRemoteBodySize = 1 << 20 // 1 MiB
@@ -133,7 +133,10 @@ func NewActivityPubActorFromRemoteActor(url string, uaString string, cache *cach
 			return *actor, nil
 		}
 	}
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return *actor, err
+	}
 	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
 	if privateKey != nil && keyID != "" {
@@ -283,7 +286,10 @@ func NewActivityPubActivity(actor Actor, to []string, object interface{}, activi
 func NewActivityPubActivityFromRemoteActivity(url string, uaString string) (Activity, error) {
 	var activity = new(Activity)
 	var err error
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return *activity, err
+	}
 	req.Header.Set("Accept", "application/activity+json")
 	req.Header.Set("User-Agent", uaString)
 	client := httpClient

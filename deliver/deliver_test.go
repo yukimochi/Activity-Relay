@@ -43,7 +43,22 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func useLocalDeliveryTransport(t *testing.T) {
+	t.Helper()
+	original := HttpClient
+	client := *original
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	client.Transport = transport
+	HttpClient = &client
+	t.Cleanup(func() {
+		HttpClient = original
+		transport.CloseIdleConnections()
+	})
+}
+
 func TestRelayActivity(t *testing.T) {
+	useLocalDeliveryTransport(t)
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := io.ReadAll(r.Body)
 		if string(data) != "ExampleData" || r.Header.Get("Content-Type") != "application/activity+json" {
@@ -92,6 +107,7 @@ func TestRelayActivityNoHost(t *testing.T) {
 }
 
 func TestRelayActivityResp500(t *testing.T) {
+	useLocalDeliveryTransport(t)
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		w.Write(nil)
@@ -116,6 +132,7 @@ func TestRelayActivityResp500(t *testing.T) {
 }
 
 func TestRegisterActivity(t *testing.T) {
+	useLocalDeliveryTransport(t)
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		data, _ := io.ReadAll(r.Body)
 		if string(data) != "data" || r.Header.Get("Content-Type") != "application/activity+json" {
@@ -147,6 +164,7 @@ func TestRegisterActivityNoHost(t *testing.T) {
 }
 
 func TestRegisterActivityResp500(t *testing.T) {
+	useLocalDeliveryTransport(t)
 	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		w.Write(nil)

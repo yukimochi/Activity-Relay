@@ -92,7 +92,7 @@ func initialize(globalConfig *models.RelayConfig) error {
 	if err != nil {
 		return err
 	}
-	HttpClient = &http.Client{Timeout: time.Duration(5) * time.Second}
+	HttpClient = globalConfig.OutboundHTTPClient(5 * time.Second)
 
 	RelayActor = models.NewActivityPubActorFromRelayConfig(globalConfig)
 	newNullLogger := NewNullLogger()
