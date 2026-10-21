@@ -37,8 +37,10 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          outputs: |
-            type=image,"name=${{ secrets.REGISTRY_USER }}/activity-relay,ghcr.io/${{ secrets.REGISTRY_USER }}/activity-relay/activity-relay",push-by-digest=true,push=true
+          tags: |
+            ${{ secrets.REGISTRY_USER }}/activity-relay
+            ghcr.io/${{ secrets.REGISTRY_USER }}/activity-relay/activity-relay
+          outputs: type=image,push-by-digest=true,push=true
       - name: Check master HEAD
         id: edge
         uses: actions/github-script@v7
