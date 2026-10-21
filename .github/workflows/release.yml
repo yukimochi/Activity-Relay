@@ -3,6 +3,8 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+  schedule:
+    - cron: '0 3 10 * *'
 
 permissions:
   contents: read
@@ -16,7 +18,7 @@ concurrency:
 jobs:
   build:
     name: Release Build
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'v')
     runs-on: ubuntu-latest
     steps:
       - id: variables
@@ -24,7 +26,7 @@ jobs:
         with:
           script: |
             let tag;
-            if (context.eventName === 'workflow_dispatch') {
+            if (context.eventName === 'workflow_dispatch' || context.eventName === 'schedule') {
               const { data: release } = await github.rest.repos.getLatestRelease(context.repo);
               tag = release.tag_name;
             } else {
@@ -52,6 +54,7 @@ jobs:
         id: build
         with:
           push: true
+          no-cache: ${{ github.event_name == 'schedule' }}
           context: .
           platforms: linux/amd64,linux/arm64
           tags: |
