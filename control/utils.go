@@ -1,27 +1,24 @@
 package control
 
+import "slices"
+
 import "github.com/yukimochi/Activity-Relay/models"
 
-func contains(entries interface{}, key string) bool {
+func contains(entries any, key string) bool {
 	switch entry := entries.(type) {
 	case string:
 		return entry == key
 	case []string:
-		for i := 0; i < len(entry); i++ {
-			if entry[i] == key {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(entry, key)
 	case []models.Subscriber:
-		for i := 0; i < len(entry); i++ {
+		for i := range entry {
 			if entry[i].Domain == key {
 				return true
 			}
 		}
 		return false
 	case []models.Follower:
-		for i := 0; i < len(entry); i++ {
+		for i := range entry {
 			if entry[i].Domain == key {
 				return true
 			}
